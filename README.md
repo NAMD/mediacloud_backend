@@ -1,4 +1,4 @@
 mediacloud_backend
 ==================
 
-MediaCloud backend repository
+MediaCloud backend repository to serve as base to MediaCloud repository.
