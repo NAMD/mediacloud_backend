@@ -133,24 +133,23 @@ class URLGatekeeper:
     #     _debuglog("gatekeeper of %s says %s" % (url, allow))
     #     return allow
 
-    @timelimit(10)
-    def get(self, url, check=True):
-        #if check and not self.can_fetch(url): return ''
-        try:
-            res = requests.get(url).text()
-            return self.urlopener.open(url).read()
-        except:
-            res = ''
-        return res
+    # @timelimit(10)
+    # def get(self, url, check=True):
+    #     #if check and not self.can_fetch(url): return ''
+    #     try:
+    #         res = requests.get(url).text()
+    #         return self.urlopener.open(url).read()
+    #     except:
+    #         res = ''
+    #     return res
 
 @timelimit(10)
-def get(url):
+def get_page(url):
     """
     Fetches html from an URL
     """
     try:
-        res = requests.get(url).text()
-        return self.urlopener.open(url).read()
+        res = requests.get(url).text
     except:
         res = ''
     return res
@@ -244,15 +243,24 @@ def tryBrokenRedirect(data):
         if newuris: return newuris[0].strip()
 
 def couldBeFeedData(data):
+    """
+    Check if content corresponds to an html document (returns 0)
+    or a feed (returns >0).
+    """
     data = data.lower()
-    if data.count('<html'): return 0
+    if data.count('<html'):
+        return 0
     return data.count('<rss') + data.count('<rdf') + data.count('<feed')
 
 def isFeed(uri):
+    """
+    Check if content corresponds to an html document (returns 0)
+    or a feed (returns >0).
+    """
     _debuglog('seeing if %s is a feed' % uri)
     protocol = urlparse.urlparse(uri)
     if protocol[0] not in ('http', 'https'): return 0
-    data = _gatekeeper.get(uri)
+    data = get_page(uri)
     return couldBeFeedData(data)
 
 def sortFeeds(feed1Info, feed2Info):
@@ -275,7 +283,7 @@ def feeds(uri, all=False, querySyndic8=False, _recurs=None):
     if _recurs is None: _recurs = [uri]
     fulluri = makeFullURI(uri)
     try:
-        data = _gatekeeper.get(fulluri, check=False)
+        data = get_page(fulluri)
     except:
         return []
     # is this already a feed?
