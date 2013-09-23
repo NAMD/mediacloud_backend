@@ -1,5 +1,9 @@
-"""feedfinder: Find the Web feed for a Web page
+"""
+feedfinder: Find the Web feeds from a Web page
+Based on script by:
 http://www.aaronsw.com/2002/feedfinder/
+
+Modified by the Mediacloud Brasil team at NAMD (github.com/NAMD)
 
 Usage:
   feed(uri) - returns feed found for a URI
@@ -47,6 +51,7 @@ Also Jason Diamond, Brian Lalor for bug reporting and patches"""
 _debug = 0
 
 import sgmllib, urllib, urlparse, re, sys, robotparser
+import requests
 
 import threading
 class TimeoutError(Exception): pass
@@ -122,19 +127,34 @@ class URLGatekeeper:
         self.rpcache[domain] = rp
         return rp
         
-    def can_fetch(self, url):
-        rp = self._getrp(url)
-        allow = rp.can_fetch(self.urlopener.version, url)
-        _debuglog("gatekeeper of %s says %s" % (url, allow))
-        return allow
+    # def can_fetch(self, url):
+    #     rp = self._getrp(url)
+    #     allow = rp.can_fetch(self.urlopener.version, url)
+    #     _debuglog("gatekeeper of %s says %s" % (url, allow))
+    #     return allow
 
     @timelimit(10)
     def get(self, url, check=True):
-        if check and not self.can_fetch(url): return ''
+        #if check and not self.can_fetch(url): return ''
         try:
+            res = requests.get(url).text()
             return self.urlopener.open(url).read()
         except:
-            return ''
+            res = ''
+        return res
+
+@timelimit(10)
+def get(url):
+    """
+    Fetches html from an URL
+    """
+    try:
+        res = requests.get(url).text()
+        return self.urlopener.open(url).read()
+    except:
+        res = ''
+    return res
+
 
 _gatekeeper = URLGatekeeper()
 
@@ -311,7 +331,6 @@ def feeds(uri, all=False, querySyndic8=False, _recurs=None):
         outfeeds = list(set(outfeeds))
     return outfeeds
 
-getFeeds = feeds # backwards-compatibility
 
 def feed(uri):
     #todo: give preference to certain feed formats
@@ -367,4 +386,4 @@ if __name__ == '__main__':
     if uri == 'test':
         test()
     else:
-        print "\n".join(getFeeds(uri))
+        print "\n".join(feeds(uri))
