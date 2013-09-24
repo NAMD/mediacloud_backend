@@ -26,8 +26,8 @@ class FeedFinderTests(unittest.TestCase):
 
 class TestUrlScanner(unittest.TestCase):
     def test_scan(self):
-        l = urlscanner.url_scanner('www.google.com',1)
-        self.assertEquals(l, ['http://www.google.com/', 'http://www.google.com/robots.txt'])
+        l = urlscanner.url_scanner('www.google.com', 1)
+        self.assertEquals(l, ['http://www.google.com/robots.txt', 'http://www.google.com/',])
 
 
 if __name__ == '__main__':
