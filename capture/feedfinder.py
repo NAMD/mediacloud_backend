@@ -39,22 +39,17 @@ How it works:
   8. As a last ditch effort, we search Syndic8 for feeds matching the URI
 """
 
-__version__ = "1.371"
-__date__ = "2006-04-24"
-__maintainer__ = "Aaron Swartz (me@aaronsw.com)"
-__author__ = "Mark Pilgrim (http://diveintomark.org)"
-__copyright__ = "Copyright 2002-4, Mark Pilgrim; 2006 Aaron Swartz"
-__license__ = "Python"
-__credits__ = """Abe Fettig for a patch to sort Syndic8 feeds by popularity
-Also Jason Diamond, Brian Lalor for bug reporting and patches"""
 
 _debug = 0
 
 import sgmllib, urllib, urlparse, re, sys, robotparser
 import requests
-
 import threading
-class TimeoutError(Exception): pass
+
+class TimeoutError(Exception):
+    pass
+
+
 def timelimit(timeout):
     """borrowed from web.py"""
     def _1(function):
@@ -100,48 +95,7 @@ if not dict:
     
 def _debuglog(message):
     if _debug: print message
-    
-class URLGatekeeper:
-    """a class to track robots.txt rules across multiple servers"""
-    def __init__(self):
-        self.rpcache = {} # a dictionary of RobotFileParser objects, by domain
-        self.urlopener = urllib.FancyURLopener()
-        self.urlopener.version = "feedfinder/" + __version__ + " " + self.urlopener.version + " +http://www.aaronsw.com/2002/feedfinder/"
-        _debuglog(self.urlopener.version)
-        self.urlopener.addheaders = [('User-agent', self.urlopener.version)]
-        robotparser.URLopener.version = self.urlopener.version
-        robotparser.URLopener.addheaders = self.urlopener.addheaders
-        
-    def _getrp(self, url):
-        protocol, domain = urlparse.urlparse(url)[:2]
-        if self.rpcache.has_key(domain):
-            return self.rpcache[domain]
-        baseurl = '%s://%s' % (protocol, domain)
-        robotsurl = urlparse.urljoin(baseurl, 'robots.txt')
-        _debuglog('fetching %s' % robotsurl)
-        rp = robotparser.RobotFileParser(robotsurl)
-        try:
-            rp.read()
-        except:
-            pass
-        self.rpcache[domain] = rp
-        return rp
-        
-    # def can_fetch(self, url):
-    #     rp = self._getrp(url)
-    #     allow = rp.can_fetch(self.urlopener.version, url)
-    #     _debuglog("gatekeeper of %s says %s" % (url, allow))
-    #     return allow
 
-    # @timelimit(10)
-    # def get(self, url, check=True):
-    #     #if check and not self.can_fetch(url): return ''
-    #     try:
-    #         res = requests.get(url).text()
-    #         return self.urlopener.open(url).read()
-    #     except:
-    #         res = ''
-    #     return res
 
 @timelimit(10)
 def get_page(url):
@@ -155,7 +109,7 @@ def get_page(url):
     return res
 
 
-_gatekeeper = URLGatekeeper()
+# _gatekeeper = URLGatekeeper()
 
 class BaseParser(sgmllib.SGMLParser):
     def __init__(self, baseuri):
@@ -178,14 +132,16 @@ class BaseParser(sgmllib.SGMLParser):
         if not attrsD.has_key('href'): return
         self.baseuri = attrsD['href']
     
-    def error(self, *a, **kw): pass # we're not picky
-        
+    def error(self, *a, **kw):
+        pass  # we're not picky
+
 class LinkParser(BaseParser):
     FEED_TYPES = ('application/rss+xml',
                   'text/xml',
                   'application/atom+xml',
                   'application/x.atom+xml',
                   'application/x-atom+xml')
+
     def do_link(self, attrs):
         attrsD = dict(self.normalize_attrs(attrs))
         if not attrsD.has_key('rel'):
@@ -199,10 +155,12 @@ class LinkParser(BaseParser):
             return
         self.links.append(urlparse.urljoin(self.baseuri, attrsD['href']))
 
+
 class ALinkParser(BaseParser):
     def start_a(self, attrs):
         attrsD = dict(self.normalize_attrs(attrs))
-        if not attrsD.has_key('href'): return
+        if not attrsD.has_key('href'):
+            return
         self.links.append(urlparse.urljoin(self.baseuri, attrsD['href']))
 
 def makeFullURI(uri):
@@ -240,7 +198,8 @@ r_brokenRedirect = re.compile('<newLocation[^>]*>(.*?)</newLocation>', re.S)
 def tryBrokenRedirect(data):
     if '<newLocation' in data:
         newuris = r_brokenRedirect.findall(data)
-        if newuris: return newuris[0].strip()
+        if newuris:
+            return newuris[0].strip()
 
 def couldBeFeedData(data):
     """
@@ -280,6 +239,9 @@ def getFeedsFromSyndic8(uri):
     return feeds
     
 def feeds(uri, all=False, querySyndic8=False, _recurs=None):
+    """
+    Returns List of feeds found on the page
+    """
     if _recurs is None: _recurs = [uri]
     fulluri = makeFullURI(uri)
     try:
@@ -348,40 +310,6 @@ def feed(uri):
     else:
         return None
 
-##### test harness ######
-
-def test():
-    uri = 'http://diveintomark.org/tests/client/autodiscovery/html4-001.html'
-    failed = []
-    count = 0
-    while 1:
-        data = _gatekeeper.get(uri)
-        if data.find('Atom autodiscovery test') == -1: break
-        sys.stdout.write('.')
-        sys.stdout.flush()
-        count += 1
-        links = getLinks(data, uri)
-        if not links:
-            print '\n*** FAILED ***', uri, 'could not find link'
-            failed.append(uri)
-        elif len(links) > 1:
-            print '\n*** FAILED ***', uri, 'found too many links'
-            failed.append(uri)
-        else:
-            atomdata = urllib.urlopen(links[0]).read()
-            if atomdata.find('<link rel="alternate"') == -1:
-                print '\n*** FAILED ***', uri, 'retrieved something that is not a feed'
-                failed.append(uri)
-            else:
-                backlink = atomdata.split('href="').pop().split('"')[0]
-                if backlink != uri:
-                    print '\n*** FAILED ***', uri, 'retrieved wrong feed'
-                    failed.append(uri)
-        if data.find('<link rel="next" href="') == -1: break
-        uri = urlparse.urljoin(uri, data.split('<link rel="next" href="').pop().split('"')[0])
-    print
-    print count, 'tests executed,', len(failed), 'failed'
-        
 if __name__ == '__main__':
     args = sys.argv[1:]
     if args and args[0] == '--debug':
