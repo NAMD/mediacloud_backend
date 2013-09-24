@@ -2,7 +2,7 @@
 __author__ = 'fccoelho'
 
 import unittest
-from capture import feedfinder
+from capture import feedfinder, urlscanner
 
 
 class FeedFinderTests(unittest.TestCase):
@@ -23,6 +23,11 @@ class FeedFinderTests(unittest.TestCase):
     def test_find_on_single_page(self):
         fs = feedfinder.feeds(self.urls[0], all=True)
         self.assertNotEquals(fs, [], msg="feeds returned an empty list.")
+
+class TestUrlScanner(unittest.TestCase):
+    def test_scan(self):
+        l = urlscanner.url_scanner('www.google.com',1)
+        self.assertEquals(l, ['http://www.google.com/', 'http://www.google.com/robots.txt'])
 
 
 if __name__ == '__main__':
