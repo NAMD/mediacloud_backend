@@ -44,72 +44,28 @@ _debug = 0
 
 import sgmllib, urllib, urlparse, re, sys, robotparser
 import requests
-import threading
-
-class TimeoutError(Exception):
-    pass
-
-
-def timelimit(timeout):
-    """borrowed from web.py"""
-    def _1(function):
-        def _2(*args, **kw):
-            class Dispatch(threading.Thread):
-                def __init__(self):
-                    threading.Thread.__init__(self)
-                    self.result = None
-                    self.error = None
-                    
-                    self.setDaemon(True)
-                    self.start()
-
-                def run(self):
-                    try:
-                        self.result = function(*args, **kw)
-                    except:
-                        self.error = sys.exc_info()
-
-            c = Dispatch()
-            c.join(timeout)
-            if c.isAlive():
-                raise TimeoutError, 'took too long'
-            if c.error:
-                raise c.error[0], c.error[1]
-            return c.result
-        return _2
-    return _1
-    
-# XML-RPC support allows feedfinder to query Syndic8 for possible matches.
-# Python 2.3 now comes with this module by default, otherwise you can download it
-try:
-    import xmlrpclib # http://www.pythonware.com/products/xmlrpc/
-except ImportError:
-    xmlrpclib = None
-
-if not dict:
-    def dict(aList):
-        rc = {}
-        for k, v in aList:
-            rc[k] = v
-        return rc
-    
-def _debuglog(message):
-    if _debug: print message
+import argparse
+import feedparser
+import logging
 
 
-@timelimit(10)
+
 def get_page(url):
     """
     Fetches html from an URL
     """
     try:
-        res = requests.get(url).text
-    except:
-        res = ''
-    return res
+        r = requests.get(url)
+        if 'content-encoding' in r.headers and r.headers['content-encoding'] == 'gzip':
+            html = r.content
+        else:
+            html = r.text
+    except requests.ConnectionError:
+        html = ''
+
+    return html
 
 
-# _gatekeeper = URLGatekeeper()
 
 class BaseParser(sgmllib.SGMLParser):
     def __init__(self, baseuri):
@@ -201,44 +157,21 @@ def tryBrokenRedirect(data):
         if newuris:
             return newuris[0].strip()
 
-def couldBeFeedData(data):
+def isFeed(url):
     """
     Check if content corresponds to an html document (returns 0)
     or a feed (returns >0).
     """
-    data = data.lower()
-    if data.count('<html'):
-        return 0
-    return data.count('<rss') + data.count('<rdf') + data.count('<feed')
+    p = feedparser.parse(url)
+    version = p.get("version")
+    return int(version != "")
 
-def isFeed(uri):
-    """
-    Check if content corresponds to an html document (returns 0)
-    or a feed (returns >0).
-    """
-    _debuglog('seeing if %s is a feed' % uri)
-    protocol = urlparse.urlparse(uri)
-    if protocol[0] not in ('http', 'https'): return 0
-    data = get_page(uri)
-    return couldBeFeedData(data)
 
 def sortFeeds(feed1Info, feed2Info):
     return cmp(feed2Info['headlines_rank'], feed1Info['headlines_rank'])
 
-def getFeedsFromSyndic8(uri):
-    feeds = []
-    try:
-        server = xmlrpclib.Server('http://www.syndic8.com/xmlrpc.php')
-        feedids = server.syndic8.FindFeeds(uri)
-        infolist = server.syndic8.GetFeedInfo(feedids, ['headlines_rank','status','dataurl'])
-        infolist.sort(sortFeeds)
-        feeds = [f['dataurl'] for f in infolist if f['status']=='Syndicated']
-        _debuglog('found %s feeds through Syndic8' % len(feeds))
-    except:
-        pass
-    return feeds
     
-def feeds(uri, all=False, querySyndic8=False, _recurs=None):
+def feeds(uri, all=False, _recurs=None):
     """
     Returns List of feeds found on the page
     """
@@ -249,23 +182,23 @@ def feeds(uri, all=False, querySyndic8=False, _recurs=None):
     except:
         return []
     # is this already a feed?
-    if couldBeFeedData(data):
+    if isFeed(data):
         return [fulluri]
     newuri = tryBrokenRedirect(data)
     if newuri and newuri not in _recurs:
         _recurs.append(newuri)
-        return feeds(newuri, all=all, querySyndic8=querySyndic8, _recurs=_recurs)
+        return feeds(newuri, all=all, _recurs=_recurs)
     # nope, it's a page, try LINK tags first
-    _debuglog('looking for LINK tags')
+
     try:
         outfeeds = getLinks(data, fulluri)
     except:
         outfeeds = []
-    _debuglog('found %s feeds through LINK tags' % len(outfeeds))
+    print('found %s feeds through LINK tags' % len(outfeeds))
     outfeeds = filter(isFeed, outfeeds)
     if all or not outfeeds:
         # no LINK tags, look for regular <A> links that point to feeds
-        _debuglog('no LINK tags, looking at A tags')
+        print('no LINK tags, looking at A tags')
         try:
             links = getALinks(data, fulluri)
         except:
@@ -283,7 +216,7 @@ def feeds(uri, all=False, querySyndic8=False, _recurs=None):
             # look harder for feed links on another server
             outfeeds.extend(filter(isFeed, filter(isXMLRelatedLink, links)))
     if all or not outfeeds:
-        _debuglog('no A tags, guessing')
+        print('no A tags, guessing')
         suffixes = [ # filenames used by popular software:
           'atom.xml', # blogger, TypePad
           'index.atom', # MT, apparently
@@ -293,10 +226,7 @@ def feeds(uri, all=False, querySyndic8=False, _recurs=None):
           'index.rss' # Slash
         ]
         outfeeds.extend(filter(isFeed, [urlparse.urljoin(fulluri, x) for x in suffixes]))
-    if (all or not outfeeds) and querySyndic8:
-        # still no luck, search Syndic8 for feeds (requires xmlrpclib)
-        _debuglog('still no luck, searching Syndic8')
-        outfeeds.extend(getFeedsFromSyndic8(uri))
+
     if hasattr(__builtins__, 'set') or __builtins__.has_key('set'):
         outfeeds = list(set(outfeeds))
     return outfeeds
@@ -311,15 +241,12 @@ def feed(uri):
         return None
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    if args and args[0] == '--debug':
-        _debug = 1
-        args.pop(0)
-    if args:
-        uri = args[0]
-    else:
-        uri = 'http://diveintomark.org/'
-    if uri == 'test':
-        test()
-    else:
-        print "\n".join(feeds(uri))
+    parser = argparse.ArgumentParser(description='Find feed links on a given url')
+    parser.add_argument('urls', metavar='urls', type=str, nargs='+',
+                       help='one or more urls to check')
+
+    args = parser.parse_args()
+
+    print "====Found %s Feeds"%len(args.urls)
+    for u in args.urls:
+        print "\n".join(feeds(u))

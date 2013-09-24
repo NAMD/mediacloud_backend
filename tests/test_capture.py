@@ -14,11 +14,11 @@ class FeedFinderTests(unittest.TestCase):
         page = feedfinder.get_page('https://www.google.com')
         self.assertIn('google', page)
 
-    def test_couldbefeed(self):
+    def test_isfeed(self):
         page = feedfinder.get_page('http://wikipedia.org')
         feed = feedfinder.get_page('http://www.engadget.com/rss.xml')
-        self.assertEquals(feedfinder.couldBeFeedData(page), 0)
-        self.assertNotEquals(feedfinder.couldBeFeedData(feed), 0)
+        self.assertEquals(feedfinder.isFeed(page), 0)
+        self.assertEquals(feedfinder.isFeed(feed), 1)
 
     def test_find_on_single_page(self):
         fs = feedfinder.feeds(self.urls[0], all=True)
