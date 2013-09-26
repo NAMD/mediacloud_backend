@@ -2,7 +2,7 @@
 __author__ = 'fccoelho'
 
 import unittest
-from capture import feedfinder, urlscanner
+from capture import feedfinder, urlscanner, downloader
 
 
 class FeedFinderTests(unittest.TestCase):
@@ -28,6 +28,25 @@ class TestUrlScanner(unittest.TestCase):
     def test_scan(self):
         l = urlscanner.url_scanner('www.google.com', 1)
         self.assertEquals(l, ['http://www.google.com/robots.txt', 'http://www.google.com/',])
+
+class TestDownloader(unittest.TestCase):
+    def setUp(self):
+        self.d = downloader.RSSDownload('http://www.engadget.com/rss.xml')
+
+    def tearDown(self):
+        downloader.FEEDS.drop()
+        downloader.ARTICLES.drop()
+
+    def test_store_feed(self):
+        self.d.parse()
+        res = downloader.FEEDS.find({"title_detail.base": 'http://www.engadget.com/rss.xml'}, fields=["title_detail"])
+        res = list(res)
+        self.assertEquals(res[0]['title_detail']['base'], 'http://www.engadget.com/rss.xml')
+
+    def test_store_articles(self):
+        self.d.parse()
+        res = downloader.ARTICLES.find().count()
+        self.assertEquals(res, 25)
 
 
 if __name__ == '__main__':

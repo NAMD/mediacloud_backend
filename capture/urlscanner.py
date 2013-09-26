@@ -19,7 +19,7 @@ def url_scanner(url, depth=1):
     :param url: Initial url
     :return: list of urls
     """
-    subprocess.check_call(['httrack', '-p0', '-d', '-r%s'%depth, url])
+    subprocess.check_call(['httrack', '-p0', '-d', '-r%s'%depth, '-c8', url])
 
     with open("hts-cache/new.txt") as f:
         t = csv.DictReader(f, delimiter='\t')
