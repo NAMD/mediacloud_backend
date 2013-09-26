@@ -13,8 +13,9 @@ import feedfinder
 import urlscanner
 import argparse
 
-def main(args):
-    with open(args.urls) as f:
+
+def main(urls):
+    with open(urls[0]) as f:
         for u in f:
             print "searching for feeds in: ", u
             feeds = feedfinder.feeds(u.strip())
@@ -25,10 +26,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Search for feeds on a set of web pages (urls)')
-    parser.add_argument('file', metavar='urls', nargs=1,
-                        help='file with one or more urls to check (one per line)')
+    parser.add_argument('file', metavar='file', nargs=1, help='file with one or more urls to check (one per line)')
 
     args = parser.parse_args()
-    main(args)
+    # print args.file
+    main(args.file)
 
 
