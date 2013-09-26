@@ -31,5 +31,6 @@ def url_scanner(url, depth=1):
         for l in t:
             urls.append(l['URL'])
     subprocess.call(['rm', '-rf', 'hts-*'])
+    subprocess.call(['rm', '-rf', url])
     return urls
 
