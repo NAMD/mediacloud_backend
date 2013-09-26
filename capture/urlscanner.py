@@ -20,7 +20,10 @@ def url_scanner(url, depth=1):
     :return: list of urls
     """
     agent = "Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7"
-    subprocess.check_call(['httrack', '-p0', '-d', '-r%s' % depth, '-c8', '-F "%s"' % agent, url])
+    try:
+        subprocess.check_call(['httrack', '-p0', '-d', '-r%s' % depth, '-c8', '-F "%s"' % agent, url])
+    except subprocess.CalledProcessError:
+        print "failed on {}".format(url)
 
     with open("hts-cache/new.txt") as f:
         t = csv.DictReader(f, delimiter='\t')
