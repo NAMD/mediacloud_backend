@@ -49,6 +49,7 @@ import feedparser
 import logging
 import settings
 import pymongo
+import time
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
@@ -245,6 +246,10 @@ def store_feeds(feed_list):
         # insert only if is not already in the database
         res = FEEDS.find({"title_detail.base": f}, fields=["title_detail"])
         if not list(res):
+            # Delete fields which cannot be serialized into BSON
+            for k, v in response.feed.iteritems():
+                if isinstance(v, time.struct_time):
+                    response.feed.pop(k)
             FEEDS.insert(response.feed)
 
 def feed(uri):
