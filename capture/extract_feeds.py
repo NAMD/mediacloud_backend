@@ -21,7 +21,7 @@ def main(urls):
             u2 = urlscanner.url_scanner(u.strip(), 2)
             for U in u2:
                 print "searching for feeds in: ", u
-                feeds = feedfinder.feeds(u.strip())
+                feeds = feedfinder.feeds(U.strip())
                 print "found %s feeds" % len(feeds)
                 if feeds:
                     feedfinder.store_feeds(feeds)
