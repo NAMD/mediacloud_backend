@@ -21,7 +21,7 @@ def main(urls):
             feeds = feedfinder.feeds(u.strip())
             print "found %s feeds" % len(feeds)
             if feeds:
-                feedfinder.store_feeds()
+                feedfinder.store_feeds(feeds)
 
 
 if __name__ == "__main__":
