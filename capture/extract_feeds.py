@@ -17,11 +17,14 @@ import argparse
 def main(urls):
     with open(urls[0]) as f:
         for u in f:
-            print "searching for feeds in: ", u
-            feeds = feedfinder.feeds(u.strip())
-            print "found %s feeds" % len(feeds)
-            if feeds:
-                feedfinder.store_feeds(feeds)
+            print "scanning {} with depth {}".format(u, 2)
+            u2 = urlscanner.url_scanner(u.strip(), 2)
+            for U in u2:
+                print "searching for feeds in: ", u
+                feeds = feedfinder.feeds(u.strip())
+                print "found %s feeds" % len(feeds)
+                if feeds:
+                    feedfinder.store_feeds(feeds)
 
 
 if __name__ == "__main__":
