@@ -24,6 +24,7 @@ def main(urls):
                 feeds = feedfinder.feeds(U.strip())
                 print "found %s feeds" % len(feeds)
                 if feeds:
+                    print feeds
                     feedfinder.store_feeds(feeds)
 
 

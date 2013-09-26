@@ -247,9 +247,11 @@ def store_feeds(feed_list):
         res = FEEDS.find({"title_detail.base": f}, fields=["title_detail"])
         if not list(res):
             # Delete fields which cannot be serialized into BSON
+            ks = []
             for k, v in response.feed.iteritems():
                 if isinstance(v, time.struct_time):
-                    response.feed.pop(k)
+                    ks.append(k)
+            [response.feed.pop(k) for k in ks]
             FEEDS.insert(response.feed)
 
 def feed(uri):
