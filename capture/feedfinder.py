@@ -47,8 +47,12 @@ import requests
 import argparse
 import feedparser
 import logging
+import settings
+import pymongo
 
-
+client = pymongo.MongoClient(settings.MONGOHOST, 27017)
+MCDB = client.MCDB
+FEEDS = MCDB.feeds  # Feed collection
 
 def get_page(url):
     """
@@ -231,6 +235,17 @@ def feeds(uri, all=False, _recurs=None):
         outfeeds = list(set(outfeeds))
     return outfeeds
 
+def store_feeds(feed_list):
+    """
+    Store the Feeds in the Feed collection in the database
+    :param feed_list: LIst of feed URLs returned by feeds()
+    """
+    for f in feed_list:
+        response = feedparser.parse(f)
+        # insert only if is not already in the database
+        res = FEEDS.find({"title_detail.base": f}, fields=["title_detail"])
+        if not list(res):
+            FEEDS.insert(response.feed)
 
 def feed(uri):
     #todo: give preference to certain feed formats

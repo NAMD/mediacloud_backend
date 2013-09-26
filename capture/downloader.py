@@ -13,16 +13,17 @@ import feedparser
 import pymongo
 import logging
 import requests
+import settings
+from multiprocessing.pool import ThreadPool
 
 logger = logging.getLogger("downloader.rss")
 
  ## Media Cloud database setup
 
-client = pymongo.MongoClient('localhost', 27017)
+client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
-
 
 
 class RSSDownload(object):
@@ -31,10 +32,6 @@ class RSSDownload(object):
 
     def parse(self):
         response = feedparser.parse(self.url)
-        # insert only if is not already in the database
-        res = FEEDS.find({"title_detail.base": self.url}, fields=["title_detail"])
-        if not list(res):
-            FEEDS.insert(response.feed)
         self._save_articles(response.entries)
         return ((r.title, r.link) for r in response.entries)
 
@@ -45,3 +42,15 @@ class RSSDownload(object):
             a.tags = [i['term'] for i in a.tags]
             a.pop('published_parsed')
             ARTICLES.insert(a)
+
+def fetch_feed(feed):
+    f = RSSDownload(feed)
+    f.parse()
+
+def parallel_fetch():
+    """
+    Starts parallel threads to fetch feeds.
+    """
+    feeds = FEEDS.find()
+    P = ThreadPool(30)
+    P.map(fetch_feed(), feeds)

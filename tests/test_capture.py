@@ -10,6 +10,9 @@ class FeedFinderTests(unittest.TestCase):
         with open('data/URLS.txt') as f:
             self.urls = [s.strip() for s in f.readlines()]
 
+    def tearDown(self):
+        downloader.FEEDS.drop()
+
     def test_get_page(self):
         page = feedfinder.get_page('https://www.google.com')
         self.assertIn('google', page)
@@ -24,6 +27,12 @@ class FeedFinderTests(unittest.TestCase):
         fs = feedfinder.feeds(self.urls[0], all=True)
         self.assertNotEquals(fs, [], msg="feeds returned an empty list.")
 
+    def test_store_feed(self):
+        feedfinder.store_feeds(['http://www.engadget.com/rss.xml'])
+        res = downloader.FEEDS.find({"title_detail.base": 'http://www.engadget.com/rss.xml'}, fields=["title_detail"])
+        res = list(res)
+        self.assertEquals(res[0]['title_detail']['base'], 'http://www.engadget.com/rss.xml')
+
 class TestUrlScanner(unittest.TestCase):
     def test_scan(self):
         l = urlscanner.url_scanner('www.google.com', 1)
@@ -34,14 +43,9 @@ class TestDownloader(unittest.TestCase):
         self.d = downloader.RSSDownload('http://www.engadget.com/rss.xml')
 
     def tearDown(self):
-        downloader.FEEDS.drop()
         downloader.ARTICLES.drop()
 
-    def test_store_feed(self):
-        self.d.parse()
-        res = downloader.FEEDS.find({"title_detail.base": 'http://www.engadget.com/rss.xml'}, fields=["title_detail"])
-        res = list(res)
-        self.assertEquals(res[0]['title_detail']['base'], 'http://www.engadget.com/rss.xml')
+
 
     def test_store_articles(self):
         self.d.parse()
