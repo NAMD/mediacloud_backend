@@ -20,7 +20,7 @@ def main(urls):
             print "scanning {} with depth {}".format(u, 2)
             u2 = urlscanner.url_scanner(u.strip(), 2)
             for U in u2:
-                print "searching for feeds in: ", u
+                print "searching for feeds in: ", U
                 feeds = feedfinder.feeds(U.strip())
                 print "found %s feeds" % len(feeds)
                 if feeds:
