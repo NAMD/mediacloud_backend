@@ -17,7 +17,7 @@ def main(args):
     with open(args.urls) as f:
         for u in f:
             print "searching for feeds in: ", u
-            feeds = feedfinder.feeds(u)
+            feeds = feedfinder.feeds(u.strip())
             print "found %s feeds" % len(feeds)
             if feeds:
                 feedfinder.store_feeds()
@@ -29,5 +29,6 @@ if __name__ == "__main__":
                         help='file with one or more urls to check (one per line)')
 
     args = parser.parse_args()
+    main(args)
 
 
