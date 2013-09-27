@@ -14,11 +14,11 @@ import urlscanner
 import argparse
 
 
-def main(urls):
+def main(urls, depth):
     with open(urls[0]) as f:
         for u in f:
-            print "scanning {} with depth {}".format(u, 2)
-            u2 = urlscanner.url_scanner(u.strip(), 2)
+            print "scanning {} with depth {}".format(u, depth)
+            u2 = urlscanner.url_scanner(u.strip(), depth)
             for U in u2:
                 print "searching for feeds in: ", U
                 feeds = feedfinder.feeds(U.strip())
@@ -31,9 +31,10 @@ def main(urls):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Search for feeds on a set of web pages (urls)')
     parser.add_argument('file', metavar='file', nargs=1, help='file with one or more urls to check (one per line)')
+    parser.add_argument('-d', '--depth', type=int, default=2, help='Depth of the search, from the initial url')
 
     args = parser.parse_args()
     # print args.file
-    main(args.file)
+    main(args.file, args.depth)
 
 
