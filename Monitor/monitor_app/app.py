@@ -2,11 +2,12 @@
 # Imports.
 #----------------------------------------------------------------------------#
 
-from flask import * # do not use '*'; actually input the dependencies.
+from flask import *  # do not use '*'; actually input the dependencies.
 from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from forms import *
+import pymongo
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -41,6 +42,7 @@ def login_required(test):
 
 @app.route('/')
 def home():
+    #TODO: fetch from database total number of feeds an total number of articles downloaded
     return render_template('pages/placeholder.home.html')
 
 @app.route('/about')
