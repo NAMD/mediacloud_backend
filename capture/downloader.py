@@ -54,7 +54,7 @@ def parallel_fetch():
     """
     feeds = FEEDS.find()
     P = ThreadPool(30)
-    P.map(fetch_feed(), feeds)
+    P.map(fetch_feed, feeds)
 
 if __name__ == "__main__":
     parallel_fetch()
