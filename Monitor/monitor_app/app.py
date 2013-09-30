@@ -7,6 +7,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from forms import *
+import models
 import pymongo
 
 #----------------------------------------------------------------------------#
@@ -15,7 +16,7 @@ import pymongo
 
 app = Flask(__name__)
 app.config.from_object('config')
-#db = SQLAlchemy(app)
+db = SQLAlchemy(app)
 
 # Automatically tear down SQLAlchemy.
 '''
@@ -64,9 +65,16 @@ def forgot():
     form = ForgotForm(request.form)
     return render_template('forms/forgot.html', form = form)
 
-@app.route('/config')
+@app.route('/config', methods=['GET', 'POST'])
 def config():
     form = ConfigurationForm(request.form)
+    if request.method == 'POST':
+        c = models.Configuration(mongohost=form.dbhost.data, mongouser=form.dbuser.data, mongopasswd=form.dbpasswd.data, pyplnhost=form.pyplnhost.data,
+                          pyplnuser=form.pyplnuser.data, pyplnpasswd=form.pyplnpasswd.data)
+        db.session.add(c)
+        db.session.commit()
+        flash('Configuration saved')
+        return redirect(url_for('home'))
     return render_template('forms/config.html', form=form)
 
 @app.route('/feeds')

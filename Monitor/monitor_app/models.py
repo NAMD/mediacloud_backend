@@ -13,7 +13,7 @@ Base.query = db_session.query_property()
 
 # Set your classes here.
 
-'''
+
 class User(Base):
     __tablename__ = 'Users'
 
@@ -25,7 +25,16 @@ class User(Base):
     def __init__(self, name=None, password=None):
         self.name = name
         self.password = password
-'''
+
+class Configuration(Base):
+    __tablename__ = "Configurations"
+    id = db.Column(db.Integer, primary_key=True)
+    mongohost = db.Column(db.String(120), unique=True)
+    mongouser = db.Column(db.String(120))
+    mongopasswd = db.Column(db.String(120))
+    pyplnhost = db.Column(db.String(120), unique=True)
+    pyplnuser = db.Column(db.String(120))
+    pyplnpasswd = db.Column(db.String(120))
 
 # Create tables.
 Base.metadata.create_all(bind=engine)
