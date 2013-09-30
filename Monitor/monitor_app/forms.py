@@ -1,5 +1,6 @@
-from flask.ext.wtf import Form, TextField, PasswordField
-from flask.ext.wtf import Required, EqualTo, validators, Length
+from flask.ext.wtf import Form
+from wtforms import TextField, PasswordField
+from wtforms.validators import Required, EqualTo, Length
 
 # Set your classes here.
 
@@ -15,3 +16,12 @@ class LoginForm(Form):
 
 class ForgotForm(Form):
     email       = TextField('Email', validators = [Required(), Length(min=6, max=40)])
+
+class ConfigurationForm(Form):
+    dbhost      = TextField('MongoDB Host', validators = [Required()])
+    dbuser      = TextField('MongoDB Username', [Required()])
+    dbpasswd    = PasswordField('MongoDB Password', [Required()])
+    pyplnhost   = TextField('PyPLN Host', validators = [Required()])
+    pyplnuser      = TextField('PyPLN Username', [Required()])
+    pyplnpasswd    = PasswordField('PyPLN Password', [Required()])
+

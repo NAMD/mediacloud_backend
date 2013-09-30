@@ -1,0 +1,15 @@
+{% extends 'layouts/form.html' %}
+{% block title %}Mediacloud Configuration Details{% endblock %}
+{% block content %}
+  <form method="post" class="form">
+    <h3 class="form-heading">Configuration <a href="{{ url_for('home') }}" title="Back to homepage"><i class="icon icon-home pull-right"></i></a></h3>
+    {{ form.dbhost(class_ = 'form-control first-input', placeholder = form.dbhost.label.text, required = true, autofocus = true) }}
+    {{ form.dbuser(class_ = 'form-control', placeholder = form.dbuser.label.text, required = true) }}
+    {{ form.dbpasswd(class_ = 'form-control', placeholder = form.dbpasswd.label.text, required = true) }}
+    {{ form.pyplnhost(class_ = 'form-control first-input', placeholder = form.pyplnhost.label.text, required = true, autofocus = true) }}
+    {{ form.pyplnuser(class_ = 'form-control', placeholder = form.pyplnuser.label.text, required = true) }}
+    {{ form.pyplnpasswd(class_ = 'form-control', placeholder = form.pyplnpasswd.label.text, required = true) }}
+    <p class="pull-left"><a href="{{ url_for('home') }}">Done</a></p>
+    <input type="submit" value="Done" class="btn btn-primary btn-lg btn-block">
+  </form>
+{% endblock %}

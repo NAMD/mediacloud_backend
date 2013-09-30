@@ -64,6 +64,19 @@ def forgot():
     form = ForgotForm(request.form)
     return render_template('forms/forgot.html', form = form)
 
+@app.route('/config')
+def config():
+    form = ConfigurationForm(request.form)
+    return render_template('forms/config.html', form=form)
+
+@app.route('/feeds')
+def feeds():
+    return render_template('pages/feeds.html')
+
+@app.route('/articles')
+def articles():
+    return render_template('pages/articles.html')
+
 # Error handlers.
 
 @app.errorhandler(500)
@@ -90,7 +103,7 @@ if not app.debug:
 
 # Default port:
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
 # Or specify port manually:
 '''

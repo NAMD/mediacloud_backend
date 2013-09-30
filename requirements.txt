@@ -4,3 +4,5 @@ requests
 rawdog
 pymongo
 flask
+Flask-SQLAlchemy
+Flask-WTF
