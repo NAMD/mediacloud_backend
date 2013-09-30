@@ -4,6 +4,9 @@
 
 <div class="page-header">
   <h1>Mediacloud Brasil Monitor</h1>
+  {% if data.host %}
+  <h2>Monitoring <b>{{ data.host }}</b></h2>
+  {% else %} Please <a href="url_for('config')">configure</a> the instance you want to monitor.
 </div>
 <p class="lead">Pin a fixed-height footer to the bottom of the viewport in desktop browsers with this custom HTML and CSS. A fixed navbar has been added within <code>#wrap</code> with <code>padding-top: 60px;</code> on the <code>.container</code>.</p>
 

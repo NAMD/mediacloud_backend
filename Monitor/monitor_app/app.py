@@ -44,7 +44,14 @@ def login_required(test):
 @app.route('/')
 def home():
     #TODO: fetch from database total number of feeds an total number of articles downloaded
-    return render_template('pages/placeholder.home.html')
+    conf = models.Configuration.query.first()
+    if conf:
+        data = {
+            'host': conf.mongohost,
+        }
+    else:
+        data = {}
+    return render_template('pages/placeholder.home.html', data=data)
 
 @app.route('/about')
 def about():
