@@ -82,7 +82,7 @@ def parallel_fetch():
     feedurls = []
     for f in feeds:
         try:
-            feedurls.append(f["title_detail"]["base"])
+            feedurls.append(u''+f["title_detail"]["base"])
         except KeyError:
             print f
 
