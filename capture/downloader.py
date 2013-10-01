@@ -48,7 +48,8 @@ class RSSDownload(object):
             [a.pop(i) for i in ks]
 
             r = requests.get(a.link)
-            a['link_content'] = r.content.encode(r.encoding)
+            print r.encoding
+            a['link_content'] = r.content.decode(r.encoding)
             # Turn the tags field into a simple list of tags
             try:
                 a['tags'] = [i['term'] for i in a.tags]
