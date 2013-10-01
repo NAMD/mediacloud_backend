@@ -53,8 +53,15 @@ def parallel_fetch():
     Starts parallel threads to fetch feeds.
     """
     feeds = FEEDS.find()
+    feedurls =
+    for f in feeds:
+        try:
+            feedurls.append(f["title_detail"]["base"])
+        except KeyError:
+            print feed
+
     P = ThreadPool(30)
-    P.map(fetch_feed, feeds)
+    P.map(fetch_feed, feedurls)
 
 if __name__ == "__main__":
     parallel_fetch()
