@@ -40,7 +40,10 @@ class RSSDownload(object):
         for a in entries:
             a.link_content = requests.get(a.link).content
             # Turn the tags field into a simple list of tags
-            a.tags = [i['term'] for i in a.tags]
+            try:
+                a.tags = [i['term'] for i in a.tags]
+            except AttributeError:
+                print "This feed has no tags"
             a.pop('published_parsed')
             ARTICLES.insert(a)
 
