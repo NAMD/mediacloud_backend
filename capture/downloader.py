@@ -87,8 +87,8 @@ def parallel_fetch():
             print f
         fetch_feed(f)
 
-    P = ThreadPool(30)
-    P.map(fetch_feed, feedurls)
+    #P = ThreadPool(30)
+    #P.map(fetch_feed, feedurls)
 
 if __name__ == "__main__":
     parallel_fetch()
