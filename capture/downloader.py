@@ -82,7 +82,7 @@ def parallel_fetch():
     feedurls = []
     for f in feeds:
         try:
-            feedurls.append(f["title_detail"]["base"].decode('utf8'))
+            feedurls.append(f["title_detail"]["base"].encode('utf8'))
         except KeyError:
             print f
 
