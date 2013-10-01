@@ -49,7 +49,7 @@ class RSSDownload(object):
                 a.pop('published_parsed')
             except KeyError:
                 pass
-            exists = list(ARTICLES.find(link=a.link))
+            exists = list(ARTICLES.find({"link": a.link}))
             print exists
             if exists == []:
                 ARTICLES.insert(a)
