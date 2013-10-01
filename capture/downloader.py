@@ -16,6 +16,7 @@ import logging
 import requests
 import settings
 from multiprocessing.pool import ThreadPool
+from bson.errors import InvalidDocument
 
 logger = logging.getLogger("downloader.rss")
 
@@ -45,10 +46,15 @@ class RSSDownload(object):
             except AttributeError:
                 print "This feed has no tags"
             a.pop('published_parsed')
-            ARTICLES.insert(a)
+            exists = list(ARTICLES.find(link=a.link))
+            if not exists:
+                ARTICLES.insert(a)
 
 def fetch_feed(feed):
-    f = RSSDownload(feed)
+    try:
+        f = RSSDownload(feed)
+    except InvalidDocument:
+        print "This feed failed: \n", f
     f.parse()
 
 def parallel_fetch():
