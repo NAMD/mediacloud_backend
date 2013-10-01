@@ -17,6 +17,8 @@ import requests
 import settings
 from multiprocessing.pool import ThreadPool
 from bson.errors import InvalidDocument
+import time
+
 
 logger = logging.getLogger("downloader.rss")
 
@@ -39,6 +41,11 @@ class RSSDownload(object):
 
     def _save_articles(self, entries):
         for a in entries:
+            ks = []
+            for k, v in a.iteritems():
+                if isinstance(v, time.struct_time):
+                    ks.append(k)
+            [a.pop(i) for i in ks]
             a['link_content'] = requests.get(a.link).content
             # Turn the tags field into a simple list of tags
             try:
