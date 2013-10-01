@@ -42,7 +42,7 @@ class RSSDownload(object):
             a['link_content'] = requests.get(a.link).content
             # Turn the tags field into a simple list of tags
             try:
-                a.tags = [i['term'] for i in a.tags]
+                a['tags'] = [i['term'] for i in a.tags]
             except AttributeError:
                 print "This feed has no tags: ", a.link
             try:
@@ -52,6 +52,7 @@ class RSSDownload(object):
             exists = list(ARTICLES.find(link=a.link))
             if not exists:
                 ARTICLES.insert(a)
+                print "inserted"
 
 def fetch_feed(feed):
     try:
