@@ -340,6 +340,6 @@
       </general>
     </ddl-file-settings>
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 2.7.5+ (/usr/bin/python2)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 2.7.3 (/usr/bin/python)" project-jdk-type="Python SDK" />
 </project>
 
