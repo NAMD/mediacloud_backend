@@ -4,6 +4,11 @@
 
 <div class="page-header">
   <h1>Feeds Being Tracked</h1>
+<ol>
+   {% for f in feeds %}
+    <li>{{ f }}</li>
+    {% endfor %}
+</ol>
 </div>
 
 

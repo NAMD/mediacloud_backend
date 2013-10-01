@@ -2,13 +2,16 @@
 # Imports.
 #----------------------------------------------------------------------------#
 
-from flask import *  # do not use '*'; actually input the dependencies.
+from flask import Flask,render_template, jsonify, flash, request, redirect, url_for, Response, make_response  # do not use '*'; actually input the dependencies.
 from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from forms import *
 import models
+import json
 import pymongo
+from bson import json_util
+import base64
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -37,6 +40,27 @@ def login_required(test):
             return redirect(url_for('login'))
     return wrap
 '''
+@app.route('/dbstats')
+def db_stats():
+    """
+    From GET take:  login, password : database credentials(optional, currently ignored)
+
+    Return json with database stats,as returned by mongo (db.stats())
+    """
+    conf = models.Configuration.query.first()
+    host = conf.mongohost
+
+    try:
+        conn = pymongo.Connection(host=host, port=27017)
+        db = conn.MCDB
+        resp = db.command({'dbstats': 1})
+        json_response = json.dumps({'data': resp}, default=pymongo.json_util.default)
+    except Exception, e:
+        json_response = json.dumps({'error': repr(e)})
+    finally:
+        conn.disconnect()
+
+    return Response(json_response, mimetype='application/json')
 #----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
@@ -86,11 +110,95 @@ def config():
 
 @app.route('/feeds')
 def feeds():
-    return render_template('pages/feeds.html')
+    conf = models.Configuration.query.first()
+    C = pymongo.MongoClient(conf.mongohost)
+    nfeeds = C.MCDB.feeds.count()
+    feeds = fetch_docs('feeds')
+
+
+    return render_template('pages/feeds.html',nfeeds=nfeeds, feeds=feeds)
 
 @app.route('/articles')
 def articles():
-    return render_template('pages/articles.html')
+    conf = models.Configuration.query.first()
+    C = pymongo.MongoClient(conf.mongohost)
+    articles = fetch_docs('articles')
+    return render_template('pages/articles.html',articles=articles)
+
+# Utility functions
+
+def fix_json_output(json_obj):
+    """
+        Handle binary data in output json, because pymongo cannot encode them properly (generating UnicodeDecode exceptions)
+    """
+    def _fix_json(d):
+        if d in [None, [], {}]: #if not d: breaks empty Binary
+            return d
+        data_type = type(d)
+        if data_type == list:
+            data = []
+            for item in d:
+                data.append(_fix_json(item))
+            return data
+        elif data_type == dict:
+            data = {}
+            for k in d:
+                data[_fix_json(k)] = _fix_json(d[k])
+            return data
+        elif data_type == pymongo.binary.Binary:
+            ud = base64.encodestring(d)
+            return { '$binary' : ud, '$type': d.subtype }
+        else:
+            return d
+
+    return _fix_json(json_obj)
+
+def fetch_docs(colname,limit=100):
+    """
+    From GET take:  login, password : database credentials(optional, currently ignored)
+         q -  mongo query as JSON dictionary
+         sort - sort info (JSON dictionary)
+         limit
+         skip
+         fields
+
+    Return json with requested data or error
+    """
+    conf = models.Configuration.query.first()
+    host = conf.mongohost
+    try:
+        conn = pymongo.Connection(host = host)
+        db = conn.MCDB
+        coll = db['colname']
+        resp = {}
+        query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
+        limit = 10
+        sort = None
+        if 'limit' in request.GET:
+            limit = int(request.GET['limit'])
+        skip = 0
+        if 'skip' in request.GET:
+            skip = int(request.GET['skip'])
+        if 'sort' in request.GET:
+            sort = json.loads(request.GET['sort'])
+        cur = coll.find(query, skip=skip, limit=limit)
+        cnt = cur.count()
+        if sort:
+            cur = cur.sort(sort)
+        resp = [a for a in cur]
+        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=pymongo.json_util.default)
+    except Exception, e:
+        print e
+        import traceback
+        traceback.print_stack()
+        json_response = json.dumps({'error': repr(e)})
+    finally:
+        conn.disconnect()
+
+    #resp = Response(json_response, mimetype='application/json' )
+    #resp['Cache-Control'] = 'no-cache'
+    return json_response
+
 
 # Error handlers.
 
