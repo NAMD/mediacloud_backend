@@ -37,11 +37,11 @@ class RSSDownload(object):
     def parse(self):
         response = feedparser.parse(self.url)
 
-        self._save_articles(response.entries)
+        self._save_articles(response.feed.title, response.entries)
         return ((r.title, r.link) for r in response.entries)
 
-    def _save_articles(self,title, entries):
-        print "Downloading {} articles".format(len(entries))
+    def _save_articles(self, title, entries):
+        print "Downloading {} articles from {}".format(title, len(entries))
         for a in entries:
             ks = []
             for k, v in a.iteritems():
