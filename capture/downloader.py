@@ -50,7 +50,8 @@ class RSSDownload(object):
             except KeyError:
                 pass
             exists = list(ARTICLES.find(link=a.link))
-            if not exists:
+            print exists
+            if exists == []:
                 ARTICLES.insert(a)
                 print "inserted"
 
