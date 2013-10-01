@@ -39,13 +39,16 @@ class RSSDownload(object):
 
     def _save_articles(self, entries):
         for a in entries:
-            a.link_content = requests.get(a.link).content
+            a['link_content'] = requests.get(a.link).content
             # Turn the tags field into a simple list of tags
             try:
                 a.tags = [i['term'] for i in a.tags]
             except AttributeError:
-                print "This feed has no tags"
-            a.pop('published_parsed')
+                print "This feed has no tags: ", a.link
+            try:
+                a.pop('published_parsed')
+            except KeyError:
+                pass
             exists = list(ARTICLES.find(link=a.link))
             if not exists:
                 ARTICLES.insert(a)
