@@ -48,7 +48,7 @@ class RSSDownload(object):
             [a.pop(i) for i in ks]
 
             r = requests.get(a.link)
-            print r.encoding
+            # print r.encoding
             a['link_content'] = r.content.decode(r.encoding)
             # Turn the tags field into a simple list of tags
             try:
@@ -60,10 +60,10 @@ class RSSDownload(object):
             except KeyError:
                 pass
             exists = list(ARTICLES.find({"link": a.link}))
-            print exists
+            # print exists
             if exists == []:
                 ARTICLES.insert(a)
-                print "inserted"
+                # print "inserted"
 
 def fetch_feed(feed):
     try:
