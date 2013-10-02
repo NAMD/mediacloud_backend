@@ -61,7 +61,7 @@ class RSSDownload(object):
         return ((r.title, r.link) for r in response.entries)
 
     def _save_articles(self, entries):
-        logger.info("Downloading %S articles from %s", len(entries), self.url)
+        logger.info("Downloading %s articles from %s", len(entries), self.url)
         for a in entries:
             ks = []
             for k, v in a.iteritems():
