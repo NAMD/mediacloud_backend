@@ -67,7 +67,6 @@ def db_stats():
 
 @app.route('/')
 def home():
-    #TODO: fetch from database total number of feeds an total number of articles downloaded
     conf = models.Configuration.query.first()
     if conf:
         data = {

@@ -55,9 +55,10 @@ class RSSDownload(object):
             r = requests.get(a.link)
             # print r.encoding
             try:
-                a['link_content'] = r.content.decode(r.encoding)
+                encoding = r.encoding if r.encoding is not None else 'utf8'
+                a['link_content'] = r.content.decode(encoding)
             except UnicodeDecodeError:
-                print "could not decode page as ", r.encoding
+                print "could not decode page as ", encoding
                 continue
             # Turn the tags field into a simple list of tags
             try:
