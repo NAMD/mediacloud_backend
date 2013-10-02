@@ -35,7 +35,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 fh.setFormatter(formatter)
 # add ch to logger
-logger.addHandler(ch)
+#logger.addHandler(ch)  # uncomment for console output of messages
 logger.addHandler(fh)
 
 
