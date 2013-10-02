@@ -87,7 +87,7 @@ def parallel_fetch():
             feedurls.append(f["title_detail"]["base"].decode('utf8'))
         except KeyError:
             print f
-        fetch_feed(f)
+        fetch_feed(f["title_detail"]["base"].decode('utf8'))
 
     #P = ThreadPool(30)
     #P.map(fetch_feed, feedurls)
