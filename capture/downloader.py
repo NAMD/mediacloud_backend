@@ -28,7 +28,7 @@ logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
-fh = logging.FileHandler()
+fh = logging.FileHandler('/tmp/mediacloud.log')
 # create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # add formatter to ch
