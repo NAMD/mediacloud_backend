@@ -5,8 +5,8 @@
 <div class="page-header">
   <h1>Articles Downloaded</h1>
 <ol>
-   {% for a in articles %}
-    <li>{{ a.title }}</li>
+   {% for a in articles.data %}
+    <li>{{ a }}</li>
    {% endfor %}
 </ol>
 </div>

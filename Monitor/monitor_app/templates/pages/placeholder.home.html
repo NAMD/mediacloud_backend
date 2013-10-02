@@ -1,14 +1,25 @@
 {% extends 'layouts/main.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-
 <div class="page-header">
+<script type="text/javascript">
+$(document).ready(function() {
+    $.get('/dbstats',function(d){
+        $('#stats').html(JSON.stringify(d.data, null, '\t'));
+    });
+
+   /* $('#stats').dataTable( {
+        "bProcessing": true,
+        "sAjaxSource": '/dbstats'
+    } ); */
+} );
+</script>
   <h1>Mediacloud Brasil Monitor</h1>
+    </div>
   {% if data.host %}
   <h2>Monitoring <b>{{ data.host }}</b></h2>
-  {% else %} Please <a href="url_for('config')">configure</a> the instance you want to monitor.
+  <div id="stats"></div>
+  {% else %} Please <a href="{{ url_for('config') }}">configure</a> the instance you want to monitor.
   {% endif %}
-</div>
-
 
 {% endblock %}

@@ -48,13 +48,15 @@ def db_stats():
     Return json with database stats,as returned by mongo (db.stats())
     """
     conf = models.Configuration.query.first()
+    if not conf:
+        return redirect(url_for('config'))
     host = conf.mongohost
 
     try:
         conn = pymongo.Connection(host=host, port=27017)
         db = conn.MCDB
         resp = db.command({'dbstats': 1})
-        json_response = json.dumps({'data': resp}, default=pymongo.json_util.default)
+        json_response = json.dumps({'data': resp}, default=json_util.default)
     except Exception, e:
         json_response = json.dumps({'error': repr(e)})
     finally:
@@ -122,7 +124,7 @@ def articles():
     conf = models.Configuration.query.first()
     C = pymongo.MongoClient(conf.mongohost)
     articles = fetch_docs('articles')
-    return render_template('pages/articles.html',articles=articles)
+    return render_template('pages/articles.html', articles=articles)
 
 # Utility functions
 
@@ -152,14 +154,9 @@ def fix_json_output(json_obj):
 
     return _fix_json(json_obj)
 
-def fetch_docs(colname,limit=100):
+def fetch_docs(colname, limit=100):
     """
-    From GET take:  login, password : database credentials(optional, currently ignored)
-         q -  mongo query as JSON dictionary
-         sort - sort info (JSON dictionary)
-         limit
-         skip
-         fields
+    Query MongoDB in the collection specified
 
     Return json with requested data or error
     """
@@ -170,22 +167,22 @@ def fetch_docs(colname,limit=100):
         db = conn.MCDB
         coll = db['colname']
         resp = {}
-        query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
-        limit = 10
-        sort = None
-        if 'limit' in request.GET:
-            limit = int(request.GET['limit'])
-        skip = 0
-        if 'skip' in request.GET:
-            skip = int(request.GET['skip'])
-        if 'sort' in request.GET:
-            sort = json.loads(request.GET['sort'])
-        cur = coll.find(query, skip=skip, limit=limit)
+        # query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
+        # limit = 10
+        # sort = None
+        # if 'limit' in request.GET:
+        #     limit = int(request.GET['limit'])
+        # skip = 0
+        # if 'skip' in request.GET:
+        #     skip = int(request.GET['skip'])
+        # if 'sort' in request.GET:
+        #     sort = json.loads(request.GET['sort'])
+        cur = coll.find(limit=limit)
         cnt = cur.count()
-        if sort:
-            cur = cur.sort(sort)
+        # if sort:
+        #     cur = cur.sort(sort)
         resp = [a for a in cur]
-        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=pymongo.json_util.default)
+        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
     except Exception, e:
         print e
         import traceback
