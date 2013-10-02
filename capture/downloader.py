@@ -23,7 +23,7 @@ import time
 ###########################
 #  Setting up Logging
 ###########################
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("Downloader")
 logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
 ch = logging.StreamHandler()
@@ -99,7 +99,7 @@ def fetch_feed(feed):
     try:
         f = RSSDownload(feed)
     except InvalidDocument:
-        print "This feed failed: \n", f
+        logger.error("This feed failed: %s", f)
     f.parse()
 
 def parallel_fetch():
