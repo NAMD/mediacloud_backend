@@ -36,12 +36,14 @@ class RSSDownload(object):
 
     def parse(self):
         response = feedparser.parse(self.url)
+        if response.bozo:
+            print "fetching {} returned an exception: \n", response.bozo_exception
 
         self._save_articles(response.entries)
         return ((r.title, r.link) for r in response.entries)
 
     def _save_articles(self, entries):
-        print "Downloading {} articles".format(len(entries))
+        print "Downloading {} articles from {}".format(len(entries), self.url)
         for a in entries:
             ks = []
             for k, v in a.iteritems():

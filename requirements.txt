@@ -6,3 +6,4 @@ pymongo
 flask
 Flask-SQLAlchemy
 Flask-WTF
+chardet
