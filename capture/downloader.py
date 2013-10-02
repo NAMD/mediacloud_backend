@@ -20,7 +20,7 @@ from bson.errors import InvalidDocument
 import time
 
 
-logger = logging.getLogger("downloader.rss")
+logger = logging.getLogger(__name__)
 
  ## Media Cloud database setup
 
@@ -37,7 +37,8 @@ class RSSDownload(object):
     def parse(self):
         response = feedparser.parse(self.url)
         if response.bozo:
-            print "fetching {} returned an exception: \n", response.bozo_exception
+            logger.info("fetching %s returned an exception: %s", self.url, response.bozo_exception)
+            return
 
         self._save_articles(response.entries)
         return ((r.title, r.link) for r in response.entries)
@@ -83,11 +84,14 @@ def parallel_fetch():
     feeds = FEEDS.find()
     feedurls = []
     for f in feeds:
+        t = f.get('title_detail', f.get('subtitle_detail', None))
+        if t is None:
+            continue
         try:
-            feedurls.append(f["title_detail"]["base"].decode('utf8'))
+            feedurls.append(t["base"].decode('utf8'))
         except KeyError:
             print f
-        fetch_feed(f["title_detail"]["base"].decode('utf8'))
+        fetch_feed(t["base"].decode('utf8'))
 
     #P = ThreadPool(30)
     #P.map(fetch_feed, feedurls)
