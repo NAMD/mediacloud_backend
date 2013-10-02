@@ -36,5 +36,13 @@ class Configuration(Base):
     pyplnuser = db.Column(db.String(120))
     pyplnpasswd = db.Column(db.String(120))
 
+    def __init__(self, mongohost=None, mongouser=None, mongopasswd=None, pyplnhost=None, pyplnuser=None, pyplnpasswd=None):
+        self.mongohost = mongohost
+        self.mongouser = mongouser
+        self.mongopasswd = mongopasswd
+        self.pyplnhost = pyplnhost
+        self.pyplnuser = pyplnuser
+        self.pyplnpasswd = pyplnpasswd
+
 # Create tables.
 Base.metadata.create_all(bind=engine)

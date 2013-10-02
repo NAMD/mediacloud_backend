@@ -105,6 +105,15 @@ def config():
         db.session.commit()
         flash('Configuration saved')
         return redirect(url_for('home'))
+    else:
+        conf = models.Configuration.query.first()
+        if conf:
+            form.dbhost.data = conf.mongohost
+            form.dbuser.data = conf.mongouser
+            form.dbpasswd.data = conf.mongopasswd
+            form.pyplnhost.data = conf.pyplnhost
+            form.pyplnuser.data = conf.pyplnuser
+            form.pyplnpasswd.data = conf.pyplnpasswd
     return render_template('forms/config.html', form=form)
 
 @app.route('/feeds')
