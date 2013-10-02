@@ -54,12 +54,16 @@ class RSSDownload(object):
 
             r = requests.get(a.link)
             # print r.encoding
-            a['link_content'] = r.content.decode(r.encoding)
+            try:
+                a['link_content'] = r.content.decode(r.encoding)
+            except UnicodeDecodeError:
+                print "could not decode page as ", r.encoding
+                continue
             # Turn the tags field into a simple list of tags
             try:
                 a['tags'] = [i['term'] for i in a.tags]
             except AttributeError:
-                print "This feed has no tags: ", a.link
+                logger.info("This feed has no tags: %s", a.link)
             try:
                 a.pop('published_parsed')
             except KeyError:
@@ -91,10 +95,10 @@ def parallel_fetch():
             feedurls.append(t["base"].decode('utf8'))
         except KeyError:
             print f
-        fetch_feed(t["base"].decode('utf8'))
+        #fetch_feed(t["base"].decode('utf8'))
 
-    #P = ThreadPool(30)
-    #P.map(fetch_feed, feedurls)
+    P = ThreadPool(30)
+    P.map(fetch_feed, feedurls)
 
 if __name__ == "__main__":
     parallel_fetch()
