@@ -17,10 +17,27 @@ import requests
 import settings
 from multiprocessing.pool import ThreadPool
 from bson.errors import InvalidDocument
+from pymongo.errors import DuplicateKeyError
 import time
 
+###########################
+#  Setting up Logging
+###########################
+logger = logging.getLogger("Downloader")
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+fh = logging.FileHandler('/tmp/mediacloud.log')
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+fh.setFormatter(formatter)
+# add ch to logger
+#logger.addHandler(ch)  # uncomment for console output of messages
+logger.addHandler(fh)
 
-logger = logging.getLogger(__name__)
 
  ## Media Cloud database setup
 
@@ -37,14 +54,14 @@ class RSSDownload(object):
     def parse(self):
         response = feedparser.parse(self.url)
         if response.bozo:
-            logger.info("fetching %s returned an exception: %s", self.url, response.bozo_exception)
+            logger.error("fetching %s returned an exception: %s", self.url, response.bozo_exception)
             return
 
         self._save_articles(response.entries)
         return ((r.title, r.link) for r in response.entries)
 
     def _save_articles(self, entries):
-        print "Downloading {} articles from {}".format(len(entries), self.url)
+        logger.info("Downloading %s articles from %s", len(entries), self.url)
         for a in entries:
             ks = []
             for k, v in a.iteritems():
@@ -72,14 +89,17 @@ class RSSDownload(object):
             exists = list(ARTICLES.find({"link": a.link}))
             # print exists
             if exists == []:
-                ARTICLES.insert(a)
+                try:
+                    ARTICLES.insert(a)
+                except DuplicateKeyError:
+                    logger.error("Duplicate article found")
                 # print "inserted"
 
 def fetch_feed(feed):
     try:
         f = RSSDownload(feed)
     except InvalidDocument:
-        print "This feed failed: \n", f
+        logger.error("This feed failed: %s", f)
     f.parse()
 
 def parallel_fetch():
