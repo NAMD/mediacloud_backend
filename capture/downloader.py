@@ -19,6 +19,7 @@ from multiprocessing.pool import ThreadPool
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import time
+import datetime
 
 ###########################
 #  Setting up Logging
@@ -66,8 +67,10 @@ class RSSDownload(object):
             ks = []
             for k, v in a.iteritems():
                 if isinstance(v, time.struct_time):
-                    ks.append(k)
-            [a.pop(i) for i in ks]
+                    # Convert to datetime instead of removing
+                    a[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                    #ks.append(k)
+            #[a.pop(i) for i in ks]
 
             r = requests.get(a.link)
             # print r.encoding
@@ -89,6 +92,8 @@ class RSSDownload(object):
             exists = list(ARTICLES.find({"link": a.link}))
             # print exists
             if exists == []:
+                if "published" in a
+
                 try:
                     ARTICLES.insert(a)
                 except DuplicateKeyError:
