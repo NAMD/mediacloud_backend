@@ -117,11 +117,14 @@ def parallel_fetch():
     for f in feeds:
         t = f.get('title_detail', f.get('subtitle_detail', None))
         if t is None:
+            logger.error("Feed %s does not contain ", f.get('link', None))
             continue
         try:
             feedurls.append(t["base"].decode('utf8'))
         except KeyError:
-            print f
+            logger.error("Feed %s does not contain base URL", f.get('link', None))
+        except UnicodeEncodeError:
+            logger.error("Feed %s failed Unicode decoding", f.get('link', None))
         #fetch_feed(t["base"].decode('utf8'))
 
     P = ThreadPool(30)
