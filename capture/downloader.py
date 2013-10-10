@@ -19,6 +19,7 @@ from multiprocessing.pool import ThreadPool
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import time
+import datetime
 
 ###########################
 #  Setting up Logging
@@ -62,18 +63,20 @@ class RSSDownload(object):
 
     def _save_articles(self, entries):
         logger.info("Downloading %s articles from %s", len(entries), self.url)
-        for a in entries:
+        for entry in entries:
             ks = []
-            for k, v in a.iteritems():
+            for k, v in entry.iteritems():
                 if isinstance(v, time.struct_time):
-                    ks.append(k)
-            [a.pop(i) for i in ks]
+                    # Convert to datetime instead of removing
+                    entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                    #ks.append(k)
+            #[a.pop(i) for i in ks]
 
-            r = requests.get(a.link)
+            r = requests.get(entry.link)
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
-                a['link_content'] = r.content.decode(encoding)
+                entry['link_content'] = r.content.decode(encoding)
                 a['pypln_json'] = send_pypln(a['link_content']).json()
                 #print a['pypln_json']
             except UnicodeDecodeError:
@@ -81,18 +84,21 @@ class RSSDownload(object):
                 continue
             # Turn the tags field into a simple list of tags
             try:
-                a['tags'] = [i['term'] for i in a.tags]
+                entry['tags'] = [i['term'] for i in entry.tags]
             except AttributeError:
-                logger.info("This feed has no tags: %s", a.link)
+                logger.info("This feed has no tags: %s", entry.link)
             try:
-                a.pop('published_parsed')
+                entry.pop('published_parsed')
             except KeyError:
                 pass
-            exists = list(ARTICLES.find({"link": a.link}))
+            exists = list(ARTICLES.find({"link": entry.link}))
             # print exists
             if exists == []:
+                if "published" in entry:
+                    # consider parsing the string datetime into a datetime object
+                    pass
                 try:
-                    ARTICLES.insert(a)
+                    ARTICLES.insert(entry)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
                 # print "inserted"
@@ -118,11 +124,14 @@ def parallel_fetch():
     for f in feeds:
         t = f.get('title_detail', f.get('subtitle_detail', None))
         if t is None:
+            logger.error("Feed %s does not contain ", f.get('link', None))
             continue
         try:
             feedurls.append(t["base"].decode('utf8'))
         except KeyError:
-            print f
+            logger.error("Feed %s does not contain base URL", f.get('link', None))
+        except UnicodeEncodeError:
+            logger.error("Feed %s failed Unicode decoding", f.get('link', None))
         #fetch_feed(t["base"].decode('utf8'))
 
     P = ThreadPool(30)
