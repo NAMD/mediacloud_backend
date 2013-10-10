@@ -63,39 +63,40 @@ class RSSDownload(object):
 
     def _save_articles(self, entries):
         logger.info("Downloading %s articles from %s", len(entries), self.url)
-        for a in entries:
+        for entry in entries:
             ks = []
-            for k, v in a.iteritems():
+            for k, v in entry.iteritems():
                 if isinstance(v, time.struct_time):
                     # Convert to datetime instead of removing
-                    a[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                    entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
                     #ks.append(k)
             #[a.pop(i) for i in ks]
 
-            r = requests.get(a.link)
+            r = requests.get(entry.link)
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
-                a['link_content'] = r.content.decode(encoding)
+                entry['link_content'] = r.content.decode(encoding)
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
             # Turn the tags field into a simple list of tags
             try:
-                a['tags'] = [i['term'] for i in a.tags]
+                entry['tags'] = [i['term'] for i in entry.tags]
             except AttributeError:
-                logger.info("This feed has no tags: %s", a.link)
+                logger.info("This feed has no tags: %s", entry.link)
             try:
-                a.pop('published_parsed')
+                entry.pop('published_parsed')
             except KeyError:
                 pass
-            exists = list(ARTICLES.find({"link": a.link}))
+            exists = list(ARTICLES.find({"link": entry.link}))
             # print exists
             if exists == []:
-                if "published" in a
-
+                if "published" in entry:
+                    # consider parsing the string datetime into a datetime object
+                    pass
                 try:
-                    ARTICLES.insert(a)
+                    ARTICLES.insert(entry)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
                 # print "inserted"
