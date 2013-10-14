@@ -21,6 +21,7 @@ URLS = MCDB.urls  # Collection of urls to extract feeds from
 URLS.ensure_index('url', unique=True)
 ###########
 
+
 def main(subject='', n=5):
     """
     Scrape google search up to the nth page and save the results to a MongoDB collection.
@@ -39,7 +40,7 @@ def main(subject='', n=5):
             #print url
             #print(unquote(url.geturl()))
             try:
-                URLS.insert({'url': url, 'tags': [subject], 'fetched_on': datetime.datetime.now()})
+                URLS.insert({'url': unquote(url.geturl()), 'tags': [subject], 'fetched_on': datetime.datetime.now()})
             except DuplicateKeyError:
                 pass
 
