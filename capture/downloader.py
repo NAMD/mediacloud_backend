@@ -20,6 +20,7 @@ from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import time
 import datetime
+from logging.handlers import RotatingFileHandler
 
 ###########################
 #  Setting up Logging
@@ -29,7 +30,7 @@ logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
-fh = logging.FileHandler('/tmp/mediacloud.log')
+fh = RotatingFileHandler('/tmp/mediacloud.log', maxBytes=5e6, backupCount=3)
 # create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # add formatter to ch

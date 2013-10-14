@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # This is a little module to use the google search engine
@@ -238,7 +238,9 @@ class GoogleScraper:
         return cleaned
 
 def scrape(query, results_per_page=100, number_pages=1, offset=0):
-    '''Search for terms and return a list of all URLs.'''
-    scraper = GoogleScraper(query, number_results_page=results_per_page)
+    """
+    Search for terms and return a list of all URLs.
+    """
+    scraper = GoogleScraper(query, number_results_page=results_per_page, offset=offset)
     results = scraper.search(number_pages=number_pages)
     return [url for url in results]
