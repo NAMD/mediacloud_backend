@@ -39,7 +39,7 @@ def main(subject='', n=5):
             #print url
             #print(unquote(url.geturl()))
             try:
-                URLS.insert({'url': url, 'fetched_on': datetime.datetime.now()})
+                URLS.insert({'url': url, 'tags': [subject], 'fetched_on': datetime.datetime.now()})
             except DuplicateKeyError:
                 pass
 
