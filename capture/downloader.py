@@ -20,6 +20,10 @@ from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import time
 import datetime
+import base64 as b64
+import zlib
+import cPickle as CP
+
 from logging.handlers import RotatingFileHandler
 
 ###########################
@@ -77,7 +81,9 @@ class RSSDownload(object):
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
-                entry['link_content'] = r.content.decode(encoding)
+                # Articles are first decoded with the declared encoding and then compressed with zlib
+                entry['link_content'] = compress_content(r.content.decode(encoding))
+                entry['compressed'] = True
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
@@ -101,6 +107,31 @@ class RSSDownload(object):
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
                 # print "inserted"
+
+
+def compress_content(html):
+    """
+    Compresses and encodes html content so that it can be BSON encoded an store in mongodb
+    :param html: original html document
+    :return: compressed an b64 encoded document
+    """
+    pickled = CP.dumps(html, CP.HIGHEST_PROTOCOL)
+    squished = zlib.compress(pickled)
+    encoded = b64.urlsafe_b64encode(squished)
+    return encoded
+
+
+def decompress_content(comphtml):
+    """
+    Decompress data compressed by `compress_content`
+    :param comphtml: compressed html document
+    :return: original html
+    """
+    unencoded = b64.urlsafe_b64decode(str(comphtml))
+    decompressed = zlib.decompress(unencoded)
+    orig_html = CP.loads(decompressed)
+    return orig_html
+
 
 def fetch_feed(feed):
     try:

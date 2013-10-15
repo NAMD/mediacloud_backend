@@ -5,6 +5,7 @@ import unittest
 from capture import feedfinder, urlscanner, downloader
 import subprocess
 from capture import googlerss
+import bson
 
 
 class FeedFinderTests(unittest.TestCase):
@@ -47,7 +48,7 @@ class TestUrlScanner(unittest.TestCase):
 
 class TestDownloader(unittest.TestCase):
     def setUp(self):
-        self.d = downloader.RSSDownload('http://www.engadget.com/rss.xml')
+        self.d = downloader.RSSDownload('http://www.estadao.com.br/rss/manchetes.xml')
 
     def tearDown(self):
         downloader.ARTICLES.drop()
@@ -55,7 +56,20 @@ class TestDownloader(unittest.TestCase):
     def test_store_articles(self):
         self.d.parse()
         res = downloader.ARTICLES.find().count()
-        self.assertEquals(res, 25)
+        self.assertGreater(res, 0, "{} is not greater than 0".format(res))
+
+    def test_compress_decompress(self):
+        page = feedfinder.get_page('http://www.fgv.br')
+        cp = downloader.compress_content(page)
+        self.assertEqual(page, downloader.decompress_content(cp))
+
+    def test_store_compressed_data(self):
+        page = feedfinder.get_page('http://www.fgv.br')
+        cp = downloader.compress_content(page)
+        downloader.ARTICLES.insert({"compressed": cp})
+        rp = downloader.ARTICLES.find_one()
+        self.assertEqual(page, downloader.decompress_content(rp["compressed"]))
+
 
 class TestGoogleRSS(unittest.TestCase):
     def setUp(self):
