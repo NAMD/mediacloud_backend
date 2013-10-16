@@ -48,7 +48,7 @@ class TestUrlScanner(unittest.TestCase):
 
 class TestDownloader(unittest.TestCase):
     def setUp(self):
-        self.d = downloader.RSSDownload('http://www.estadao.com.br/rss/manchetes.xml')
+        self.d = downloader.RSSDownload('http://estadao.feedsportal.com/c/33043/f/534104/index.rss')
 
     def tearDown(self):
         downloader.ARTICLES.drop()

@@ -18,9 +18,9 @@ import settings
 from multiprocessing.pool import ThreadPool
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
+import bson
 import time
 import datetime
-import base64 as b64
 import zlib
 import cPickle as CP
 
@@ -116,7 +116,7 @@ def compress_content(html):
     """
     pickled = CP.dumps(html, CP.HIGHEST_PROTOCOL)
     squished = zlib.compress(pickled)
-    encoded = b64.urlsafe_b64encode(squished)
+    encoded = bson.Binary(squished)  # b64.urlsafe_b64encode(squished)
     return encoded
 
 
@@ -126,8 +126,8 @@ def decompress_content(comphtml):
     :param comphtml: compressed html document
     :return: original html
     """
-    unencoded = b64.urlsafe_b64decode(str(comphtml))
-    decompressed = zlib.decompress(unencoded)
+    # unencoded = b64.urlsafe_b64decode(str(comphtml))
+    decompressed = zlib.decompress(comphtml)
     orig_html = CP.loads(decompressed)
     return orig_html
 
