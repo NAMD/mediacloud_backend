@@ -111,7 +111,7 @@ class GoogleScraper:
     }
 
     # Keep the User-Agents updated.
-    # I guess 9 different UA's is engough, since many users
+    # I guess 9 different UA's is enough, since many users
     # have the same UA (and only a different IP).
     # Get them here: http://techblog.willshouse.com/2012/01/03/most-common-user-agents/
     _UAS = [

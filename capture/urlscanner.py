@@ -21,7 +21,7 @@ def url_scanner(url, depth=1):
     """
     agent = "Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7"
     try:
-        subprocess.check_call(['httrack', '-p0', '-%P', '-b1', '-i', '-d', '-r%s' % depth, '-c8', '-F "%s"' % agent, url])
+        subprocess.check_call(['httrack', '-p0', '-%P', '-b1', '-i', '-d', '-T3', '-R3', '-r%s' % depth, '-c8', '-F "%s"' % agent, url])
     except subprocess.CalledProcessError:
         print "failed on {}".format(url)
 
