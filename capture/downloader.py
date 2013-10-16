@@ -46,7 +46,6 @@ logger.addHandler(fh)
 
 
  ## Media Cloud database setup
-
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
