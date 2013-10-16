@@ -40,7 +40,8 @@ def main(subject='', n=5):
             #print url
             #print(unquote(url.geturl()))
             try:
-                URLS.insert({'url': unquote(url.geturl()), 'tags': [subject], 'fetched_on': datetime.datetime.now()})
+                U = unquote(url.geturl()).split("&sa=U&ei=")[0]  # Remove googlebot crap
+                URLS.insert({'url': U, 'tags': [subject], 'fetched_on': datetime.datetime.now()})
             except DuplicateKeyError:
                 pass
 
