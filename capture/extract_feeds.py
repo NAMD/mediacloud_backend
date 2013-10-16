@@ -22,8 +22,8 @@ URLS = MCDB.urls  # Feed collection
 
 
 def main(urls, depth):
-    if urls != []:
-        with open(urls[0]) as f:
+    if urls:
+        with open(urls) as f:
             for u in f:
                 print "scanning {} with depth {}".format(u, depth)
                 scan_url(u, depth)
@@ -45,7 +45,7 @@ def scan_url(url, depth):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Search for feeds on a set of web pages (urls)')
-    parser.add_argument('file', metavar='file', nargs=1, help='file with one or more urls to check (one per line)')
+    parser.add_argument('-f', '--file', type=str, default='', help='file with one or more urls to check (one per line)')
     parser.add_argument('-d', '--depth', type=int, default=2, help='Depth of the search, from the initial url')
 
     args = parser.parse_args()
