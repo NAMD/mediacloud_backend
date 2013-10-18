@@ -50,6 +50,7 @@ import logging
 import settings
 import pymongo
 import time
+from pymongo.errors import DuplicateKeyError
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
@@ -252,7 +253,10 @@ def store_feeds(feed_list):
                 if isinstance(v, time.struct_time):
                     ks.append(k)
             [response.feed.pop(k) for k in ks]
-            FEEDS.insert(response.feed)
+            try:
+                FEEDS.insert(response.feed)
+            except DuplicateKeyError:
+                print "Feed {} already in database".format(f)
 
 def feed(uri):
     #todo: give preference to certain feed formats
