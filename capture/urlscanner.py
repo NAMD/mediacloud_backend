@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 u"""
-This module provides a url scanner function but depends on hhttrack being available on the system
+This module provides a url scanner function but depends on httrack being available on the system
 Created on 24/09/13
 by fccoelho
 license: GPL V3 or Later

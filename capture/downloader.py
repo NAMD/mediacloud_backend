@@ -97,7 +97,7 @@ class RSSDownload(object):
                 pass
             exists = list(ARTICLES.find({"link": entry.link}))
             # print exists
-            if exists == []:
+            if not exists:
                 if "published" in entry:
                     # consider parsing the string datetime into a datetime object
                     pass
@@ -145,6 +145,7 @@ def parallel_fetch():
     """
     feeds = FEEDS.find()
     feedurls = []
+    t0 = time.time()
     for f in feeds:
         t = f.get('title_detail', f.get('subtitle_detail', None))
         if t is None:
@@ -160,6 +161,7 @@ def parallel_fetch():
 
     P = ThreadPool(30)
     P.map(fetch_feed, feedurls)
+    logger.info("Time taken to download %s feeds: %s minutes.", len(feedurls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
     parallel_fetch()
