@@ -14,6 +14,25 @@ import urlscanner
 import argparse
 import pymongo
 import settings
+import logging
+
+###########################
+#  Setting up Logging
+###########################
+logger = logging.getLogger("Extract_feeds")
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+#fh = RotatingFileHandler('/tmp/mediacloud.log', maxBytes=5e6, backupCount=3)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+#fh.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(ch)  # uncomment for console output of messages
+#logger.addHandler(fh)
 
  ## Media Cloud database setup
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
@@ -36,11 +55,11 @@ def main(urls, depth):
 def scan_url(url, depth):
     u2 = urlscanner.url_scanner(url.strip(), depth)
     for U in u2:
-        print "searching for feeds in: ", U
+        logger.info("searching for feeds in: %s", U)
         feeds = feedfinder.feeds(U.strip())
-        print "found %s feeds" % len(feeds)
+        logger.info("found %s feeds", len(feeds))
         if feeds:
-            print feeds
+            logger.info(str(feeds))
             feedfinder.store_feeds(feeds)
 
 if __name__ == "__main__":

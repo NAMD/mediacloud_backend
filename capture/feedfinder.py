@@ -200,11 +200,11 @@ def feeds(uri, all=False, _recurs=None):
         outfeeds = getLinks(data, fulluri)
     except:
         outfeeds = []
-    print('found %s feeds through LINK tags' % len(outfeeds))
+    # print('found %s feeds through LINK tags' % len(outfeeds))
     outfeeds = filter(isFeed, outfeeds)
     if all or not outfeeds:
         # no LINK tags, look for regular <A> links that point to feeds
-        print('no LINK tags, looking at A tags')
+        # print('no LINK tags, looking at A tags')
         try:
             links = getALinks(data, fulluri)
         except:
