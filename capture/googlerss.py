@@ -12,6 +12,7 @@ import logging
 import settings
 import argparse
 import datetime
+import time
 from pymongo.errors import DuplicateKeyError
 
 ##### Setup URL Collection ############
@@ -44,6 +45,7 @@ def main(subject='', n=5):
                 URLS.insert({'url': U, 'tags': [subject], 'fetched_on': datetime.datetime.now()})
             except DuplicateKeyError:
                 pass
+        time.sleep(1)
 
 
 if __name__ == "__main__":
