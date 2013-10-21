@@ -23,6 +23,7 @@ import time
 import datetime
 import zlib
 import cPickle as CP
+import cld
 
 from logging.handlers import RotatingFileHandler
 
@@ -81,8 +82,10 @@ class RSSDownload(object):
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
                 # Articles are first decoded with the declared encoding and then compressed with zlib
-                entry['link_content'] = compress_content(r.content.decode(encoding))
+                dec_content = r.content.decode(encoding)
+                entry['link_content'] = compress_content(dec_content)
                 entry['compressed'] = True
+                entry['language'] = detect_language(dec_content)
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
@@ -130,6 +133,16 @@ def decompress_content(comphtml):
     decompressed = zlib.decompress(comphtml)
     orig_html = CP.loads(decompressed)
     return orig_html
+
+
+def detect_language(text):
+    """
+    Detect the language of text using chromium_compact_language_detector
+    :param text: text to be analyzed
+    :return: {"name": portuguese, "pt"}
+    """
+    name, code, isReliable, textBytesFound, details = cld.detect(text)
+    return {"name": name, "code": code}
 
 
 def fetch_feed(feed):
