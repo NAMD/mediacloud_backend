@@ -15,6 +15,7 @@ import argparse
 import pymongo
 import settings
 import logging
+from pymongo.errors import OperationFailure
 
 ###########################
 #  Setting up Logging
@@ -47,10 +48,12 @@ def main(urls, depth):
                 print "scanning {} with depth {}".format(u, depth)
                 scan_url(u, depth)
     else:  # Scan URLs from Mongodb url collection
-        for doc in URLS.find():
-            print "scanning {} with depth {}".format(doc['url'], depth)
-            scan_url(doc['url'], depth)
-
+        try:
+            for doc in URLS.find():
+                print "scanning {} with depth {}".format(doc['url'], depth)
+                scan_url(doc['url'], depth)
+        except OperationFailure as e:
+            logger.error("Mongodb Operation failure: %s", e)
 
 def scan_url(url, depth):
     u2 = urlscanner.url_scanner(url.strip(), depth)

@@ -222,7 +222,7 @@ def feeds(uri, all=False, _recurs=None):
             # look harder for feed links on another server
             outfeeds.extend(filter(isFeed, filter(isXMLRelatedLink, links)))
     if all or not outfeeds:
-        print('no A tags, guessing')
+        # print('no A tags, guessing')
         suffixes = [ # filenames used by popular software:
           'atom.xml', # blogger, TypePad
           'index.atom', # MT, apparently
