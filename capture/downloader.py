@@ -141,7 +141,7 @@ def detect_language(text):
     :param text: text to be analyzed
     :return: {"name": portuguese, "pt"}
     """
-    name, code, isReliable, textBytesFound, details = cld.detect(text)
+    name, code, isReliable, textBytesFound, details = cld.detect(text.encode('utf8'))
     return {"name": name, "code": code}
 
 

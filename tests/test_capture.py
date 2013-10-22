@@ -44,7 +44,7 @@ class TestUrlScanner(unittest.TestCase):
 
     def test_scan(self):
         l = urlscanner.url_scanner('www.google.com', 1)
-        self.assertEquals(l, ['http://www.google.com/robots.txt', 'http://www.google.com/',])
+        self.assertEquals(l, ['http://www.google.com/robots.txt', 'http://www.google.com/'])
 
 class TestDownloader(unittest.TestCase):
     def setUp(self):
