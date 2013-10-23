@@ -11,18 +11,20 @@ __docformat__ = 'restructuredtext en'
 from dateutil.parser import parse
 import datetime
 import pymongo
+import sys
 
-
-## Media Cloud database setup
-client = pymongo.MongoClient()
-MCDB = client.MCDB
-ARTICLES = MCDB.urls  # Article collection
 
 def parse(collection):
     for doc in collection.find():
+        if not "published" in doc:
+            continue
         if not isinstance(doc['published'], datetime.datetime):
             collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published']),
                                                             "updated": parse(doc['updated'])}})
 
 if __name__=="__main__":
+    ## Media Cloud database setup
+    client = pymongo.MongoClient(sys.argv[1])
+    MCDB = client.MCDB
+    ARTICLES = MCDB.urls  # Article collection
     parse(ARTICLES)
