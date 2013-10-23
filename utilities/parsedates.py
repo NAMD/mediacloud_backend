@@ -20,11 +20,17 @@ def parsedates(collection):
             continue
         if not isinstance(doc['published'], datetime.datetime):
             print "updating %s"%doc["_id"]
-            collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
+            try:
+                collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
+            except ValueError:
+                print "Could not parse string: %s" % doc['published']
         if not "updated" in doc:
             continue
         if not isinstance(doc['updated'], datetime.datetime):
-            collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
+            try:
+                collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
+            except ValueError:
+                print "Could not parse string: %s" % doc['updated']
 
 if __name__=="__main__":
     ## Media Cloud database setup
