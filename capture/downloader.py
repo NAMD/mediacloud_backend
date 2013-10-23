@@ -24,6 +24,7 @@ import datetime
 import zlib
 import cPickle as CP
 import cld
+from dateutil.parser import parse
 
 from logging.handlers import RotatingFileHandler
 
@@ -86,6 +87,11 @@ class RSSDownload(object):
                 entry['link_content'] = compress_content(dec_content)
                 entry['compressed'] = True
                 entry['language'] = detect_language(dec_content)
+                # Parsing date strings
+                if 'published' in entry:
+                    entry['published'] = parse(entry['published'])
+                if 'updated' in entry:
+                    entry['updated'] = parse(entry['updated'])
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
