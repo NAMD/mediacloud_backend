@@ -19,6 +19,7 @@ def parse(collection):
         if not "published" in doc:
             continue
         if not isinstance(doc['published'], datetime.datetime):
+            print "updating %s"%doc["_id"]
             collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published']),
                                                             "updated": parse(doc['updated'])}})
 
