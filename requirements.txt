@@ -9,3 +9,4 @@ Flask-WTF
 chardet
 cssselect
 chromium_compact_language_detector
+dateutil

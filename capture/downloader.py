@@ -159,17 +159,17 @@ def parallel_fetch():
     feeds = FEEDS.find()
     feedurls = []
     t0 = time.time()
-    for f in feeds:
-        t = f.get('title_detail', f.get('subtitle_detail', None))
+    for feed in feeds:
+        t = feed.get('title_detail', feed.get('subtitle_detail', None))
         if t is None:
-            logger.error("Feed %s does not contain ", f.get('link', None))
+            logger.error("Feed %s does not contain ", feed.get('link', None))
             continue
         try:
             feedurls.append(t["base"].decode('utf8'))
         except KeyError:
-            logger.error("Feed %s does not contain base URL", f.get('link', None))
+            logger.error("Feed %s does not contain base URL", feed.get('link', None))
         except UnicodeEncodeError:
-            logger.error("Feed %s failed Unicode decoding", f.get('link', None))
+            logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
         #fetch_feed(t["base"].decode('utf8'))
 
     P = ThreadPool(30)

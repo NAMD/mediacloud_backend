@@ -35,7 +35,7 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)  # uncomment for console output of messages
 #logger.addHandler(fh)
 
- ## Media Cloud database setup
+## Media Cloud database setup
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 URLS = MCDB.urls  # Feed collection
