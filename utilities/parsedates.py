@@ -27,5 +27,5 @@ if __name__=="__main__":
     ## Media Cloud database setup
     client = pymongo.MongoClient(sys.argv[1])
     MCDB = client.MCDB
-    ARTICLES = MCDB.urls  # Article collection
+    ARTICLES = MCDB.articles  # Article collection
     parsedates(ARTICLES)
