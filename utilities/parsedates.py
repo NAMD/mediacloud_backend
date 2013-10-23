@@ -14,7 +14,7 @@ import pymongo
 import sys
 
 
-def parse(collection):
+def parsedates(collection):
     for doc in collection.find():
         if not "published" in doc:
             continue
@@ -28,4 +28,4 @@ if __name__=="__main__":
     client = pymongo.MongoClient(sys.argv[1])
     MCDB = client.MCDB
     ARTICLES = MCDB.urls  # Article collection
-    parse(ARTICLES)
+    parsedates(ARTICLES)
