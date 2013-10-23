@@ -98,6 +98,8 @@ class RSSDownload(object):
                         entry['updated'] = parse(entry['updated'])
                     except ValueError:
                         logger.error("Could not parse date %s ", entry['updated'])
+                else:
+                    entry['updated'] = datetime.datetime.now()
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
