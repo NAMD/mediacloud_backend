@@ -89,9 +89,15 @@ class RSSDownload(object):
                 entry['language'] = detect_language(dec_content)
                 # Parsing date strings
                 if 'published' in entry:
-                    entry['published'] = parse(entry['published'])
+                    try:
+                        entry['published'] = parse(entry['published'])
+                    except ValueError:
+                        logger.error("Could not parse date %s ", entry['published'])
                 if 'updated' in entry:
-                    entry['updated'] = parse(entry['updated'])
+                    try:
+                        entry['updated'] = parse(entry['updated'])
+                    except ValueError:
+                        logger.error("Could not parse date %s ", entry['updated'])
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
