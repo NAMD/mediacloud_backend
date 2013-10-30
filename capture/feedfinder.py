@@ -51,10 +51,29 @@ import settings
 import pymongo
 import time
 from pymongo.errors import DuplicateKeyError
+from logging.handlers import RotatingFileHandler
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
+
+###########################
+#  Setting up Logging
+###########################
+logger = logging.getLogger("Feedfinder")
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+fh = RotatingFileHandler('/tmp/mediacloud.log', maxBytes=5e6, backupCount=3)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+fh.setFormatter(formatter)
+# add ch to logger
+#logger.addHandler(ch)  # uncomment for console output of messages
+logger.addHandler(fh)
 
 def get_page(url):
     """
@@ -70,8 +89,6 @@ def get_page(url):
         html = ''
 
     return html
-
-
 
 class BaseParser(sgmllib.SGMLParser):
     def __init__(self, baseuri):
@@ -147,7 +164,19 @@ def getALinks(data, baseuri):
 def getLocalLinks(links, baseuri):
     baseuri = baseuri.lower()
     urilen = len(baseuri)
-    return [l for l in links if l.lower().startswith(baseuri)]
+    local_links = []
+    for l in links:
+        try:
+            if l.lower().startswith(baseuri):
+                local_links.append(l)
+        except UnicodeDecodeError:
+            try:
+                l = l.decode('utf8')
+                if l.lower().startswith(baseuri):
+                    local_links.append(l)
+            except UnicodeDecodeError:
+                logger.error("Could not decode link: %s", l)
+    return local_links
 
 def isFeedLink(link):
     return link[-4:].lower() in ('.rss', '.rdf', '.xml', '.atom')

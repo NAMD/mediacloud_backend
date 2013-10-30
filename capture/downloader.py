@@ -119,7 +119,7 @@ class RSSDownload(object):
                     # consider parsing the string datetime into a datetime object
                     pass
                 try:
-                    ARTICLES.insert(entry)
+                    ARTICLES.insert(entry, safe=True)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
                 # print "inserted"
