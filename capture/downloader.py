@@ -20,6 +20,7 @@ from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import time
 import datetime
+from nlp import send_pypln
 
 ###########################
 #  Setting up Logging
@@ -77,8 +78,7 @@ class RSSDownload(object):
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
                 entry['link_content'] = r.content.decode(encoding)
-                a['pypln_json'] = send_pypln(a['link_content']).json()
-                #print a['pypln_json']
+                entry['pypln_json'] = send_pypln(entry['link_content']).json()
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
@@ -110,10 +110,6 @@ def fetch_feed(feed):
         logger.error("This feed failed: %s", f)
     f.parse()
 
-def send_pypln(feed_entry, url = 'http://demo.pypln.org/documents/' , data = {'corpus':'http://demo.pypln.org/corpora/15/'}, auth = ('elopes', '613722')):
-    files = {'blob': feed_entry}
-    resp = requests.post(url, data = data, files = files, auth=auth)
-    return resp
 
 def parallel_fetch():
     """
