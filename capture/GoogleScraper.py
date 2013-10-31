@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # This is a little module to use the google search engine
@@ -111,7 +111,7 @@ class GoogleScraper:
     }
 
     # Keep the User-Agents updated.
-    # I guess 9 different UA's is engough, since many users
+    # I guess 9 different UA's is enough, since many users
     # have the same UA (and only a different IP).
     # Get them here: http://techblog.willshouse.com/2012/01/03/most-common-user-agents/
     _UAS = [
@@ -238,7 +238,9 @@ class GoogleScraper:
         return cleaned
 
 def scrape(query, results_per_page=100, number_pages=1, offset=0):
-    '''Search for terms and return a list of all URLs.'''
-    scraper = GoogleScraper(query, number_results_page=results_per_page)
+    """
+    Search for terms and return a list of all URLs.
+    """
+    scraper = GoogleScraper(query, number_results_page=results_per_page, offset=offset)
     results = scraper.search(number_pages=number_pages)
     return [url for url in results]

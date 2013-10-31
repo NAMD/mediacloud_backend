@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 u"""
-This module provides a url scanner function but depends on hhttrack being available on the system
+This module provides a url scanner function but depends on httrack being available on the system
 Created on 24/09/13
 by fccoelho
 license: GPL V3 or Later
@@ -21,9 +21,9 @@ def url_scanner(url, depth=1):
     """
     agent = "Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7"
     try:
-        subprocess.check_call(['httrack', '-p0', '-%P', '-b1', '-i', '-d', '-r%s' % depth, '-c8', '-F "%s"' % agent, url])
-    except subprocess.CalledProcessError:
-        print "failed on {}".format(url)
+        subprocess.check_output(['httrack', '-p0', '-%P', '-b1', '-i', '-d', '-T1', '-R1', '-r%s' % depth, '-c16', '-F "%s"' % agent, url])
+    except subprocess.CalledProcessError as e:
+        print "failed on {}:\n{}".format(url, e.output)
 
     with open("hts-cache/new.txt") as f:
         t = csv.DictReader(f, delimiter='\t')
@@ -31,6 +31,7 @@ def url_scanner(url, depth=1):
         for l in t:
             urls.append(l['URL'])
     subprocess.call(['rm', '-rf', 'hts-*'])
+    subprocess.call(['rm', '-rf', 'cookies.txt'])
     subprocess.call(['rm', '-rf', url])
     return urls
 

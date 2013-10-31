@@ -50,10 +50,30 @@ import logging
 import settings
 import pymongo
 import time
+from pymongo.errors import DuplicateKeyError
+from logging.handlers import RotatingFileHandler
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
+
+###########################
+#  Setting up Logging
+###########################
+logger = logging.getLogger("Feedfinder")
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+fh = RotatingFileHandler('/tmp/mediacloud.log', maxBytes=5e6, backupCount=3)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+fh.setFormatter(formatter)
+# add ch to logger
+#logger.addHandler(ch)  # uncomment for console output of messages
+logger.addHandler(fh)
 
 def get_page(url):
     """
@@ -69,8 +89,6 @@ def get_page(url):
         html = ''
 
     return html
-
-
 
 class BaseParser(sgmllib.SGMLParser):
     def __init__(self, baseuri):
@@ -146,7 +164,19 @@ def getALinks(data, baseuri):
 def getLocalLinks(links, baseuri):
     baseuri = baseuri.lower()
     urilen = len(baseuri)
-    return [l for l in links if l.lower().startswith(baseuri)]
+    local_links = []
+    for l in links:
+        try:
+            if l.lower().startswith(baseuri):
+                local_links.append(l)
+        except UnicodeDecodeError:
+            try:
+                l = l.decode('utf8')
+                if l.lower().startswith(baseuri):
+                    local_links.append(l)
+            except UnicodeDecodeError:
+                logger.error("Could not decode link: %s", l)
+    return local_links
 
 def isFeedLink(link):
     return link[-4:].lower() in ('.rss', '.rdf', '.xml', '.atom')
@@ -199,11 +229,11 @@ def feeds(uri, all=False, _recurs=None):
         outfeeds = getLinks(data, fulluri)
     except:
         outfeeds = []
-    print('found %s feeds through LINK tags' % len(outfeeds))
+    # print('found %s feeds through LINK tags' % len(outfeeds))
     outfeeds = filter(isFeed, outfeeds)
     if all or not outfeeds:
         # no LINK tags, look for regular <A> links that point to feeds
-        print('no LINK tags, looking at A tags')
+        # print('no LINK tags, looking at A tags')
         try:
             links = getALinks(data, fulluri)
         except:
@@ -221,7 +251,7 @@ def feeds(uri, all=False, _recurs=None):
             # look harder for feed links on another server
             outfeeds.extend(filter(isFeed, filter(isXMLRelatedLink, links)))
     if all or not outfeeds:
-        print('no A tags, guessing')
+        # print('no A tags, guessing')
         suffixes = [ # filenames used by popular software:
           'atom.xml', # blogger, TypePad
           'index.atom', # MT, apparently
@@ -252,7 +282,10 @@ def store_feeds(feed_list):
                 if isinstance(v, time.struct_time):
                     ks.append(k)
             [response.feed.pop(k) for k in ks]
-            FEEDS.insert(response.feed)
+            try:
+                FEEDS.insert(response.feed, w=1)
+            except DuplicateKeyError:
+                print "Feed {} already in database".format(f)
 
 def feed(uri):
     #todo: give preference to certain feed formats

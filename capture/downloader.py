@@ -18,9 +18,16 @@ import settings
 from multiprocessing.pool import ThreadPool
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
+import bson
 import time
 import datetime
 from nlp import send_pypln
+import zlib
+import cPickle as CP
+import cld
+from dateutil.parser import parse
+
+from logging.handlers import RotatingFileHandler
 
 ###########################
 #  Setting up Logging
@@ -30,7 +37,7 @@ logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
-fh = logging.FileHandler('/tmp/mediacloud.log')
+fh = RotatingFileHandler('/tmp/mediacloud.log', maxBytes=5e6, backupCount=3)
 # create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # add formatter to ch
@@ -42,7 +49,6 @@ logger.addHandler(fh)
 
 
  ## Media Cloud database setup
-
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
@@ -65,6 +71,9 @@ class RSSDownload(object):
     def _save_articles(self, entries):
         logger.info("Downloading %s articles from %s", len(entries), self.url)
         for entry in entries:
+            if "%set" in entry:  # hallmark of empty article
+                logger.error("Empty article from %s", self.url)
+                continue
             ks = []
             for k, v in entry.iteritems():
                 if isinstance(v, time.struct_time):
@@ -77,8 +86,25 @@ class RSSDownload(object):
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
-                entry['link_content'] = r.content.decode(encoding)
-                entry['pypln_json'] = send_pypln(entry['link_content']).json()
+                # Articles are first decoded with the declared encoding and then compressed with zlib
+                dec_content = r.content.decode(encoding)
+                entry['link_content'] = compress_content(dec_content)
+                entry['pypln_json'] = send_pypln(dec_content).json()
+                entry['compressed'] = True
+                entry['language'] = detect_language(dec_content)
+                # Parsing date strings
+                if 'published' in entry:
+                    try:
+                        entry['published'] = parse(entry['published'])
+                    except ValueError:
+                        logger.error("Could not parse date %s ", entry['published'])
+                if 'updated' in entry:
+                    try:
+                        entry['updated'] = parse(entry['updated'])
+                    except ValueError:
+                        logger.error("Could not parse date %s ", entry['updated'])
+                else:
+                    entry['updated'] = datetime.datetime.now()
             except UnicodeDecodeError:
                 print "could not decode page as ", encoding
                 continue
@@ -93,15 +119,50 @@ class RSSDownload(object):
                 pass
             exists = list(ARTICLES.find({"link": entry.link}))
             # print exists
-            if exists == []:
+            if not exists:
                 if "published" in entry:
                     # consider parsing the string datetime into a datetime object
                     pass
                 try:
-                    ARTICLES.insert(entry)
+                    ARTICLES.insert(entry, w=1)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
                 # print "inserted"
+
+
+def compress_content(html):
+    """
+    Compresses and encodes html content so that it can be BSON encoded an store in mongodb
+    :param html: original html document
+    :return: compressed an b64 encoded document
+    """
+    pickled = CP.dumps(html, CP.HIGHEST_PROTOCOL)
+    squished = zlib.compress(pickled)
+    encoded = bson.Binary(squished)  # b64.urlsafe_b64encode(squished)
+    return encoded
+
+
+def decompress_content(comphtml):
+    """
+    Decompress data compressed by `compress_content`
+    :param comphtml: compressed html document
+    :return: original html
+    """
+    # unencoded = b64.urlsafe_b64decode(str(comphtml))
+    decompressed = zlib.decompress(comphtml)
+    orig_html = CP.loads(decompressed)
+    return orig_html
+
+
+def detect_language(text):
+    """
+    Detect the language of text using chromium_compact_language_detector
+    :param text: text to be analyzed
+    :return: {"name": portuguese, "pt"}
+    """
+    name, code, isReliable, textBytesFound, details = cld.detect(text.encode('utf8'))
+    return {"name": name, "code": code}
+
 
 def fetch_feed(feed):
     try:
@@ -117,21 +178,23 @@ def parallel_fetch():
     """
     feeds = FEEDS.find()
     feedurls = []
-    for f in feeds:
-        t = f.get('title_detail', f.get('subtitle_detail', None))
+    t0 = time.time()
+    for feed in feeds:
+        t = feed.get('title_detail', feed.get('subtitle_detail', None))
         if t is None:
-            logger.error("Feed %s does not contain ", f.get('link', None))
+            logger.error("Feed %s does not contain ", feed.get('link', None))
             continue
         try:
             feedurls.append(t["base"].decode('utf8'))
         except KeyError:
-            logger.error("Feed %s does not contain base URL", f.get('link', None))
+            logger.error("Feed %s does not contain base URL", feed.get('link', None))
         except UnicodeEncodeError:
-            logger.error("Feed %s failed Unicode decoding", f.get('link', None))
+            logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
         #fetch_feed(t["base"].decode('utf8'))
 
     P = ThreadPool(30)
     P.map(fetch_feed, feedurls)
+    logger.info("Time taken to download %s feeds: %s minutes.", len(feedurls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
     parallel_fetch()
