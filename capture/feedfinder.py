@@ -283,7 +283,7 @@ def store_feeds(feed_list):
                     ks.append(k)
             [response.feed.pop(k) for k in ks]
             try:
-                FEEDS.insert(response.feed)
+                FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:
                 print "Feed {} already in database".format(f)
 
