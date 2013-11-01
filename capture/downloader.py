@@ -189,7 +189,7 @@ def parallel_fetch():
             logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
         #fetch_feed(t["base"].decode('utf8'))
 
-    P = ThreadPool(30)
+    P = ThreadPool(20)
     P.map(fetch_feed, feedurls)
     logger.info("Time taken to download %s feeds: %s minutes.", len(feedurls), (time.time()-t0)/60.)
 

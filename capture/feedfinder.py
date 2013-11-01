@@ -174,8 +174,10 @@ def getLocalLinks(links, baseuri):
                 l = l.decode('utf8')
                 if l.lower().startswith(baseuri):
                     local_links.append(l)
-            except UnicodeDecodeError:
-                logger.error("Could not decode link: %s", l)
+            except UnicodeDecodeError as e:
+                logger.error("Could not decode link: %s \n %s", l, e)
+            except UnicodeEncodeError as e:
+                logger.error("Could not encode link: %s\n%s", l, e)
     return local_links
 
 def isFeedLink(link):
