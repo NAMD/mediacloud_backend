@@ -35,3 +35,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# idea
+.idea
+
+# logs of any kind
+*.log
