@@ -24,9 +24,14 @@ The backend project is divided into 3 simple steps:
 
 ## Installation
 
-### Installing system dependencies
+You can install everything in your system or create a
+[Docker](http://docker.io) image using the provided `Dockerfile` - jump to
+"Using Docker" if you prefer to install everything in a container instead of in
+your system.
 
-#### Installing compilers and needed libraries
+### Installing in your system
+
+#### Compilers and needed libraries
 
 We need to install some libraries, compiler and services. To do it on
 Debian-based systems (such as Ubuntu), run as root:
@@ -34,7 +39,7 @@ Debian-based systems (such as Ubuntu), run as root:
     apt-get install python-dev build-essential libxml2-dev libxslt1-dev zlib1g-dev libssl-dev
 
 
-#### Installing httrac
+#### httrac
 
 We also need to download and compile [httrack](http://www.httrack.com/), as we
 use it to crawl the Web pages. To install it, run as root:
@@ -50,7 +55,7 @@ use it to crawl the Web pages. To install it, run as root:
     rm -rf httrack*
 
 
-#### Installing MongoDB
+#### MongoDB
 
 We also use [MongoDB](http://www.mongodb.org/) database (to store our data), so
 you need to install and run it. On Debian/Ubuntu GNU/Linux systems, execute as
@@ -72,7 +77,7 @@ local MongoDB server (if not, an error will be displayed). To exit the shell,
 just type `Ctrl+c`.
 
 
-#### Installing virtualenv and virtualenvwrapper
+#### virtualenv and virtualenvwrapper
 
 If you don't have virtualenv and virtualenvwrapper installed in your system,
 do it before running the commands above. If you're on a Debian or Ubuntu
@@ -90,7 +95,7 @@ You need to reload your shell to the modifications take action or execute
 `source ~/.bashrc` just after adding these lines to the file.
 
 
-### Create a virtualenv
+#### Python requirements
 
 After having all system dependencies installed, you need to create a
 virtualenv to this project and install our Python dependencies:
@@ -98,6 +103,34 @@ virtualenv to this project and install our Python dependencies:
     mkvirtualenv mediacloud_backend
     pip install -r requirements.txt
 
+### Using Docker
+
+To build a new image using [Docker](http://docker.io), just execute in the root
+of this repository:
+
+    docker build -t mcb .
+
+Then it'll build an image called `mcb` with everything you need installed (and
+the code copied to `/srv/mediacloud_backend`).
+
+To run a container from this image, execute:
+
+    docker run -t -i mcb /bin/bash
+
+As we don't run any service on the container by default (with the command above
+you only run Bash - nothing more is run on the container), you need to run
+MongoDB server before using any script that needs it. Execute on the
+container's shell:
+
+    mongod -f /etc/mongodb.conf &
+
+Then you can go to `/srv/mediacloud_backend/capture` and run any of the scripts
+there (you don't need to active a virtualenv), for example:
+
+    cd /srv/mediacloud_backend/capture
+    python googlerss.py
+    python extract_feeds.py
+    python downloader.py
 
 ## Using the scripts
 
