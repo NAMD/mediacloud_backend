@@ -1,14 +1,41 @@
 {% extends 'layouts/main.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-
+<script type="text/javascript">
+$(document).ready(function() {
+    var oTable = $('#feeds').dataTable( {
+        "bProcessing": true,
+        "sAjaxSource": "/feeds/json",
+        "aoColumns": [
+            {% for key in keys %}
+            { "mData": "{{ key }}" },
+            {% endfor %}
+        ]
+    } );
+} );
+</script>
 <div class="page-header">
   <h1>Feeds Being Tracked</h1>
-<ol>
-   {% for f in feeds.data %}
-    <li>{{ f.link }}</li>
-    {% endfor %}
-</ol>
+
+<table cellpadding="5" cellspacing="0" border="0" class="display" id="feeds">
+    <thead>
+        <tr>
+            {% for key in keys %}
+            <th width="auto">{{ key }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+    <tfoot>
+        <tr>
+            {% for key in keys %}
+            <th width="auto">{{ key }}</th>
+            {% endfor %}
+        </tr>
+    </tfoot>
+</table>
 </div>
 
 

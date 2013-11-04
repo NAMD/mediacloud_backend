@@ -123,17 +123,23 @@ def feeds():
     conf = models.Configuration.query.first()
     C = pymongo.MongoClient(conf.mongohost)
     nfeeds = C.MCDB.feeds.count()
-    feeds = fetch_docs('feeds')
-
-
-    return render_template('pages/feeds.html',nfeeds=nfeeds, feeds=feeds)
+    feeds = json.loads(fetch_docs('feeds'))
+    try:
+        keys = feeds[0].keys()
+    except KeyError:
+        keys = ["No", "feeds", "in", "Database"]
+    return render_template('pages/feeds.html', nfeeds=nfeeds, feeds=feeds, keys=keys)
 
 @app.route('/articles')
 def articles():
     conf = models.Configuration.query.first()
     C = pymongo.MongoClient(conf.mongohost)
-    articles = fetch_docs('articles')
-    return render_template('pages/articles.html', articles=articles)
+    articles = json.loads(fetch_docs('articles'))
+    try:
+        keys = articles[0].keys()
+    except KeyError:
+        keys = ["No", "Articles", "in", "Database"]
+    return render_template('pages/articles.html', articles=articles, keys=keys)
 
 # Utility functions
 
@@ -157,16 +163,23 @@ def fix_json_output(json_obj):
             return data
         elif data_type == pymongo.binary.Binary:
             ud = base64.encodestring(d)
-            return { '$binary' : ud, '$type': d.subtype }
+            return {'$binary': ud, '$type': d.subtype }
         else:
             return d
 
     return _fix_json(json_obj)
 
+@app.route("/feeds/json")
+def json_feeds(start=0, stop=100):
+    return fetch_docs('feeds', stop)
+
+@app.route("/articles/json")
+def json_articles(start=0, stop=100):
+    return fetch_docs('articles', stop)
+
 def fetch_docs(colname, limit=100):
     """
     Query MongoDB in the collection specified
-
     Return json with requested data or error
     """
     conf = models.Configuration.query.first()
