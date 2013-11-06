@@ -30,6 +30,7 @@ def shutdown_session(exception=None):
 
 # Login required decorator.
 
+
 def login_required(test):
     @wraps(test)
     def wrap(*args, **kwargs):
@@ -39,6 +40,7 @@ def login_required(test):
             flash('You need to login first.')
             return redirect(url_for('login'))
     return wrap
+
 
 @app.route('/dbstats')
 def db_stats():
@@ -67,6 +69,7 @@ def db_stats():
 # Controllers.
 #----------------------------------------------------------------------------#
 
+
 @app.route('/')
 def home():
     conf = models.Configuration.query.first()
@@ -78,6 +81,7 @@ def home():
         data = {}
     return render_template('pages/placeholder.home.html', data=data)
 
+
 @app.route('/about')
 def about():
     return render_template('pages/placeholder.about.html')
@@ -87,15 +91,18 @@ def login():
     form = LoginForm(request.form)
     return render_template('forms/login.html', form = form)
 
+
 @app.route('/register')
 def register():
     form = RegisterForm(request.form)
     return render_template('forms/register.html', form = form)
 
+
 @app.route('/forgot')
 def forgot():
     form = ForgotForm(request.form)
     return render_template('forms/forgot.html', form = form)
+
 
 @app.route('/config', methods=['GET', 'POST'])
 def config():
@@ -118,6 +125,7 @@ def config():
             form.pyplnpasswd.data = conf.pyplnpasswd
     return render_template('forms/config.html', form=form)
 
+
 @app.route('/feeds')
 def feeds():
     conf = models.Configuration.query.first()
@@ -130,6 +138,7 @@ def feeds():
         keys = ["No", "feeds", "in", "Database"]
     return render_template('pages/feeds.html', nfeeds=nfeeds, feeds=feeds, keys=keys)
 
+
 @app.route('/articles')
 def articles():
     conf = models.Configuration.query.first()
@@ -141,13 +150,16 @@ def articles():
         keys = ["No", "Articles", "in", "Database"]
     return render_template('pages/articles.html', articles=articles, keys=keys)
 
+
 @app.route("/feeds/json")
 def json_feeds(start=0, stop=100):
     return fetch_docs('feeds', stop)
 
+
 @app.route("/articles/json")
 def json_articles(start=0, stop=100):
     return fetch_docs('articles', stop)
+
 
 @app.route("/query/<coll_name>", methods=['GET'])
 def mongo_query(coll_name):
@@ -192,6 +204,8 @@ def mongo_query(coll_name):
 #-----------------------------#
 # Utility functions
 #-----------------------------#
+
+
 def fix_json_output(json_obj):
     """
     Handle binary data in output json, because pymongo cannot encode them properly (generating UnicodeDecode exceptions)
@@ -218,7 +232,6 @@ def fix_json_output(json_obj):
             return d
 
     return _fix_json(json_obj)
-
 
 
 def fetch_docs(colname, limit=100):
@@ -268,6 +281,7 @@ def fetch_docs(colname, limit=100):
 def internal_error(error):
     #db_session.rollback()
     return render_template('errors/500.html'), 500
+
 
 @app.errorhandler(404)
 def internal_error(error):
