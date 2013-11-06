@@ -2,7 +2,7 @@
 # Imports.
 #----------------------------------------------------------------------------#
 
-from flask import Flask,render_template, jsonify, flash, request, redirect, url_for, Response, make_response  # do not use '*'; actually input the dependencies.
+from flask import Flask, render_template, jsonify, flash, request, redirect, url_for, Response, make_response  # do not use '*'; actually input the dependencies.
 from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
@@ -29,7 +29,7 @@ def shutdown_session(exception=None):
 '''
 
 # Login required decorator.
-'''
+
 def login_required(test):
     @wraps(test)
     def wrap(*args, **kwargs):
@@ -39,7 +39,7 @@ def login_required(test):
             flash('You need to login first.')
             return redirect(url_for('login'))
     return wrap
-'''
+
 @app.route('/dbstats')
 def db_stats():
     """
@@ -141,14 +141,64 @@ def articles():
         keys = ["No", "Articles", "in", "Database"]
     return render_template('pages/articles.html', articles=articles, keys=keys)
 
-# Utility functions
+@app.route("/feeds/json")
+def json_feeds(start=0, stop=100):
+    return fetch_docs('feeds', stop)
 
+@app.route("/articles/json")
+def json_articles(start=0, stop=100):
+    return fetch_docs('articles', stop)
+
+@app.route("/query/<coll_name>", methods=['GET'])
+def mongo_query(coll_name):
+    """
+    From GET take:  login, password : database credentials(optional, currently ignored)
+         q -  mongo query as JSON dictionary
+         sort - sort info (JSON dictionary)
+         limit
+         skip
+         fields
+
+    Return json with requested data or error
+    """
+    try:
+        conf = models.Configuration.query.first()
+        conn = pymongo.MongoClient(conf.mongohost)
+        db = conn.MCDB
+        coll = db[coll_name]
+        resp = {}
+        query = json.loads(request.args.get('q', ''), object_hook=json_util.object_hook)
+        limit = int(request.args.get('limit', 10))
+        sort = request.args.get('sort', None)
+        skip = int(request.args.get('skip', 0))
+        if sort is not None:
+            sort = json.loads(sort)
+        cur = coll.find(query, skip=skip, limit=limit)
+        cnt = cur.count()
+        if sort is not None:
+            cur = cur.sort(sort)
+        resp = [a for a in cur]
+        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=pymongo.json_util.default)
+    except Exception as e:
+        app.logger.error(repr(e))
+        import traceback
+        traceback.print_stack()
+        json_response = json.dumps({'error': repr(e)})
+    finally:
+        conn.disconnect()
+    resp = Response(json_response, mimetype='application/json')
+    return resp
+
+#-----------------------------#
+# Utility functions
+#-----------------------------#
 def fix_json_output(json_obj):
     """
-        Handle binary data in output json, because pymongo cannot encode them properly (generating UnicodeDecode exceptions)
+    Handle binary data in output json, because pymongo cannot encode them properly (generating UnicodeDecode exceptions)
+    :param json_obj:
     """
     def _fix_json(d):
-        if d in [None, [], {}]: #if not d: breaks empty Binary
+        if d in [None, [], {}]:  # if not d: breaks empty Binary
             return d
         data_type = type(d)
         if data_type == list:
@@ -169,13 +219,7 @@ def fix_json_output(json_obj):
 
     return _fix_json(json_obj)
 
-@app.route("/feeds/json")
-def json_feeds(start=0, stop=100):
-    return fetch_docs('feeds', stop)
 
-@app.route("/articles/json")
-def json_articles(start=0, stop=100):
-    return fetch_docs('articles', stop)
 
 def fetch_docs(colname, limit=100):
     """
