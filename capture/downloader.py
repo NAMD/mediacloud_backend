@@ -169,29 +169,35 @@ def fetch_feed(feed):
         logger.error("This feed failed: %s", f)
     f.parse()
 
+
 def parallel_fetch():
     """
     Starts parallel threads to fetch feeds.
     """
-    feeds = FEEDS.find()
-    feedurls = []
+    feed_cursor = FEEDS.find()
+    feed_urls = []
     t0 = time.time()
-    for feed in feeds:
-        t = feed.get('title_detail', feed.get('subtitle_detail', None))
-        if t is None:
-            logger.error("Feed %s does not contain ", feed.get('link', None))
-            continue
-        try:
-            feedurls.append(t["base"].decode('utf8'))
-        except KeyError:
-            logger.error("Feed %s does not contain base URL", feed.get('link', None))
-        except UnicodeEncodeError:
-            logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
-        #fetch_feed(t["base"].decode('utf8'))
+    feeds_scanned = 0
+    while feeds_scanned < feed_cursor.count():
+        feed_cursor = FEEDS.find()[feeds_scanned:feeds_scanned+100]
+        for feed in feed_cursor:
+            t = feed.get('title_detail', feed.get('subtitle_detail', None))
+            if t is None:
+                logger.error("Feed %s does not contain ", feed.get('link', None))
+                continue
+            try:
+                feed_urls.append(t["base"].decode('utf8'))
+            except KeyError:
+                logger.error("Feed %s does not contain base URL", feed.get('link', None))
+            except UnicodeEncodeError:
+                logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
+            #fetch_feed(t["base"].decode('utf8'))
 
-    P = ThreadPool(20)
-    P.map(fetch_feed, feedurls)
-    logger.info("Time taken to download %s feeds: %s minutes.", len(feedurls), (time.time()-t0)/60.)
+        P = ThreadPool(20)
+        P.map(fetch_feed, feed_urls)
+        P.close()
+        feeds_scanned += 100
+    logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
     parallel_fetch()
