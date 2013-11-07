@@ -174,12 +174,12 @@ def parallel_fetch():
     """
     Starts parallel threads to fetch feeds.
     """
-    feed_cursor = FEEDS.find()
+    feed_cursor = FEEDS.find()  # Needed for first round of while
     feed_urls = []
     t0 = time.time()
     feeds_scanned = 0
     while feeds_scanned < feed_cursor.count():
-        feed_cursor = FEEDS.find()[feeds_scanned:feeds_scanned+100]
+        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100)
         for feed in feed_cursor:
             t = feed.get('title_detail', feed.get('subtitle_detail', None))
             if t is None:
@@ -196,7 +196,7 @@ def parallel_fetch():
         P = ThreadPool(20)
         P.map(fetch_feed, feed_urls)
         P.close()
-        feeds_scanned += 100
+        feeds_scanned += len(feed_urls)
     logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
