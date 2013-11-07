@@ -2,7 +2,7 @@
 # Imports.
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, jsonify, flash, request, redirect, url_for, Response, make_response  # do not use '*'; actually input the dependencies.
+from flask import Flask, render_template, jsonify, flash, request, redirect, url_for, Response, make_response
 from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
@@ -12,14 +12,15 @@ import json
 import pymongo
 from bson import json_util
 import base64
+from appinit import app, db
 
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
 
-app = Flask(__name__)
-app.config.from_object('config')
-db = SQLAlchemy(app)
+# app = Flask(__name__)
+# app.config.from_object('config')
+# db = SQLAlchemy(app)
 
 # Automatically tear down SQLAlchemy.
 '''
@@ -30,16 +31,16 @@ def shutdown_session(exception=None):
 
 # Login required decorator.
 
-
-def login_required(test):
-    @wraps(test)
-    def wrap(*args, **kwargs):
-        if 'logged_in' in session:
-            return test(*args, **kwargs)
-        else:
-            flash('You need to login first.')
-            return redirect(url_for('login'))
-    return wrap
+#
+# def login_required(test):
+#     @wraps(test)
+#     def wrap(*args, **kwargs):
+#         if 'logged_in' in session:
+#             return test(*args, **kwargs)
+#         else:
+#             flash('You need to login first.')
+#             return redirect(url_for('login'))
+#     return wrap
 
 
 @app.route('/dbstats')
@@ -175,7 +176,7 @@ def mongo_query(coll_name):
     """
     try:
         conf = models.Configuration.query.first()
-        conn = pymongo.MongoClient(conf.mongohost)
+        conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
         coll = db[coll_name]
         resp = {}
@@ -193,8 +194,8 @@ def mongo_query(coll_name):
         json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=pymongo.json_util.default)
     except Exception as e:
         app.logger.error(repr(e))
-        import traceback
-        traceback.print_stack()
+        # import traceback
+        # traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
     finally:
         conn.disconnect()
