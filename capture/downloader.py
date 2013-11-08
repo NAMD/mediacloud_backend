@@ -9,6 +9,8 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
+
+
 import bs4
 import feedparser
 import pymongo
@@ -52,6 +54,10 @@ client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
+
+config = {
+    'threads': 20,  # Number of threads used in the fetching pool
+}
 
 
 class RSSDownload(object):
@@ -174,29 +180,30 @@ def parallel_fetch():
     """
     Starts parallel threads to fetch feeds.
     """
-    feed_cursor = FEEDS.find()  # Needed for first round of while
+    feed_count = FEEDS.count()  # Needed for first round of while
     feed_urls = []
     t0 = time.time()
     feeds_scanned = 0
-    while feeds_scanned < feed_cursor.count():
+    while feeds_scanned < feed_count():
         feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100)
         for feed in feed_cursor:
-            t = feed.get('title_detail', feed.get('subtitle_detail', None))
-            if t is None:
+            feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
+            if feed_title is None:
                 logger.error("Feed %s does not contain ", feed.get('link', None))
                 continue
             try:
-                feed_urls.append(t["base"].decode('utf8'))
+                feed_urls.append(feed_title["base"].decode('utf8'))
             except KeyError:
                 logger.error("Feed %s does not contain base URL", feed.get('link', None))
             except UnicodeEncodeError:
                 logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
             #fetch_feed(t["base"].decode('utf8'))
 
-        P = ThreadPool(20)
-        P.map(fetch_feed, feed_urls)
-        P.close()
+        thread_pool = ThreadPool(config['threads'])
+        thread_pool.map(fetch_feed, feed_urls)
+        thread_pool.close()
         feeds_scanned += len(feed_urls)
+        feed_count = FEEDS.count()
     logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
