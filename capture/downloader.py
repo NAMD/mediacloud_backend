@@ -86,8 +86,11 @@ class RSSDownload(object):
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
                     #ks.append(k)
             #[a.pop(i) for i in ks]
-
-            r = requests.get(entry.link)
+            try:
+                r = requests.get(entry.link)
+            except requests.exceptions.ConnectionError:
+                logger.error("Failed to fetch %s", entry.link)
+                continue
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
