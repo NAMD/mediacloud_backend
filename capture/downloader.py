@@ -184,7 +184,7 @@ def parallel_fetch():
     feed_urls = []
     t0 = time.time()
     feeds_scanned = 0
-    while feeds_scanned < feed_count():
+    while feeds_scanned < feed_count:
         feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100)
         for feed in feed_cursor:
             feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
