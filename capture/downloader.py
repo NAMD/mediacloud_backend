@@ -206,6 +206,7 @@ def parallel_fetch():
         thread_pool.map(fetch_feed, feed_urls)
         thread_pool.close()
         feeds_scanned += len(feed_urls)
+        logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
         feed_count = FEEDS.count()
     logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
