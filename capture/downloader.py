@@ -117,7 +117,8 @@ class RSSDownload(object):
                 continue
             # Turn the tags field into a simple list of tags
             try:
-                entry['tags'] = [i['term'] for i in entry.tags]
+                tag_list = [tag['term'] for tag in entry.tags]
+                entry['tags'] = tag_list
             except AttributeError:
                 logger.info("This feed has no tags: %s", entry.link)
             try:
