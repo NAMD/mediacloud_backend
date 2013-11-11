@@ -9,6 +9,8 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
+
+
 import bs4
 import feedparser
 import pymongo
@@ -53,6 +55,10 @@ MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
+config = {
+    'threads': 20,  # Number of threads used in the fetching pool
+}
+
 
 class RSSDownload(object):
     def __init__(self, url):
@@ -80,8 +86,11 @@ class RSSDownload(object):
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
                     #ks.append(k)
             #[a.pop(i) for i in ks]
-
-            r = requests.get(entry.link)
+            try:
+                r = requests.get(entry.link)
+            except requests.exceptions.ConnectionError:
+                logger.error("Failed to fetch %s", entry.link)
+                continue
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
@@ -169,29 +178,36 @@ def fetch_feed(feed):
         logger.error("This feed failed: %s", f)
     f.parse()
 
+
 def parallel_fetch():
     """
     Starts parallel threads to fetch feeds.
     """
-    feeds = FEEDS.find()
-    feedurls = []
+    feed_count = FEEDS.count()  # Needed for first round of while
+    feed_urls = []
     t0 = time.time()
-    for feed in feeds:
-        t = feed.get('title_detail', feed.get('subtitle_detail', None))
-        if t is None:
-            logger.error("Feed %s does not contain ", feed.get('link', None))
-            continue
-        try:
-            feedurls.append(t["base"].decode('utf8'))
-        except KeyError:
-            logger.error("Feed %s does not contain base URL", feed.get('link', None))
-        except UnicodeEncodeError:
-            logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
-        #fetch_feed(t["base"].decode('utf8'))
+    feeds_scanned = 0
+    while feeds_scanned < feed_count:
+        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100)
+        for feed in feed_cursor:
+            feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
+            if feed_title is None:
+                logger.error("Feed %s does not contain ", feed.get('link', None))
+                continue
+            try:
+                feed_urls.append(feed_title["base"].decode('utf8'))
+            except KeyError:
+                logger.error("Feed %s does not contain base URL", feed.get('link', None))
+            except UnicodeEncodeError:
+                logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
+            #fetch_feed(t["base"].decode('utf8'))
 
-    P = ThreadPool(20)
-    P.map(fetch_feed, feedurls)
-    logger.info("Time taken to download %s feeds: %s minutes.", len(feedurls), (time.time()-t0)/60.)
+        thread_pool = ThreadPool(config['threads'])
+        thread_pool.map(fetch_feed, feed_urls)
+        thread_pool.close()
+        feeds_scanned += len(feed_urls)
+        feed_count = FEEDS.count()
+    logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
     parallel_fetch()
