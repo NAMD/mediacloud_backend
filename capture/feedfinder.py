@@ -279,11 +279,10 @@ def store_feeds(feed_list):
         res = FEEDS.find({"title_detail.base": f}, fields=["title_detail"])
         if not list(res):
             # Delete fields which cannot be serialized into BSON
-            ks = []
+
             for k, v in response.feed.iteritems():
-                if isinstance(v, time.struct_time):
-                    ks.append(k)
-            [response.feed.pop(k) for k in ks]
+                # Convert to datetime instead of removing
+                entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
             try:
                 FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:
