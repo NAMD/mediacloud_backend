@@ -192,7 +192,7 @@ def parallel_fetch():
     t0 = time.time()
     feeds_scanned = 0
     while feeds_scanned < feed_count:
-        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100)
+        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100).sort({"last_visited": 1, "updated": 1})
         for feed in feed_cursor:
             if "updated" in feed:
                 FEEDS.update({"_id":feed["_id"]}, {"updated": parse(feed["updated"])})
