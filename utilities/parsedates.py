@@ -17,19 +17,17 @@ import pymongo
 
 def parse_dates(collection):
     for doc in collection.find():
-        if "published" in doc:
-            if not isinstance(doc['published'], datetime.datetime):
-                print "updating %s"%doc["_id"]
-                try:
-                    collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
-                except ValueError:
-                    print "Could not parse string: %s" % doc['published']
-        if "updated" in doc:
-            if not isinstance(doc['updated'], datetime.datetime):
-                try:
-                    collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
-                except ValueError:
-                    print "Could not parse string: %s" % doc['updated']
+        if "published" in doc and not isinstance(doc['published'], datetime.datetime):
+            print "updating {0:s}".format(doc["_id"])
+            try:
+                collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
+            except ValueError:
+                print "Could not parse string: {0:s}".format(doc['published'])
+        if "updated" in doc and not isinstance(doc['updated'], datetime.datetime):
+            try:
+                collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
+            except ValueError:
+                print "Could not parse string: {0:s}".format(doc['updated'])
 
 if __name__ == "__main__":
     ## Media Cloud database setup
