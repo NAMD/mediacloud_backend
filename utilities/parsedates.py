@@ -17,7 +17,6 @@ import sys
 def parsedates(collection):
     for doc in collection.find():
         if "published" in doc:
-            continue
             if not isinstance(doc['published'], datetime.datetime):
                 print "updating %s"%doc["_id"]
                 try:
@@ -35,5 +34,8 @@ if __name__=="__main__":
     ## Media Cloud database setup
     client = pymongo.MongoClient(sys.argv[1])
     MCDB = client.MCDB
-    ARTICLES = MCDB.articles  # Article collection
-    parsedates(ARTICLES)
+    if len(sys.argv) > 2:
+        Collection = MCDB[sys.argv[2]]  # user-defined collection
+    else:
+        Collection = MCDB['articles']  # Article collection (default)
+    parsedates(Collection)
