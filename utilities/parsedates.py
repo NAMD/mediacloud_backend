@@ -15,7 +15,7 @@ from dateutil.parser import parse
 import pymongo
 
 
-def parsedates(collection):
+def parse_dates(collection):
     for doc in collection.find():
         if "published" in doc:
             if not isinstance(doc['published'], datetime.datetime):
@@ -31,7 +31,7 @@ def parsedates(collection):
                 except ValueError:
                     print "Could not parse string: %s" % doc['updated']
 
-if __name__=="__main__":
+if __name__ == "__main__":
     ## Media Cloud database setup
     client = pymongo.MongoClient(sys.argv[1])
     MCDB = client.MCDB
@@ -39,4 +39,4 @@ if __name__=="__main__":
         Collection = MCDB[sys.argv[2]]  # user-defined collection
     else:
         Collection = MCDB['articles']  # Article collection (default)
-    parsedates(Collection)
+    parse_dates(Collection)
