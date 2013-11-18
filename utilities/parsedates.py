@@ -8,10 +8,11 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
-from dateutil.parser import parse
 import datetime
-import pymongo
 import sys
+
+from dateutil.parser import parse
+import pymongo
 
 
 def parsedates(collection):
