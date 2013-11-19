@@ -36,10 +36,10 @@ def url_scanner(url, depth=1):
         for l in t:
             urls.append(l['URL'])
     try:
-        shutil.rmtree(tempdir + 'hts-cache', ignore_errors=True)
-        shutil.rmtree(tempdir + url.split("://")[-1].split('/')[0])
-        os.remove(tempdir + 'cookies.txt')
-        os.remove(tempdir + 'hts-log.txt')
+        shutil.rmtree(os.path.join(tempdir, 'hts-cache'), ignore_errors=True)
+        shutil.rmtree(os.path.join(tempdir, url.split("://")[-1].split('/')[0]), ignore_errors=True)
+        os.remove(os.path.join(tempdir, 'cookies.txt'))
+        os.remove(os.path.join(tempdir, 'hts-log.txt'))
     except OSError as e:
         print e
     os.chdir(current_dir)
