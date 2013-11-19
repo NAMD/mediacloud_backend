@@ -11,6 +11,8 @@ __docformat__ = 'restructuredtext en'
 import csv
 import subprocess
 import os
+import tempfile
+import shutil
 
 def url_scanner(url, depth=1):
     """
@@ -19,6 +21,8 @@ def url_scanner(url, depth=1):
     :param url: Initial url
     :return: list of urls
     """
+    current_dir = os.getcwd()
+    os.chdir(tempfile.gettempdir())
     agent = "Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7"
     try:
         subprocess.check_output(['httrack', '-p0', '-%P', '-b1', '-i', '-d', '-T1', '-R1', '-r%s' % depth, '-c16', '-F "%s"' % agent, url])
@@ -30,8 +34,13 @@ def url_scanner(url, depth=1):
         urls = []
         for l in t:
             urls.append(l['URL'])
-    subprocess.call(['rm', '-rf', 'hts-*'])
-    subprocess.call(['rm', '-rf', 'cookies.txt'])
-    subprocess.call(['rm', '-rf', url])
+    shutil.rmtree('hts-cache', ignore_errors=True)
+    shutil.rmtree(url.split("://")[-1])
+    try:
+        os.remove('cookies.txt')
+        os.remove('hts-log.txt')
+    except OSError as e:
+        print e
+    os.chdir(current_dir)
     return urls
 
