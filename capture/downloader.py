@@ -61,8 +61,9 @@ config = {
 
 
 class RSSDownload(object):
-    def __init__(self, url):
+    def __init__(self, feed_id, url):
         self.url = url
+        self.feed_id = feed_id
 
     def parse(self):
         response = feedparser.parse(self.url)
@@ -71,6 +72,8 @@ class RSSDownload(object):
             return
 
         self._save_articles(response.entries)
+        if self.feed_id is not None:
+            FEEDS.update({"_id": self.feed_id}, {"last_visited": datetime.datetime.now()})
         return ((r.title, r.link) for r in response.entries)
 
     def _save_articles(self, entries):
@@ -174,7 +177,7 @@ def detect_language(text):
 
 def fetch_feed(feed):
     try:
-        f = RSSDownload(feed)
+        f = RSSDownload(feed[0], feed[1])
     except InvalidDocument:
         logger.error("This feed failed: %s", f)
     f.parse()
@@ -189,14 +192,16 @@ def parallel_fetch():
     t0 = time.time()
     feeds_scanned = 0
     while feeds_scanned < feed_count:
-        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100)
+        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100).sort({"last_visited": 1, "updated": 1})
         for feed in feed_cursor:
+            if "updated" in feed:
+                FEEDS.update({"_id":feed["_id"]}, {"updated": parse(feed["updated"])})
             feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
             if feed_title is None:
                 logger.error("Feed %s does not contain ", feed.get('link', None))
                 continue
             try:
-                feed_urls.append(feed_title["base"].decode('utf8'))
+                feed_urls.append((feed['_id'], feed_title["base"].decode('utf8')))
             except KeyError:
                 logger.error("Feed %s does not contain base URL", feed.get('link', None))
             except UnicodeEncodeError:

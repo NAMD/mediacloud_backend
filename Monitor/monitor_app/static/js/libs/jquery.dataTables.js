@@ -741,7 +741,7 @@
 		/**
 		 * Get an array of data for a given row from the internal data cache
 		 *  @param {object} oSettings dataTables settings object
-		 *  @param {int} iRow aoData row id
+		 *  @param {int} iRow aoData row feed_id
 		 *  @param {string} sSpecific data get type ('type' 'filter' 'sort')
 		 *  @param {array} aiColumns Array of column indexes to get data from
 		 *  @returns {array} Data array
@@ -761,7 +761,7 @@
 		/**
 		 * Get the data for a given cell from the internal cache, taking into account data mapping
 		 *  @param {object} oSettings dataTables settings object
-		 *  @param {int} iRow aoData row id
+		 *  @param {int} iRow aoData row feed_id
 		 *  @param {int} iCol Column index
 		 *  @param {string} sSpecific data get type ('display', 'type' 'filter' 'sort')
 		 *  @returns {*} Cell data
@@ -807,7 +807,7 @@
 		/**
 		 * Set the value for a specific cell, into the internal data cache
 		 *  @param {object} oSettings dataTables settings object
-		 *  @param {int} iRow aoData row id
+		 *  @param {int} iRow aoData row feed_id
 		 *  @param {int} iCol Column index
 		 *  @param {*} val Value to set
 		 *  @memberof DataTable#oApi
@@ -1623,7 +1623,7 @@
 			/* 
 			 * All DataTables are wrapped in a div
 			 */
-			oSettings.nTableWrapper = $('<div id="'+oSettings.sTableId+'_wrapper" class="'+oSettings.oClasses.sWrapper+'" role="grid"></div>')[0];
+			oSettings.nTableWrapper = $('<div feed_id="'+oSettings.sTableId+'_wrapper" class="'+oSettings.oClasses.sWrapper+'" role="grid"></div>')[0];
 			oSettings.nTableReinsertBefore = oSettings.nTable.nextSibling;
 		
 			/* Track where we want to insert the option */
@@ -1642,7 +1642,7 @@
 					/* New container div */
 					nNewNode = $('<div></div>')[0];
 					
-					/* Check to see if we should append an id and/or a class name to the container */
+					/* Check to see if we should append an feed_id and/or a class name to the container */
 					cNext = aDom[i+1];
 					if ( cNext == "'" || cNext == '"' )
 					{
@@ -1664,7 +1664,7 @@
 							sAttr = oSettings.oClasses.sJUIFooter;
 						}
 						
-						/* The attribute can be in the format of "#id.class", "#id" or "class" This logic
+						/* The attribute can be in the format of "#feed_id.class", "#feed_id" or "class" This logic
 						 * breaks the string into parts and applies them as needed
 						 */
 						if ( sAttr.indexOf('.') != -1 )
@@ -2481,7 +2481,7 @@
 					"sName": "information"
 				} );
 				
-				/* Add id */
+				/* Add feed_id */
 				nInfo.id = oSettings.sTableId+'_info';
 			}
 			oSettings.nTable.setAttribute( 'aria-describedby', oSettings.sTableId+'_info' );
@@ -4704,7 +4704,7 @@
 		{
 			var sAlert = (oSettings===null) ?
 				"DataTables warning: "+sMesg :
-				"DataTables warning (table id = '"+oSettings.sTableId+"'): "+sMesg;
+				"DataTables warning (table feed_id = '"+oSettings.sTableId+"'): "+sMesg;
 			
 			if ( iLevel === 0 )
 			{
@@ -4927,7 +4927,7 @@
 			var n = $(
 				'<div style="position:absolute; top:0; left:0; height:1px; width:1px; overflow:hidden">'+
 					'<div style="position:absolute; top:1px; left:1px; width:100px; overflow:scroll;">'+
-						'<div id="DT_BrowserTest" style="width:100%; height:10px;"></div>'+
+						'<div feed_id="DT_BrowserTest" style="width:100%; height:10px;"></div>'+
 					'</div>'+
 				'</div>')[0];
 		
@@ -6405,7 +6405,7 @@
 				/* If the element we are initialising has the same ID as a table which was previously
 				 * initialised, but the table nodes don't match (from before) then we destroy the old
 				 * instance by simply deleting it. This is under the assumption that the table has been
-				 * destroyed by other methods. Anyone using non-id selectors will need to do this manually
+				 * destroyed by other methods. Anyone using non-feed_id selectors will need to do this manually
 				 */
 				if ( DataTable.settings[i].sTableId == this.id )
 				{
@@ -9645,7 +9645,7 @@
 		 *       <ul>
 		 *         <li>'&lt;' and '&gt;' - div elements</li>
 		 *         <li>'&lt;"class" and '&gt;' - div with a class</li>
-		 *         <li>'&lt;"#id" and '&gt;' - div with an ID</li>
+		 *         <li>'&lt;"#feed_id" and '&gt;' - div with an ID</li>
 		 *       </ul>
 		 *     </li>
 		 *     <li>Examples:

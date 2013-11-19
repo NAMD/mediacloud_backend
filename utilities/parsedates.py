@@ -8,33 +8,33 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
-from dateutil.parser import parse
 import datetime
-import pymongo
 import sys
 
+from dateutil.parser import parse
+import pymongo
 
-def parsedates(collection):
+
+def parse_dates(collection):
     for doc in collection.find():
-        if not "published" in doc:
-            continue
-        if not isinstance(doc['published'], datetime.datetime):
-            print "updating %s"%doc["_id"]
+        if "published" in doc and not isinstance(doc['published'], datetime.datetime):
+            print "updating {0:s}".format(doc["_id"])
             try:
                 collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
             except ValueError:
-                print "Could not parse string: %s" % doc['published']
-        if not "updated" in doc:
-            continue
-        if not isinstance(doc['updated'], datetime.datetime):
+                print "Could not parse string: {0:s}".format(doc['published'])
+        if "updated" in doc and not isinstance(doc['updated'], datetime.datetime):
             try:
                 collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
             except ValueError:
-                print "Could not parse string: %s" % doc['updated']
+                print "Could not parse string: {0:s}".format(doc['updated'])
 
-if __name__=="__main__":
+if __name__ == "__main__":
     ## Media Cloud database setup
     client = pymongo.MongoClient(sys.argv[1])
     MCDB = client.MCDB
-    ARTICLES = MCDB.articles  # Article collection
-    parsedates(ARTICLES)
+    if len(sys.argv) > 2:
+        Collection = MCDB[sys.argv[2]]  # user-defined collection
+    else:
+        Collection = MCDB['articles']  # Article collection (default)
+    parse_dates(Collection)
