@@ -34,9 +34,9 @@ def url_scanner(url, depth=1):
         urls = []
         for l in t:
             urls.append(l['URL'])
-    shutil.rmtree('hts-cache', ignore_errors=True)
-    shutil.rmtree(url.split("://")[-1])
     try:
+        shutil.rmtree('hts-cache', ignore_errors=True)
+        shutil.rmtree(url.split("://")[-1].split('/')[0])
         os.remove('cookies.txt')
         os.remove('hts-log.txt')
     except OSError as e:
