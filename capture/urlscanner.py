@@ -38,7 +38,8 @@ def url_scanner(url, depth=1):
     try:
         shutil.rmtree(os.path.join(tempdir, 'hts-cache'), ignore_errors=True)
         shutil.rmtree(os.path.join(tempdir, url.split("://")[-1].split('/')[0]), ignore_errors=True)
-        os.remove(os.path.join(tempdir, 'cookies.txt'))
+        if os.path.exists(os.path.join(tempdir, 'cookies.txt')):
+            os.remove(os.path.join(tempdir, 'cookies.txt'))
         os.remove(os.path.join(tempdir, 'hts-log.txt'))
     except OSError as e:
         print e
