@@ -22,7 +22,8 @@ def url_scanner(url, depth=1):
     :return: list of urls
     """
     current_dir = os.getcwd()
-    os.chdir(tempfile.gettempdir())
+    tempdir = tempfile.gettempdir()
+    os.chdir(tempdir)
     agent = "Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7"
     try:
         subprocess.check_output(['httrack', '-p0', '-%P', '-b1', '-i', '-d', '-T1', '-R1', '-r%s' % depth, '-c16', '-F "%s"' % agent, url])
@@ -35,10 +36,10 @@ def url_scanner(url, depth=1):
         for l in t:
             urls.append(l['URL'])
     try:
-        shutil.rmtree('hts-cache', ignore_errors=True)
-        shutil.rmtree(url.split("://")[-1].split('/')[0])
-        os.remove('cookies.txt')
-        os.remove('hts-log.txt')
+        shutil.rmtree(tempdir + 'hts-cache', ignore_errors=True)
+        shutil.rmtree(tempdir + url.split("://")[-1].split('/')[0])
+        os.remove(tempdir + 'cookies.txt')
+        os.remove(tempdir + 'hts-log.txt')
     except OSError as e:
         print e
     os.chdir(current_dir)
