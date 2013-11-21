@@ -115,7 +115,7 @@ class RSSDownload(object):
                 else:
                     entry['updated'] = datetime.datetime.now()
             except UnicodeDecodeError:
-                print "could not decode page as ", encoding
+                print "could not decode page as ", r.encoding
                 continue
             # Turn the tags field into a simple list of tags
             try:
@@ -152,14 +152,14 @@ def compress_content(html):
     return encoded
 
 
-def decompress_content(comphtml):
+def decompress_content(compressed_html):
     """
     Decompress data compressed by `compress_content`
-    :param comphtml: compressed html document
+    :param compressed_html: compressed html document
     :return: original html
     """
-    # unencoded = b64.urlsafe_b64decode(str(comphtml))
-    decompressed = zlib.decompress(comphtml)
+    # unencoded = b64.urlsafe_b64decode(str(compressed_html))
+    decompressed = zlib.decompress(compressed_html)
     orig_html = CP.loads(decompressed)
     return orig_html
 
