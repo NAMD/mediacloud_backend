@@ -9,26 +9,25 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
-
-
-import bs4
-import feedparser
-import pymongo
 import logging
-import requests
-import settings
 from multiprocessing.pool import ThreadPool
-from bson.errors import InvalidDocument
-from pymongo.errors import DuplicateKeyError
-import bson
 import time
 import datetime
 import zlib
 import cPickle as CP
 import cld
+from logging.handlers import RotatingFileHandler
+
+import feedparser
+import pymongo
+import requests
+from bson.errors import InvalidDocument
+from pymongo.errors import DuplicateKeyError
+import bson
 from dateutil.parser import parse
 
-from logging.handlers import RotatingFileHandler
+import settings
+
 
 ###########################
 #  Setting up Logging
@@ -192,10 +191,14 @@ def parallel_fetch():
     t0 = time.time()
     feeds_scanned = 0
     while feeds_scanned < feed_count:
-        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100).sort({"last_visited": 1, "updated": 1})
+        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100, sort=[("last_visited", pymongo.DESCENDING),
+                                                                          ("updated", pymongo.DESCENDING)])
         for feed in feed_cursor:
             if "updated" in feed:
-                FEEDS.update({"_id":feed["_id"]}, {"updated": parse(feed["updated"])})
+                try:
+                    FEEDS.update({"_id": feed["_id"]}, {"updated": parse(feed["updated"])})
+                except ValueError:
+                    FEEDS.update({"_id": feed["_id"]}, {"updated": datetime.datetime.now()})
             feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
             if feed_title is None:
                 logger.error("Feed %s does not contain ", feed.get('link', None))
