@@ -21,6 +21,7 @@ from logging.handlers import RotatingFileHandler
 import feedparser
 import pymongo
 import requests
+from requests.exceptions import ConnectionError
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import bson
@@ -81,16 +82,15 @@ class RSSDownload(object):
             if "%set" in entry:  # hallmark of empty article
                 logger.error("Empty article from %s", self.url)
                 continue
-            ks = []
+
             for k, v in entry.iteritems():
                 if isinstance(v, time.struct_time):
-                    # Convert to datetime instead of removing
+                    # Convert to datetime
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
-                    #ks.append(k)
-            #[a.pop(i) for i in ks]
+
             try:
                 r = requests.get(entry.link)
-            except requests.exceptions.ConnectionError:
+            except ConnectionError:
                 logger.error("Failed to fetch %s", entry.link)
                 continue
             # print r.encoding
