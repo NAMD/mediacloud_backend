@@ -94,7 +94,7 @@ class RSSDownload(object):
                 logger.error("Failed to fetch %s", entry.get('link'))
                 continue
             except MissingSchema:
-                logger.error("Failed to fetch %s bacause of missing link.", entry.get('link'))
+                logger.error("Failed to fetch %s because of missing link.", entry.get('link'))
                 continue
             # print r.encoding
             try:
@@ -203,6 +203,9 @@ def parallel_fetch():
                     FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": parse(feed["updated"])}})
                 except ValueError:
                     FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": datetime.datetime.now()}})
+                except:
+                    logger.error("Failed to parse updated field.")
+                    pass
             feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
             if feed_title is None:
                 logger.error("Feed %s does not contain a title or subtitle ", feed.get('link', None))
