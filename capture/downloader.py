@@ -95,6 +95,7 @@ class RSSDownload(object):
                 continue
             except MissingSchema:
                 logger.error("Failed to fetch %s bacause of missing link.", entry.get('link'))
+                continue
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
