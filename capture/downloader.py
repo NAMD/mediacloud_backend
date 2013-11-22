@@ -56,7 +56,7 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
 config = {
-    'threads': 20,  # Number of threads used in the fetching pool
+    'threads': 15,  # Number of threads used in the fetching pool
 }
 
 
@@ -192,6 +192,7 @@ def parallel_fetch():
     feed_urls = []
     t0 = time.time()
     feeds_scanned = 0
+    thread_pool = ThreadPool(config['threads'])
     while feeds_scanned < feed_count:
         feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100, sort=[("last_visited", pymongo.DESCENDING),
                                                                           ("updated", pymongo.DESCENDING)])
@@ -212,13 +213,11 @@ def parallel_fetch():
             except UnicodeEncodeError:
                 logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
             #fetch_feed(t["base"].decode('utf8'))
-
-        thread_pool = ThreadPool(config['threads'])
         thread_pool.map(fetch_feed, feed_urls)
-        thread_pool.close()
         feeds_scanned += len(feed_urls)
         logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
         feed_count = FEEDS.count()
+    thread_pool.close()
     logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
