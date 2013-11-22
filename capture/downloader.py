@@ -21,7 +21,7 @@ from logging.handlers import RotatingFileHandler
 import feedparser
 import pymongo
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, MissingSchema
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import bson
@@ -73,8 +73,8 @@ class RSSDownload(object):
 
         self._save_articles(response.entries)
         if self.feed_id is not None:
-            FEEDS.update({"_id": self.feed_id}, {"last_visited": datetime.datetime.now()})
-        return ((r.title, r.link) for r in response.entries)
+            FEEDS.update({"_id": self.feed_id}, {"$set": {"last_visited": datetime.datetime.now()}})
+        return ((r.get('title'), r.get('link')) for r in response.entries)
 
     def _save_articles(self, entries):
         logger.info("Downloading %s articles from %s", len(entries), self.url)
@@ -89,10 +89,12 @@ class RSSDownload(object):
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
 
             try:
-                r = requests.get(entry.link)
+                r = requests.get(entry.get('link'))
             except ConnectionError:
-                logger.error("Failed to fetch %s", entry.link)
+                logger.error("Failed to fetch %s", entry.get('link'))
                 continue
+            except MissingSchema:
+                logger.error("Failed to fetch %s bacause of missing link.", entry.get('link'))
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
@@ -196,12 +198,12 @@ def parallel_fetch():
         for feed in feed_cursor:
             if "updated" in feed:
                 try:
-                    FEEDS.update({"_id": feed["_id"]}, {"updated": parse(feed["updated"])})
+                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": parse(feed["updated"])}})
                 except ValueError:
-                    FEEDS.update({"_id": feed["_id"]}, {"updated": datetime.datetime.now()})
+                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": datetime.datetime.now()}})
             feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
             if feed_title is None:
-                logger.error("Feed %s does not contain ", feed.get('link', None))
+                logger.error("Feed %s does not contain a title or subtitle ", feed.get('link', None))
                 continue
             try:
                 feed_urls.append((feed['_id'], feed_title["base"].decode('utf8')))
