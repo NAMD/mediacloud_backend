@@ -152,6 +152,18 @@ def articles():
     return render_template('pages/articles.html', articles=articles, keys=keys)
 
 
+@app.route('/urls')
+def articles():
+    conf = models.Configuration.query.first()
+    C = pymongo.MongoClient(conf.mongohost)
+    urls = json.loads(fetch_docs('urls'))
+    try:
+        keys = articles[0].keys()
+    except KeyError:
+        keys = ["No", "URLs", "in", "Database"]
+    return render_template('pages/urls.html', urls=urls, keys=keys)
+
+
 @app.route("/feeds/json")
 def json_feeds(start=0, stop=100):
     return fetch_docs('feeds', stop)
@@ -160,6 +172,11 @@ def json_feeds(start=0, stop=100):
 @app.route("/articles/json")
 def json_articles(start=0, stop=100):
     return fetch_docs('articles', stop)
+
+
+@app.route("/urls/json")
+def json_articles(start=0, stop=100):
+    return fetch_docs('urls', stop)
 
 
 @app.route("/query/<coll_name>", methods=['GET'])
