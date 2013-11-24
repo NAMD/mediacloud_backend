@@ -3,9 +3,9 @@
 {% block content %}
 <script type="text/javascript">
 $(document).ready(function() {
-    var oTable = $('#feeds').dataTable( {
+    var oTable = $('#urls').dataTable( {
         "bProcessing": true,
-        "sAjaxSource": "/feeds/json",
+        "sAjaxSource": "/urls/json",
         "aoColumns": [
             {% for key in keys %}
             { "mData": "{{ key }}" },
@@ -15,9 +15,9 @@ $(document).ready(function() {
 } );
 </script>
 <div class="page-header">
-  <h1>Feeds Being Tracked</h1>
+  <h1>Urls Being Scanned Daily for Feeds</h1>
 
-<table cellpadding="5" cellspacing="0" border="0" class="display" id="feeds">
+<table cellpadding="5" cellspacing="0" border="0" class="display" id="urls">
     <thead>
         <tr>
             {% for key in keys %}
