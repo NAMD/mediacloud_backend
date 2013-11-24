@@ -129,8 +129,7 @@ def config():
 
 @app.route('/feeds')
 def feeds():
-    conf = models.Configuration.query.first()
-    C = pymongo.MongoClient(conf.mongohost)
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     nfeeds = C.MCDB.feeds.count()
     feeds = json.loads(fetch_docs('feeds'))
     try:
@@ -142,8 +141,7 @@ def feeds():
 
 @app.route('/articles')
 def articles():
-    conf = models.Configuration.query.first()
-    C = pymongo.MongoClient(conf.mongohost)
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     articles = json.loads(fetch_docs('articles'))
     try:
         keys = articles[0].keys()
@@ -153,9 +151,8 @@ def articles():
 
 
 @app.route('/urls')
-def articles():
-    conf = models.Configuration.query.first()
-    C = pymongo.MongoClient(conf.mongohost)
+def urls():
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     urls = json.loads(fetch_docs('urls'))
     try:
         keys = articles[0].keys()
@@ -175,7 +172,7 @@ def json_articles(start=0, stop=100):
 
 
 @app.route("/urls/json")
-def json_articles(start=0, stop=100):
+def json_urls(start=0, stop=100):
     return fetch_docs('urls', stop)
 
 
@@ -197,7 +194,7 @@ def mongo_query(coll_name):
         db = conn.MCDB
         coll = db[coll_name]
         resp = {}
-        query = json.loads(request.args.get('q', ''), object_hook=json_util.object_hook)
+        query = json.loads(request.args.get('q', '{}'), object_hook=json_util.object_hook)
         limit = int(request.args.get('limit', 10))
         sort = request.args.get('sort', None)
         skip = int(request.args.get('skip', 0))
@@ -208,7 +205,7 @@ def mongo_query(coll_name):
         if sort is not None:
             cur = cur.sort(sort)
         resp = [a for a in cur]
-        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=pymongo.json_util.default)
+        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=None)
     except Exception as e:
         app.logger.error(repr(e))
         # import traceback
