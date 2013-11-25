@@ -9,26 +9,26 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
-
-
-import bs4
-import feedparser
-import pymongo
 import logging
-import requests
-import settings
 from multiprocessing.pool import ThreadPool
-from bson.errors import InvalidDocument
-from pymongo.errors import DuplicateKeyError
-import bson
 import time
 import datetime
 import zlib
 import cPickle as CP
 import cld
+from logging.handlers import RotatingFileHandler
+
+import feedparser
+import pymongo
+import requests
+from requests.exceptions import ConnectionError, MissingSchema
+from bson.errors import InvalidDocument
+from pymongo.errors import DuplicateKeyError
+import bson
 from dateutil.parser import parse
 
-from logging.handlers import RotatingFileHandler
+import settings
+
 
 ###########################
 #  Setting up Logging
@@ -56,7 +56,7 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
 config = {
-    'threads': 20,  # Number of threads used in the fetching pool
+    'threads': 15,  # Number of threads used in the fetching pool
 }
 
 
@@ -73,8 +73,8 @@ class RSSDownload(object):
 
         self._save_articles(response.entries)
         if self.feed_id is not None:
-            FEEDS.update({"_id": self.feed_id}, {"last_visited": datetime.datetime.now()})
-        return ((r.title, r.link) for r in response.entries)
+            FEEDS.update({"_id": self.feed_id}, {"$set": {"last_visited": datetime.datetime.now()}})
+        return ((r.get('title'), r.get('link')) for r in response.entries)
 
     def _save_articles(self, entries):
         logger.info("Downloading %s articles from %s", len(entries), self.url)
@@ -82,17 +82,19 @@ class RSSDownload(object):
             if "%set" in entry:  # hallmark of empty article
                 logger.error("Empty article from %s", self.url)
                 continue
-            ks = []
+
             for k, v in entry.iteritems():
                 if isinstance(v, time.struct_time):
-                    # Convert to datetime instead of removing
+                    # Convert to datetime
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
-                    #ks.append(k)
-            #[a.pop(i) for i in ks]
+
             try:
-                r = requests.get(entry.link)
-            except requests.exceptions.ConnectionError:
-                logger.error("Failed to fetch %s", entry.link)
+                r = requests.get(entry.get('link'))
+            except ConnectionError:
+                logger.error("Failed to fetch %s", entry.get('link'))
+                continue
+            except MissingSchema:
+                logger.error("Failed to fetch %s because of missing link.", entry.get('link'))
                 continue
             # print r.encoding
             try:
@@ -116,7 +118,7 @@ class RSSDownload(object):
                 else:
                     entry['updated'] = datetime.datetime.now()
             except UnicodeDecodeError:
-                print "could not decode page as ", encoding
+                print "could not decode page as ", r.encoding
                 continue
             # Turn the tags field into a simple list of tags
             try:
@@ -153,14 +155,14 @@ def compress_content(html):
     return encoded
 
 
-def decompress_content(comphtml):
+def decompress_content(compressed_html):
     """
     Decompress data compressed by `compress_content`
-    :param comphtml: compressed html document
+    :param compressed_html: compressed html document
     :return: original html
     """
-    # unencoded = b64.urlsafe_b64decode(str(comphtml))
-    decompressed = zlib.decompress(comphtml)
+    # unencoded = b64.urlsafe_b64decode(str(compressed_html))
+    decompressed = zlib.decompress(compressed_html)
     orig_html = CP.loads(decompressed)
     return orig_html
 
@@ -191,14 +193,22 @@ def parallel_fetch():
     feed_urls = []
     t0 = time.time()
     feeds_scanned = 0
+    thread_pool = ThreadPool(config['threads'])
     while feeds_scanned < feed_count:
-        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100).sort({"last_visited": 1, "updated": 1})
+        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100, sort=[("last_visited", pymongo.DESCENDING),
+                                                                          ("updated", pymongo.DESCENDING)])
         for feed in feed_cursor:
             if "updated" in feed:
-                FEEDS.update({"_id":feed["_id"]}, {"updated": parse(feed["updated"])})
+                try:
+                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": parse(feed["updated"])}})
+                except ValueError:
+                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": datetime.datetime.now()}})
+                except:
+                    logger.error("Failed to parse updated field.")
+                    pass
             feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
             if feed_title is None:
-                logger.error("Feed %s does not contain ", feed.get('link', None))
+                logger.error("Feed %s does not contain a title or subtitle ", feed.get('link', None))
                 continue
             try:
                 feed_urls.append((feed['_id'], feed_title["base"].decode('utf8')))
@@ -207,13 +217,11 @@ def parallel_fetch():
             except UnicodeEncodeError:
                 logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
             #fetch_feed(t["base"].decode('utf8'))
-
-        thread_pool = ThreadPool(config['threads'])
         thread_pool.map(fetch_feed, feed_urls)
-        thread_pool.close()
         feeds_scanned += len(feed_urls)
         logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
         feed_count = FEEDS.count()
+    thread_pool.close()
     logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":

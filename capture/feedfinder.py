@@ -42,16 +42,22 @@ How it works:
 
 _debug = 0
 
-import sgmllib, urllib, urlparse, re, sys, robotparser
-import requests
+import sgmllib
+import urlparse
+import re
 import argparse
-import feedparser
 import logging
-import settings
-import pymongo
 import time
-from pymongo.errors import DuplicateKeyError
+import datetime
 from logging.handlers import RotatingFileHandler
+
+import requests
+import feedparser
+import pymongo
+from pymongo.errors import DuplicateKeyError
+
+import settings
+
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
