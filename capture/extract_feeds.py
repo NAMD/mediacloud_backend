@@ -54,13 +54,13 @@ def main(urls, depth):
         urls_scanned = 0
         while urls_scanned < urls_count:
             cursor = URLS.find({}, skip=urls_scanned, limit=100)
-        try:
-            for doc in cursor:
-                print "scanning {} with depth {}".format(doc['url'], depth)
-                scan_url(doc['url'], depth)
-                urls_scanned += 1
-        except OperationFailure as e:
-            logger.error("Mongodb Operation failure: %s", e)
+            try:
+                for doc in cursor:
+                    print "scanning {} with depth {}".format(doc['url'], depth)
+                    scan_url(doc['url'], depth)
+                    urls_scanned += 1
+            except OperationFailure as e:
+                logger.error("Mongodb Operation failure: %s", e)
 
 def scan_url(url, depth):
     u2 = urlscanner.url_scanner(url.strip(), depth)
