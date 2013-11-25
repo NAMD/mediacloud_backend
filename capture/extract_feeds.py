@@ -8,14 +8,16 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
+import argparse
+import logging
+
+import pymongo
+from pymongo.errors import OperationFailure
 
 import feedfinder
 import urlscanner
-import argparse
-import pymongo
 import settings
-import logging
-from pymongo.errors import OperationFailure
+
 
 ###########################
 #  Setting up Logging
@@ -48,10 +50,15 @@ def main(urls, depth):
                 print "scanning {} with depth {}".format(u, depth)
                 scan_url(u, depth)
     else:  # Scan URLs from Mongodb url collection
+        urls_count = URLS.count()
+        urls_scanned = 0
+        while urls_scanned < urls_count:
+            cursor = URLS.find({}, skip=urls_scanned, limit=100)
         try:
-            for doc in URLS.find():
+            for doc in cursor:
                 print "scanning {} with depth {}".format(doc['url'], depth)
                 scan_url(doc['url'], depth)
+                urls_scanned += 1
         except OperationFailure as e:
             logger.error("Mongodb Operation failure: %s", e)
 
