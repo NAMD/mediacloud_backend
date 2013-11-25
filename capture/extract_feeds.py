@@ -62,6 +62,7 @@ def main(urls, depth):
             except OperationFailure as e:
                 logger.error("Mongodb Operation failure: %s", e)
 
+
 def scan_url(url, depth):
     u2 = urlscanner.url_scanner(url.strip(), depth)
     for U in u2:
@@ -80,5 +81,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # print args.file
     main(args.file, args.depth)
-
-
