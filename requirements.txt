@@ -11,3 +11,4 @@ pymongo
 python-dateutil
 rawdog
 requests
+twitter
