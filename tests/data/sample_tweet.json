@@ -1,0 +1,89 @@
+{
+    "_id" : ObjectId("51c845d7af371e263ecd9cce"),
+    "contributors" : null,
+    "truncated" : false,
+    "text" : "#Futbolbrasilero Pivô Alexandro Pozzer 'Tche' acerta com BM Guadalajara no handebol: Jogador deixa o Pinheiros... http://t.co/TlIdZ8dXR5",
+    "in_reply_to_status_id" : null,
+    "id" : NumberLong(349153158766927874),
+    "favorite_count" : 0,
+    "source" : "<a href=\"http://twitterfeed.com\" rel=\"nofollow\">twitterfeed</a>",
+    "retweeted" : false,
+    "coordinates" : null,
+    "entities" : {
+        "symbols" : [],
+        "user_mentions" : [],
+        "hashtags" : [
+            {
+                "indices" : [
+                    0,
+                    16
+                ],
+                "text" : "Futbolbrasilero"
+            }
+        ],
+        "urls" : [
+            {
+                "url" : "http://t.co/TlIdZ8dXR5",
+                "indices" : [
+                    114,
+                    136
+                ],
+                "expanded_url" : "http://glo.bo/14kGY7P",
+                "display_url" : "glo.bo/14kGY7P"
+            }
+        ]
+    },
+    "in_reply_to_screen_name" : null,
+    "id_str" : "349153158766927874",
+    "retweet_count" : 0,
+    "in_reply_to_user_id" : null,
+    "favorited" : false,
+    "user" : {
+        "follow_request_sent" : null,
+        "profile_use_background_image" : true,
+        "default_profile_image" : false,
+        "id" : 1465447602,
+        "verified" : false,
+        "profile_image_url_https" : "https://si0.twimg.com/profile_images/3728152613/b220b342ce4623b7016d5c12d1faf662_normal.png",
+        "profile_sidebar_fill_color" : "DDEEF6",
+        "profile_text_color" : "333333",
+        "followers_count" : 46,
+        "profile_sidebar_border_color" : "000000",
+        "id_str" : "1465447602",
+        "profile_background_color" : "4E6469",
+        "listed_count" : 0,
+        "profile_background_image_url_https" : "https://si0.twimg.com/profile_background_images/880870755/f15e07351cff706b4c3c496e484bce1d.png",
+        "utc_offset" : -10800,
+        "statuses_count" : 3174,
+        "description" : "Social Media de la actualidad del Fútbol Argentino e Internacional. Reproducí http://www.thesocialradio.com/tunein/Tocalaypica",
+        "friends_count" : 142,
+        "location" : "Córdoba, ARGENTINA",
+        "profile_link_color" : "0084B4",
+        "profile_image_url" : "http://a0.twimg.com/profile_images/3728152613/b220b342ce4623b7016d5c12d1faf662_normal.png",
+        "following" : null,
+        "geo_enabled" : false,
+        "profile_banner_url" : "https://pbs.twimg.com/profile_banners/1465447602/1369848534",
+        "profile_background_image_url" : "http://a0.twimg.com/profile_background_images/880870755/f15e07351cff706b4c3c496e484bce1d.png",
+        "name" : "Tocála y Picá",
+        "lang" : "es",
+        "profile_background_tile" : true,
+        "favourites_count" : 2,
+        "screen_name" : "Tocalaypica",
+        "notifications" : null,
+        "url" : "http://bit.ly/11hfX6g",
+        "created_at" : "Tue May 28 19:16:00 +0000 2013",
+        "contributors_enabled" : false,
+        "time_zone" : "Buenos Aires",
+        "protected" : false,
+        "default_profile" : false,
+        "is_translator" : false
+    },
+    "geo" : null,
+    "in_reply_to_user_id_str" : null,
+    "possibly_sensitive" : false,
+    "lang" : "pt",
+    "created_at" : "Mon Jun 24 13:12:54 +0000 2013",
+    "filter_level" : "medium",
+    "in_reply_to_status_id_str" : null,
+    "place" : null
+}

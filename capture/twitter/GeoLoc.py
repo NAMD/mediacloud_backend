@@ -52,8 +52,6 @@ def geoloc_tweet(_id):
         logging.info('keyError: %s', u'user')
 
 
-
-
 def fetch_loc(location):
     lat, lon = None, None
     try:
