@@ -14,8 +14,8 @@ logging.basicConfig(filename='/tmp/twitterstream.log', format=FORMAT, level=logg
 mongo_host = config.MONGO_HOST if config.MONGO_HOST else 'localhost'
 
 client = MongoClient(mongo_host)
-mdb = client.passe_livre
-coll = mdb.t
+mcdb = client.MCDB
+coll = mcdb.tweets
 # credentials
 access_token_key = config.access_token_key
 access_token_secret = config.access_token_secret
@@ -30,14 +30,7 @@ TWstream = twitter.TwitterStream(auth=twitter.OAuth(access_token_key,
                             access_token_secret,consumer_key,consumer_secret))
 iterator = TWstream.statuses.sample()
 
-size = coll.count()
 
-def growth_rate():
-    current_size = coll.count()
-    variation = current_size - size
-    if variation >= 20000:
-        size = current_size
-        logging.INFO('Size: {} tweets - variation: {}' .format(current_size, variation))
 
 def capture():
     for tweet in iterator:
@@ -52,7 +45,6 @@ def capture():
             logging.warning('Error 420: Rate limit problem')
         except KeyError as e:
             logging.error("Invalid Tweet: %s" % e)
-        #growth_rate()
 
 
 if __name__ == '__main__':

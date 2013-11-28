@@ -10,13 +10,13 @@ from dateutil import parser
 
 
 FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(filename='analisa.log',format = FORMAT, level=logging.DEBUG)
+logging.basicConfig(filename='tweet_geoloc.log',format = FORMAT, level=logging.DEBUG)
 
 # Initialize connection
 client = MongoClient()
-mdb = client.passe_livre
-coll = mdb.t
-geoj = mdb.geotweet
+mcdb = client.MCDB
+coll = mcdb.tweets
+geoj = mcdb.geotweet
 gg = geocoders.GoogleV3()
 gn = geocoders.GeoNames()
 
