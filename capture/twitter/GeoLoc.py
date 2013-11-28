@@ -24,10 +24,11 @@ data = { "type": "FeatureCollection",
   "features": []
    }
 
-def geoloc_tweet(tweet):
+def geoloc_tweet(_id):
     """
-    Tweet is a dictionary representing the full tweet record
+    Attempts to geolocate a tweet specified by `_id`
     """
+    tweet = coll.find({"_id": _id})[0]
     try:
         if tweet['place'] is not None:
             fullgeo = tweet[u'place'][u'full_name']
@@ -49,7 +50,7 @@ def geoloc_tweet(tweet):
                 return lat, lon
     except KeyError:
         logging.info('keyError: %s', u'user')
-    return
+
 
 
 
@@ -72,44 +73,48 @@ def fetch_loc(location):
     return lat, lon
 
 
-def save_tweet_as_geojson(tw, coords):
+def save_tweet_as_geojson(_id, coords):
     """
     Saves the tweets as GeoJSON in MongoDb
     """
+    tweet = coll.find({"_id": _id})[0]
     if coords is None:
         return
     twgj = {"type": "Feature",
             "geometry": {"type": "Point", "coordinates": list(coords)},
             "properties": {}
       }
-    datet = parser.parse(tw["created_at"])
-    hts = [] if not tw["entities"]["hashtags"] else tw["entities"]["hashtags"][0]["text"]
-    props = {"text": tw['text'],
-             "retweeted": tw["retweeted"],
-             "coordinates": tw["coordinates"],
+    datet = parser.parse(tweet["created_at"])
+    hts = [] if not tweet["entities"]["hashtags"] else tweet["entities"]["hashtags"][0]["text"]
+    props = {"text": tweet['text'],
+             "retweeted": tweet["retweeted"],
+             "coordinates": tweet["coordinates"],
              "hashtags": hts,
-             "lang": tw["lang"],
+             "lang": tweet["lang"],
              "date": datet,
-        }
+            }
     twgj["properties"] = props
-    geoj.insert({"originalID": ObjectId(tw["_id"]),
-                 "geoJSONproperty": twgj,}, safe=True)
+    geoj.insert({"originalID": ObjectId(tweet["_id"]),
+                 "geoJSONproperty": twgj, }, w=1)
     data["features"].append(twgj)
 
 def process_tweet():
     try:
-        for tweet in coll.find({'geochecked': {'$exists' : 0}}):
-            c = geoloc_tweet(tweet)
-            save_tweet_as_geojson(tweet, c)
-            coll.update({'_id': tweet['_id']}, {'$set': {'geochecked': 1}})
-            print tweet['_id'], c
+        ids_to_process = list(coll.find({'geolocated': {'$exists': False}}, fields=["_id"]))
+        for _id in ids_to_process:
+            c = geoloc_tweet(_id)
+            if c is None:
+                coll.update({'_id': _id}, {'$set': {'geolocated': False}})
+            save_tweet_as_geojson(_id, c)
+            coll.update({'_id': _id}, {'$set': {'geolocated': True}})
+            #print _id, c
     except OperationFailure:
         logging.error("operationFailure")
 
 if __name__ == "__main__":
 
-    size = geoj.count()
-    logging.info("Started running")
+    size = geoj.find({{'geochecked': {'$exists': False}}}).count()
+    logging.info("%s tweets left to geolocate", size)
     process_tweet()
     current_size = geoj.count()
     variation = current_size - size

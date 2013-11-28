@@ -27,7 +27,7 @@ oauth_token = oauth.Token(key=access_token_key, secret=access_token_secret)
 oauth_consumer = oauth.Consumer(key=consumer_key, secret=consumer_secret)
 
 TWstream = twitter.TwitterStream(auth=twitter.OAuth(access_token_key,
-                            access_token_secret,consumer_key,consumer_secret))
+                            access_token_secret, consumer_key, consumer_secret))
 iterator = TWstream.statuses.sample()
 
 
