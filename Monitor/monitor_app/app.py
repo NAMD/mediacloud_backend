@@ -141,7 +141,7 @@ def feeds():
         flash('Error searching for articles')
     try:
         keys = feed_list[0].keys()
-    except KeyError:
+    except IndexError:
         keys = ["No", "feeds", "in", "Database"]
     return render_template('pages/feeds.html', nfeeds=nfeeds, feeds=feeds, keys=keys)
 
@@ -251,7 +251,7 @@ def fetch_docs(colname, limit=100):
     try:
         conn = pymongo.Connection(host=app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
-        coll = db['colname']
+        coll = db[colname]
         resp = {}
         # query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
         # limit = 10
