@@ -2,17 +2,20 @@
 # Imports.
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, jsonify, flash, request, redirect, url_for, Response, make_response
-from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from forms import *
-import models
 import json
+import base64
+
+from flask import render_template, flash, request, redirect, url_for, Response
 import pymongo
 from bson import json_util
-import base64
+
+from forms import *
+import models
 from appinit import app, db
+
+
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -118,7 +121,7 @@ def config():
     else:
         conf = models.Configuration.query.first()
         if conf:
-            form.dbhost.data = conf.mongohost
+            form.dbhost.data = app.config["MEDIACLOUD_DATABASE_HOST"]
             form.dbuser.data = conf.mongouser
             form.dbpasswd.data = conf.mongopasswd
             form.pyplnhost.data = conf.pyplnhost
@@ -130,7 +133,7 @@ def config():
 @app.route('/feeds')
 def feeds():
     conf = models.Configuration.query.first()
-    C = pymongo.MongoClient(conf.mongohost)
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     nfeeds = C.MCDB.feeds.count()
     feeds = json.loads(fetch_docs('feeds'))
     try:
@@ -143,7 +146,7 @@ def feeds():
 @app.route('/articles')
 def articles():
     conf = models.Configuration.query.first()
-    C = pymongo.MongoClient(conf.mongohost)
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     articles = json.loads(fetch_docs('articles'))
     try:
         keys = articles[0].keys()
