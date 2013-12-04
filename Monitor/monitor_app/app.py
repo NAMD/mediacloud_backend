@@ -76,12 +76,11 @@ def db_stats():
 
 @app.route('/')
 def home():
-    conf = models.Configuration.query.first()
-    if conf:
+    try:
         data = {
-            'host': conf.mongohost,
+            'host': app.config["MEDIACLOUD_DATABASE_HOST"],
         }
-    else:
+    except KeyError:
         data = {}
     return render_template('pages/placeholder.home.html', data=data)
 
@@ -99,13 +98,13 @@ def login():
 @app.route('/register')
 def register():
     form = RegisterForm(request.form)
-    return render_template('forms/register.html', form = form)
+    return render_template('forms/register.html', form=form)
 
 
 @app.route('/forgot')
 def forgot():
     form = ForgotForm(request.form)
-    return render_template('forms/forgot.html', form = form)
+    return render_template('forms/forgot.html', form=form)
 
 
 @app.route('/config', methods=['GET', 'POST'])
@@ -113,7 +112,7 @@ def config():
     form = ConfigurationForm(request.form)
     if request.method == 'POST':
         c = models.Configuration(mongohost=form.dbhost.data, mongouser=form.dbuser.data, mongopasswd=form.dbpasswd.data, pyplnhost=form.pyplnhost.data,
-                          pyplnuser=form.pyplnuser.data, pyplnpasswd=form.pyplnpasswd.data)
+                                 pyplnuser=form.pyplnuser.data, pyplnpasswd=form.pyplnpasswd.data)
         db.session.add(c)
         db.session.commit()
         flash('Configuration saved')
@@ -132,7 +131,6 @@ def config():
 
 @app.route('/feeds')
 def feeds():
-    conf = models.Configuration.query.first()
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     nfeeds = C.MCDB.feeds.count()
     feeds = json.loads(fetch_docs('feeds'))
@@ -145,7 +143,6 @@ def feeds():
 
 @app.route('/articles')
 def articles():
-    conf = models.Configuration.query.first()
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     articles = json.loads(fetch_docs('articles'))
     try:
@@ -178,7 +175,6 @@ def mongo_query(coll_name):
     Return json with requested data or error
     """
     try:
-        conf = models.Configuration.query.first()
         conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
         coll = db[coll_name]
@@ -243,10 +239,9 @@ def fetch_docs(colname, limit=100):
     Query MongoDB in the collection specified
     Return json with requested data or error
     """
-    conf = models.Configuration.query.first()
-    host = conf.mongohost
+
     try:
-        conn = pymongo.Connection(host = host)
+        conn = pymongo.Connection(host=app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
         coll = db['colname']
         resp = {}
