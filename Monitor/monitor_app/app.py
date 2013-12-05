@@ -11,7 +11,7 @@ from flask import render_template, flash, request, redirect, url_for, Response
 import pymongo
 from bson import json_util
 from pymongo.errors import ConnectionFailure
-
+import bson
 from forms import *
 import models
 from appinit import app, db
@@ -138,7 +138,8 @@ def feeds():
     if 'data' in response:
         feed_list = response['data']
     else:
-        flash('Error searching for articles')
+        flash('Error searching for feeds')
+        feed_list = []
     try:
         keys = feed_list[0].keys()
     except IndexError:
@@ -150,24 +151,35 @@ def feeds():
 def articles():
     response = json.loads(fetch_docs('articles'))
     if 'data' in response:
-        article_list = response['data']
+        article_list = []
+        for article in response['data']:
+            article.pop('link_content')
+            article_list.append(article)
     else:
         flash('Error searching for articles')
+        article_list = []
     try:
         keys = article_list[0].keys()
-    except KeyError:
+    except IndexError:
         keys = ["No", "Articles", "in", "Database"]
     return render_template('pages/articles.html', articles=article_list, keys=keys)
 
 
 @app.route("/feeds/json")
 def json_feeds(start=0, stop=100):
-    return fetch_docs('feeds', stop)
+    result = json.loads(fetch_docs('feeds', stop))
+    return json.dumps({"aaData": result['data']})
 
 
 @app.route("/articles/json")
 def json_articles(start=0, stop=100):
-    return fetch_docs('articles', stop)
+    result = json.loads(fetch_docs('articles', stop))
+    articles = []
+    for article in result['data']:
+        article.pop('link_content')
+        articles.append(article)
+
+    return json.dumps({"aaData": articles})
 
 
 @app.route("/query/<coll_name>", methods=['GET'])
@@ -233,7 +245,7 @@ def fix_json_output(json_obj):
             for k in d:
                 data[_fix_json(k)] = _fix_json(d[k])
             return data
-        elif data_type == pymongo.binary.Binary:
+        elif data_type == bson.Binary:
             ud = base64.encodestring(d)
             return {'$binary': ud, '$type': d.subtype }
         else:
@@ -252,21 +264,10 @@ def fetch_docs(colname, limit=100):
         conn = pymongo.Connection(host=app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
         coll = db[colname]
-        resp = {}
-        # query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
-        # limit = 10
-        # sort = None
-        # if 'limit' in request.GET:
-        #     limit = int(request.GET['limit'])
-        # skip = 0
-        # if 'skip' in request.GET:
-        #     skip = int(request.GET['skip'])
-        # if 'sort' in request.GET:
-        #     sort = json.loads(request.GET['sort'])
+
         cur = coll.find({}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
         cnt = cur.count()
-        # if sort:
-        #     cur = cur.sort(sort)
+
         resp = [a for a in cur]
         json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
     except Exception, e:

@@ -288,7 +288,10 @@ def store_feeds(feed_list):
 
             for k, v in response.feed.iteritems():
                 # Convert to datetime instead of removing
-                entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                try:
+                    response.feed[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                except TypeError:
+                    print "Couldn't convert date {}".format(v)
             try:
                 FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:

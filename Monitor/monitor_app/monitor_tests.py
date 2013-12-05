@@ -1,8 +1,11 @@
 #-*- coding:utf-8 -*-
 import os
-from app import app
+import json
 import unittest
 import tempfile
+
+from app import app
+
 
 class MonitorTestCase(unittest.TestCase):
 
@@ -23,6 +26,17 @@ class MonitorTestCase(unittest.TestCase):
         self.assertIn('{"error": "ValueError(', rv.data)
         rv = self.app.get('/query/articles')
         self.assertIn('{"error": "ValueError(', rv.data)
+
+    def test_fetch_docs_feeds(self):
+        rv = self.app.get('/feeds/json')
+        self.assertIn("data", json.loads(rv.data))
+        self.assertGreater(json.loads(rv.data)["meta"]["count"], 0)
+
+    def test_fetch_docs_articles(self):
+        rv = self.app.get('/articles/json')
+        self.assertIn("data", json.loads(rv.data))
+        self.assertGreater(json.loads(rv.data)["meta"]["count"], 0)
+
 
 if __name__ == '__main__':
     unittest.main()
