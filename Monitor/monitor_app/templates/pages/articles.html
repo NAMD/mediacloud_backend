@@ -8,6 +8,7 @@
                 "fnInitComplete": function(oSettings, json) {
                     $(".text").linker();
                     },
+                "bFilter": true,
                 "sAjaxSource": "/articles/json",
                 "aoColumns": [
                     {% for key in keys %}

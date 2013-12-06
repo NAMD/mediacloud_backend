@@ -39,6 +39,7 @@
                 "fnInitComplete": function(oSettings, json) {
                     $(".text").linker();
                 },
+                "bFilter": true,
                 "sAjaxSource": "/feeds/json",
                 "aoColumns": [
                     {% for key in keys %}

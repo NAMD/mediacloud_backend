@@ -150,10 +150,12 @@ def feeds():
 @app.route('/articles')
 def articles():
     response = json.loads(fetch_docs('articles'))
+    removed_fields = set(response['data'][0].keys()) - set(['title', 'summary', 'link', 'language', 'published'])
+
     if 'data' in response:
         article_list = []
         for article in response['data']:
-            article.pop('link_content')
+            [article.pop(f) for f in removed_fields]
             article_list.append(article)
     else:
         flash('Error searching for articles')
