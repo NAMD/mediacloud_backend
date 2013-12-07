@@ -140,7 +140,7 @@ def feeds():
         keys += feed.keys()
     if not keys:
         keys = ["No", "feeds", "in", "Database"]
-    maintained_keys = set(['title', 'link', 'language', 'published', 'last_visited', 'subtitle_detail'])
+    maintained_keys = set(['title', 'link', 'feed_link', 'language', 'published', 'last_visited', 'subtitle_detail'])
 
 
 
@@ -150,28 +150,49 @@ def feeds():
 @app.route('/articles')
 def articles():
     response = json.loads(fetch_docs('articles'))
-    removed_fields = set(response['data'][0].keys()) - set(['title', 'summary', 'link', 'language', 'published'])
-
-    if 'data' in response:
-        article_list = []
-        for article in response['data']:
-            [article.pop(f) for f in removed_fields]
-            article_list.append(article)
-    else:
-        flash('Error searching for articles')
-        article_list = []
-    try:
-        keys = article_list[0].keys()
-    except IndexError:
+    maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
+    removed_fields = set(response['data'][0].keys()) - maintained_keys
+    keys = []
+    for feed in response['data']:
+        keys += feed.keys()
+    if not keys:
         keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', articles=article_list, keys=keys)
+    return render_template('pages/articles.html', keys=list(maintained_keys))
+
+
+def clean_articles(data):
+    keys = []
+    for feed in data:
+        keys += feed.keys()
+    maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
+    removed_fields = set(keys) - maintained_keys
+    article_list = []
+    for article in data:
+        for f in removed_fields:
+            try:
+                article.pop(f)
+            except KeyError:
+                pass
+                #print f
+        for f in maintained_keys:
+            if f == 'language':
+                article[f] = article[f]['name']
+            if f == 'link':
+                article[f] = r'<a href="{}">{}</a>'.format(article[f], article[f][:20]+'...')
+                #print article[f]
+            if f not in article:
+                article[f] = 'NA'
+        article_list.append(article)
+        #print article_list
+    if not article_list:
+        flash('Error searching for articles')
+    return article_list
 
 
 def clean_feeds(data):
     """
     Clean JSON output to simplify table view
     """
-
     keys = []
     for feed in data:
         keys += feed.keys()
@@ -184,7 +205,8 @@ def clean_feeds(data):
             try:
                 feed.pop(f)
             except KeyError:
-                print f
+                #print f
+                pass
         for f in maintained_keys:
             if f not in feed:
                 feed[f] = 'NA'
@@ -213,7 +235,7 @@ def json_articles(start=0, stop=100):
         article.pop('link_content')
         articles.append(article)
 
-    return json.dumps({"aaData": articles})
+    return json.dumps({"aaData": clean_articles(articles)})
 
 
 @app.route("/query/<coll_name>", methods=['GET'])

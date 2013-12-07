@@ -12,7 +12,11 @@
                 "sAjaxSource": "/articles/json",
                 "aoColumns": [
                     {% for key in keys %}
-                        { "mData": "{{ key }}", sClass: "text" },
+                        {% if key == "link" %}
+                        { "mData": "{{ key }}", sType: "html" },
+                        {% else %}
+                        { "mData": "{{ key }}", sClass: "text"},
+                        {% endif %}
                     {% endfor %}
                 ]
             });
@@ -26,9 +30,6 @@
         <div id="dynamic">
             <div id="article_wrapper" class="dataTables_wrapper" role="grid">
 
-
-                <div id="article_processing" class="dataTables_processing" style="visibility: hidden;">Processing...
-                </div>
                 <table id="articles" cellpadding="5" cellspacing="0" border="0" class="display dataTable">
                     <thead>
                     <tr>
@@ -51,11 +52,6 @@
                     </tr>
                     </tfoot>
                 </table>
-
-                <div class="dataTables_paginate paging_two_button" id="article_paginate"><a
-                        class="paginate_disabled_previous" tabindex="0" role="button" id="article_previous"
-                        aria-controls="articles">Previous</a><a class="paginate_enabled_next" tabindex="0" role="button"
-                                                                id="article_next" aria-controls="articles">Next</a>
                 </div>
             </div>
         </div>
