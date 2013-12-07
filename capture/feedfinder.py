@@ -291,7 +291,8 @@ def store_feeds(feed_list):
                 try:
                     response.feed[k] = datetime.datetime.fromtimestamp(time.mktime(v))
                 except TypeError:
-                    print "Couldn't convert date {}".format(v)
+                    print "Couldn't convert date.", v
+
             try:
                 FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:
