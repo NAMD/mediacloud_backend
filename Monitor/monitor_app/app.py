@@ -149,6 +149,8 @@ def feeds():
 
 @app.route('/articles')
 def articles():
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
+    nart = C.MCDB.articles.count()
     response = json.loads(fetch_docs('articles'))
     maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
     removed_fields = set(response['data'][0].keys()) - maintained_keys
@@ -157,7 +159,7 @@ def articles():
         keys += feed.keys()
     if not keys:
         keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', keys=list(maintained_keys))
+    return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys))
 
 
 def clean_articles(data):
