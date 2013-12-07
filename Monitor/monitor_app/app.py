@@ -135,16 +135,16 @@ def feeds():
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     nfeeds = C.MCDB.feeds.count()
     response = json.loads(fetch_docs('feeds'))
-    if 'data' in response:
-        feed_list = response['data']
-    else:
-        flash('Error searching for feeds')
-        feed_list = []
-    try:
-        keys = feed_list[0].keys()
-    except IndexError:
+    keys = []
+    for feed in response['data']:
+        keys += feed.keys()
+    if not keys:
         keys = ["No", "feeds", "in", "Database"]
-    return render_template('pages/feeds.html', nfeeds=nfeeds, feeds=feeds, keys=keys)
+    maintained_keys = set(['title', 'link', 'language', 'published', 'last_visited', 'subtitle_detail'])
+
+
+
+    return render_template('pages/feeds.html', nfeeds=nfeeds, keys=list(maintained_keys))
 
 
 @app.route('/articles')
@@ -167,10 +167,42 @@ def articles():
     return render_template('pages/articles.html', articles=article_list, keys=keys)
 
 
+def clean_feeds(data):
+    """
+    Clean JSON output to simplify table view
+    """
+
+    keys = []
+    for feed in data:
+        keys += feed.keys()
+
+    maintained_keys = set(['title', 'link', 'language', 'published', 'last_visited', 'subtitle_detail'])
+    removed_fields = set(keys) - maintained_keys
+    feed_list = []
+    for feed in data:
+        for f in removed_fields:
+            try:
+                feed.pop(f)
+            except KeyError:
+                print f
+        for f in maintained_keys:
+            if f not in feed:
+                feed[f] = 'NA'
+        try:
+            if 'subtitle_detail' in feed:
+                feed['feed_link'] = feed.get('base', feed['subtitle_detail'].get('base', 'NA'))
+        except AttributeError:
+            continue
+        print feed
+        feed_list.append(feed)
+
+    return feed_list
+
+
 @app.route("/feeds/json")
 def json_feeds(start=0, stop=100):
     result = json.loads(fetch_docs('feeds', stop))
-    return json.dumps({"aaData": result['data']})
+    return json.dumps({"aaData": clean_feeds(result['data'])})
 
 
 @app.route("/articles/json")

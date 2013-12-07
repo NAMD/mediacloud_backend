@@ -56,7 +56,7 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
 config = {
-    'threads': 15,  # Number of threads used in the fetching pool
+    'threads': 35,  # Number of threads used in the fetching pool
 }
 
 
