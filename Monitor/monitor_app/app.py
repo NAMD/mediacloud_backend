@@ -217,7 +217,7 @@ def clean_feeds(data):
                 feed['feed_link'] = feed.get('base', feed['subtitle_detail'].get('base', 'NA'))
         except AttributeError:
             continue
-        print feed
+        # print feed
         feed_list.append(feed)
 
     return feed_list
@@ -257,7 +257,11 @@ def mongo_query(coll_name):
         db = conn.MCDB
         coll = db[coll_name]
         resp = {}
-        query = json.loads(request.args.get('q', ''), object_hook=json_util.object_hook)
+        query = {}
+        try:
+            query = json.loads(request.args.get('q', ''), object_hook=json_util.default)
+        except ValueError:
+            app.logger.warning("no query issued")
         limit = int(request.args.get('limit', 10))
         sort = request.args.get('sort', None)
         skip = int(request.args.get('skip', 0))
@@ -268,8 +272,8 @@ def mongo_query(coll_name):
         if sort is not None:
             cur = cur.sort(sort)
         resp = [a for a in cur]
-        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=pymongo.json_util.default)
-    except Exception as e:
+        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
+    except NameError as e:
         app.logger.error(repr(e))
         # import traceback
         # traceback.print_stack()
