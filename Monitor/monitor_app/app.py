@@ -273,7 +273,7 @@ def mongo_query(coll_name):
             cur = cur.sort(sort)
         resp = [a for a in cur]
         json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
-    except NameError as e:
+    except Exception as e:
         app.logger.error(repr(e))
         # import traceback
         # traceback.print_stack()
