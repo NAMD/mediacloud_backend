@@ -89,7 +89,7 @@ class RSSDownload(object):
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
 
             try:
-                r = requests.get(entry.get('link'))
+                r = requests.get(entry.get('link'), timeout=30)
             except ConnectionError:
                 logger.error("Failed to fetch %s", entry.get('link'))
                 continue
