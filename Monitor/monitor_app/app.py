@@ -255,7 +255,7 @@ def mongo_query(coll_name):
         json_response = json.dumps({'error': repr(e)})
     finally:
         conn.disconnect()
-    resp = Response(json_response, mimetype='application/json')
+    resp = Response(json_response, mimetype='application/json',)
     return resp
 
 #-----------------------------#
