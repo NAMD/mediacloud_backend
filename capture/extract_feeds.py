@@ -8,14 +8,14 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
-
+import argparse
+import logging
+import pymongo
+from pymongo.errors import OperationFailure
 import feedfinder
 import urlscanner
-import argparse
-import pymongo
 import settings
-import logging
-from pymongo.errors import OperationFailure
+
 
 ###########################
 #  Setting up Logging
@@ -56,6 +56,10 @@ def main(urls, depth):
             logger.error("Mongodb Operation failure: %s", e)
 
 def scan_url(url, depth):
+    if url.strip().endswith('robots.txt'):
+        # Ignore such URLs as they are fruitless.
+        print "Skipping {}".format(url)
+        return
     u2 = urlscanner.url_scanner(url.strip(), depth)
     for U in u2:
         logger.info("searching for feeds in: %s", U)
