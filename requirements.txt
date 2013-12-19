@@ -9,5 +9,5 @@ flask
 lxml
 pymongo
 python-dateutil
-rawdog
 requests
+nose

@@ -2,17 +2,21 @@
 # Imports.
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, jsonify, flash, request, redirect, url_for, Response, make_response
-from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from forms import *
-import models
 import json
+import base64
+
+from flask import render_template, flash, request, redirect, url_for, Response
 import pymongo
 from bson import json_util
-import base64
+from pymongo.errors import ConnectionFailure
+import bson
+from forms import *
+import models
 from appinit import app, db
+
+
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -73,12 +77,11 @@ def db_stats():
 
 @app.route('/')
 def home():
-    conf = models.Configuration.query.first()
-    if conf:
+    try:
         data = {
-            'host': conf.mongohost,
+            'host': app.config["MEDIACLOUD_DATABASE_HOST"],
         }
-    else:
+    except KeyError:
         data = {}
     return render_template('pages/placeholder.home.html', data=data)
 
@@ -96,13 +99,13 @@ def login():
 @app.route('/register')
 def register():
     form = RegisterForm(request.form)
-    return render_template('forms/register.html', form = form)
+    return render_template('forms/register.html', form=form)
 
 
 @app.route('/forgot')
 def forgot():
     form = ForgotForm(request.form)
-    return render_template('forms/forgot.html', form = form)
+    return render_template('forms/forgot.html', form=form)
 
 
 @app.route('/config', methods=['GET', 'POST'])
@@ -110,7 +113,7 @@ def config():
     form = ConfigurationForm(request.form)
     if request.method == 'POST':
         c = models.Configuration(mongohost=form.dbhost.data, mongouser=form.dbuser.data, mongopasswd=form.dbpasswd.data, pyplnhost=form.pyplnhost.data,
-                          pyplnuser=form.pyplnuser.data, pyplnpasswd=form.pyplnpasswd.data)
+                                 pyplnuser=form.pyplnuser.data, pyplnpasswd=form.pyplnpasswd.data)
         db.session.add(c)
         db.session.commit()
         flash('Configuration saved')
@@ -118,7 +121,7 @@ def config():
     else:
         conf = models.Configuration.query.first()
         if conf:
-            form.dbhost.data = conf.mongohost
+            form.dbhost.data = app.config["MEDIACLOUD_DATABASE_HOST"]
             form.dbuser.data = conf.mongouser
             form.dbpasswd.data = conf.mongopasswd
             form.pyplnhost.data = conf.pyplnhost
@@ -131,23 +134,93 @@ def config():
 def feeds():
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     nfeeds = C.MCDB.feeds.count()
-    feeds = json.loads(fetch_docs('feeds'))
-    try:
-        keys = feeds[0].keys()
-    except KeyError:
+    response = json.loads(fetch_docs('feeds'))
+    keys = []
+    for feed in response['data']:
+        keys += feed.keys()
+    if not keys:
         keys = ["No", "feeds", "in", "Database"]
-    return render_template('pages/feeds.html', nfeeds=nfeeds, feeds=feeds, keys=keys)
+    maintained_keys = set(['title', 'link', 'feed_link', 'language', 'published', 'last_visited', 'subtitle_detail'])
+
+
+
+    return render_template('pages/feeds.html', nfeeds=nfeeds, keys=list(maintained_keys))
 
 
 @app.route('/articles')
 def articles():
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    articles = json.loads(fetch_docs('articles'))
-    try:
-        keys = articles[0].keys()
-    except KeyError:
+    nart = C.MCDB.articles.count()
+    response = json.loads(fetch_docs('articles'))
+    maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
+    removed_fields = set(response['data'][0].keys()) - maintained_keys
+    keys = []
+    for feed in response['data']:
+        keys += feed.keys()
+    if not keys:
         keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', articles=articles, keys=keys)
+    return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys))
+
+
+def clean_articles(data):
+    keys = []
+    for feed in data:
+        keys += feed.keys()
+    maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
+    removed_fields = set(keys) - maintained_keys
+    article_list = []
+    for article in data:
+        for f in removed_fields:
+            try:
+                article.pop(f)
+            except KeyError:
+                pass
+                #print f
+        for f in maintained_keys:
+            if f == 'language':
+                article[f] = article[f]['name']
+            if f == 'link':
+                article[f] = r'<a href="{}">{}</a>'.format(article[f], article[f][:20]+'...')
+                #print article[f]
+            if f not in article:
+                article[f] = 'NA'
+        article_list.append(article)
+        #print article_list
+    if not article_list:
+        flash('Error searching for articles')
+    return article_list
+
+
+def clean_feeds(data):
+    """
+    Clean JSON output to simplify table view
+    """
+    keys = []
+    for feed in data:
+        keys += feed.keys()
+
+    maintained_keys = set(['title', 'link', 'language', 'published', 'last_visited', 'subtitle_detail'])
+    removed_fields = set(keys) - maintained_keys
+    feed_list = []
+    for feed in data:
+        for f in removed_fields:
+            try:
+                feed.pop(f)
+            except KeyError:
+                #print f
+                pass
+        for f in maintained_keys:
+            if f not in feed:
+                feed[f] = 'NA'
+        try:
+            if 'subtitle_detail' in feed:
+                feed['feed_link'] = feed.get('base', feed['subtitle_detail'].get('base', 'NA'))
+        except AttributeError:
+            continue
+        # print feed
+        feed_list.append(feed)
+
+    return feed_list
 
 
 @app.route('/urls')
@@ -163,12 +236,19 @@ def urls():
 
 @app.route("/feeds/json")
 def json_feeds(start=0, stop=100):
-    return fetch_docs('feeds', stop)
+    result = json.loads(fetch_docs('feeds', stop))
+    return json.dumps({"aaData": clean_feeds(result['data'])})
 
 
 @app.route("/articles/json")
 def json_articles(start=0, stop=100):
-    return fetch_docs('articles', stop)
+    result = json.loads(fetch_docs('articles', stop))
+    articles = []
+    for article in result['data']:
+        article.pop('link_content')
+        articles.append(article)
+
+    return json.dumps({"aaData": clean_articles(articles)})
 
 
 @app.route("/urls/json")
@@ -189,12 +269,15 @@ def mongo_query(coll_name):
     Return json with requested data or error
     """
     try:
-        conf = models.Configuration.query.first()
         conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
         coll = db[coll_name]
         resp = {}
-        query = json.loads(request.args.get('q', '{}'), object_hook=json_util.object_hook)
+        query = {}
+        try:
+            query = json.loads(request.args.get('q', ''), object_hook=json_util.default)
+        except ValueError:
+            app.logger.warning("no query issued")
         limit = int(request.args.get('limit', 10))
         sort = request.args.get('sort', None)
         skip = int(request.args.get('skip', 0))
@@ -205,7 +288,7 @@ def mongo_query(coll_name):
         if sort is not None:
             cur = cur.sort(sort)
         resp = [a for a in cur]
-        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=None)
+        json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
     except Exception as e:
         app.logger.error(repr(e))
         # import traceback
@@ -213,7 +296,7 @@ def mongo_query(coll_name):
         json_response = json.dumps({'error': repr(e)})
     finally:
         conn.disconnect()
-    resp = Response(json_response, mimetype='application/json')
+    resp = Response(json_response, mimetype='application/json',)
     return resp
 
 #-----------------------------#
@@ -240,7 +323,7 @@ def fix_json_output(json_obj):
             for k in d:
                 data[_fix_json(k)] = _fix_json(d[k])
             return data
-        elif data_type == pymongo.binary.Binary:
+        elif data_type == bson.Binary:
             ud = base64.encodestring(d)
             return {'$binary': ud, '$type': d.subtype }
         else:
@@ -254,27 +337,15 @@ def fetch_docs(colname, limit=100):
     Query MongoDB in the collection specified
     Return json with requested data or error
     """
-    conf = models.Configuration.query.first()
-    host = conf.mongohost
+
     try:
-        conn = pymongo.Connection(host = host)
+        conn = pymongo.Connection(host=app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
-        coll = db['colname']
-        resp = {}
-        # query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
-        # limit = 10
-        # sort = None
-        # if 'limit' in request.GET:
-        #     limit = int(request.GET['limit'])
-        # skip = 0
-        # if 'skip' in request.GET:
-        #     skip = int(request.GET['skip'])
-        # if 'sort' in request.GET:
-        #     sort = json.loads(request.GET['sort'])
-        cur = coll.find(limit=limit)
+        coll = db[colname]
+
+        cur = coll.find({}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
         cnt = cur.count()
-        # if sort:
-        #     cur = cur.sort(sort)
+
         resp = [a for a in cur]
         json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
     except Exception, e:
@@ -282,6 +353,8 @@ def fetch_docs(colname, limit=100):
         import traceback
         traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
+    except ConnectionFailure:
+        json_response = json.dumps({'error': "Can't connect to database on {}".format(app.config["MEDIACLOUD_DATABASE_HOST"])})
     finally:
         conn.disconnect()
 
@@ -317,7 +390,7 @@ if not app.debug:
 
 # Default port:
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
 
 # Or specify port manually:
 '''

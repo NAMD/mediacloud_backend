@@ -56,7 +56,7 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
 config = {
-    'threads': 15,  # Number of threads used in the fetching pool
+    'threads': 35,  # Number of threads used in the fetching pool
 }
 
 
@@ -89,7 +89,7 @@ class RSSDownload(object):
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
 
             try:
-                r = requests.get(entry.get('link'))
+                r = requests.get(entry.get('link'), timeout=30)
             except ConnectionError:
                 logger.error("Failed to fetch %s", entry.get('link'))
                 continue

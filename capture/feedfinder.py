@@ -260,13 +260,13 @@ def feeds(uri, all=False, _recurs=None):
             outfeeds.extend(filter(isFeed, filter(isXMLRelatedLink, links)))
     if all or not outfeeds:
         # print('no A tags, guessing')
-        suffixes = [ # filenames used by popular software:
-          'atom.xml', # blogger, TypePad
-          'index.atom', # MT, apparently
-          'index.rdf', # MT
-          'rss.xml', # Dave Winer/Manila
-          'index.xml', # MT
-          'index.rss' # Slash
+        suffixes = [  # filenames used by popular software:
+          'atom.xml',  # blogger, TypePad
+          'index.atom',  # MT, apparently
+          'index.rdf',  #
+          'rss.xml',  # Dave Winer/Manila
+          'index.xml',  # MT
+          'index.rss'  # Slash
         ]
         outfeeds.extend(filter(isFeed, [urlparse.urljoin(fulluri, x) for x in suffixes]))
 
@@ -279,6 +279,7 @@ def store_feeds(feed_list):
     Store the Feeds in the Feed collection in the database
     :param feed_list: LIst of feed URLs returned by feeds()
     """
+    #TODO: Add more test to this function
     for f in feed_list:
         response = feedparser.parse(f)
         # insert only if is not already in the database
@@ -290,11 +291,17 @@ def store_feeds(feed_list):
             for k, v in response.feed.iteritems():
                 if isinstance(v, time.struct_time):
                     # Convert to datetime instead of removing
-                    response.feed[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                    try:
+                        response.feed[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                    except TypeError:
+                        pass  # When fields are not Dates
+                        logger.error("Couldn't convert to date. %s", v)
+
             try:
                 FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:
                 logger.info("Feed %s already in database", f)
+
 
 def feed(uri):
     #todo: give preference to certain feed formats
