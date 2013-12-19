@@ -32,8 +32,8 @@ iterator = TWstream.statuses.sample()
 
 
 
-def capture():
-    for tweet in iterator:
+def capture(twiterator):
+    for tweet in twiterator:
         try:
             if not tweet['lang'].startswith('pt'):
                 continue
@@ -51,5 +51,5 @@ if __name__ == '__main__':
 
     logging.info("Started running")
     logging.info('Size: {} tweets' .format(size))
-    capture()
+    capture(iterator)
     logging.critical("Stopped running")
