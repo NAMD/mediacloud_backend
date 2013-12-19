@@ -3,9 +3,8 @@ __author__ = 'fccoelho'
 
 import unittest
 import subprocess
+from capture import feedfinder, urlscanner, downloader,googlerss
 
-from capture import feedfinder, urlscanner, downloader
-from capture import googlerss
 
 
 class FeedFinderTests(unittest.TestCase):
