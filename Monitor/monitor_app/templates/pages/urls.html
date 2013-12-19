@@ -1,0 +1,42 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<script type="text/javascript">
+$(document).ready(function() {
+    var oTable = $('#urls').dataTable( {
+        "bProcessing": true,
+        "sAjaxSource": "/urls/json",
+        "aoColumns": [
+            {% for key in keys %}
+            { "mData": "{{ key }}" },
+            {% endfor %}
+        ]
+    } );
+} );
+</script>
+<div class="page-header">
+  <h1>Urls Being Scanned Daily for Feeds</h1>
+
+<table cellpadding="5" cellspacing="0" border="0" class="display" id="urls">
+    <thead>
+        <tr>
+            {% for key in keys %}
+            <th width="auto">{{ key }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+    <tfoot>
+        <tr>
+            {% for key in keys %}
+            <th width="auto">{{ key }}</th>
+            {% endfor %}
+        </tr>
+    </tfoot>
+</table>
+</div>
+
+
+{% endblock %}
