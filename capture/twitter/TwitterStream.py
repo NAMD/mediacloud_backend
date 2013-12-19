@@ -50,6 +50,5 @@ def capture(twiterator):
 if __name__ == '__main__':
 
     logging.info("Started running")
-    logging.info('Size: {} tweets' .format(size))
     capture(iterator)
     logging.critical("Stopped running")
