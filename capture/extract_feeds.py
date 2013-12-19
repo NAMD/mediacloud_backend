@@ -10,10 +10,7 @@ __docformat__ = 'restructuredtext en'
 
 import argparse
 import logging
-
-import pymongo
 from pymongo.errors import OperationFailure
-
 import pymongo
 import feedfinder
 import urlscanner
