@@ -14,6 +14,7 @@ import logging
 import pymongo
 from pymongo.errors import OperationFailure
 
+import pymongo
 import feedfinder
 import urlscanner
 import settings
@@ -64,6 +65,10 @@ def main(urls, depth):
 
 
 def scan_url(url, depth):
+    if url.strip().endswith('robots.txt'):
+        # Ignore such URLs as they are fruitless.
+        print "Skipping {}".format(url)
+        return
     u2 = urlscanner.url_scanner(url.strip(), depth)
     for U in u2:
         logger.info("searching for feeds in: %s", U)

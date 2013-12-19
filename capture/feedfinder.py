@@ -42,16 +42,22 @@ How it works:
 
 _debug = 0
 
-import sgmllib, urllib, urlparse, re, sys, robotparser
-import requests
+import sgmllib
+import urlparse
+import re
 import argparse
-import feedparser
 import logging
-import settings
-import pymongo
 import time
-from pymongo.errors import DuplicateKeyError
+import datetime
 from logging.handlers import RotatingFileHandler
+
+import requests
+import feedparser
+import pymongo
+from pymongo.errors import DuplicateKeyError
+
+import settings
+
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
@@ -278,15 +284,17 @@ def store_feeds(feed_list):
         # insert only if is not already in the database
         res = FEEDS.find({"title_detail.base": f}, fields=["title_detail"])
         if not list(res):
-            # Delete fields which cannot be serialized into BSON
-
+            if 'title' not in response.feed:
+                logger.warning("Empty feed: %s", response.feed)
+                continue
             for k, v in response.feed.iteritems():
-                # Convert to datetime instead of removing
-                entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                if isinstance(v, time.struct_time):
+                    # Convert to datetime instead of removing
+                    response.feed[k] = datetime.datetime.fromtimestamp(time.mktime(v))
             try:
                 FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:
-                print "Feed {} already in database".format(f)
+                logger.info("Feed %s already in database", f)
 
 def feed(uri):
     #todo: give preference to certain feed formats
