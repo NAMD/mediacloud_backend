@@ -43,6 +43,8 @@ def url_scanner(url, depth=1):
     try:
         os.remove(os.path.join(tempdir, 'cookies.txt'))
         os.remove(os.path.join(tempdir, 'hts-log.txt'))
+        if os.path.exists(os.path.join(tempdir, 'cookies.txt')):
+            os.remove(os.path.join(tempdir, 'cookies.txt'))
     except OSError as e:
         print e
     os.chdir(current_dir)

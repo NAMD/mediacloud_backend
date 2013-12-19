@@ -223,6 +223,17 @@ def clean_feeds(data):
     return feed_list
 
 
+@app.route('/urls')
+def urls():
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
+    urls = json.loads(fetch_docs('urls'))
+    try:
+        keys = articles[0].keys()
+    except KeyError:
+        keys = ["No", "URLs", "in", "Database"]
+    return render_template('pages/urls.html', urls=urls, keys=keys)
+
+
 @app.route("/feeds/json")
 def json_feeds(start=0, stop=100):
     result = json.loads(fetch_docs('feeds', stop))
@@ -238,6 +249,11 @@ def json_articles(start=0, stop=100):
         articles.append(article)
 
     return json.dumps({"aaData": clean_articles(articles)})
+
+
+@app.route("/urls/json")
+def json_urls(start=0, stop=100):
+    return fetch_docs('urls', stop)
 
 
 @app.route("/query/<coll_name>", methods=['GET'])
