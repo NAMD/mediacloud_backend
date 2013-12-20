@@ -2,17 +2,21 @@
 # Imports.
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, jsonify, flash, request, redirect, url_for, Response, make_response
-from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from forms import *
-import models
 import json
+import base64
+import datetime
+
+from flask import render_template, flash, request, redirect, url_for, Response
 import pymongo
 from bson import json_util
-import base64
+import bson
+
+from forms import *
+import models
 from appinit import app, db
+
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -131,7 +135,7 @@ def config():
 def feeds():
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     nfeeds = C.MCDB.feeds.count()
-    feeds = json.loads(fetch_docs('feeds'))
+    feeds = json.loads(fetch_docs('feeds'))['data']
     try:
         keys = feeds[0].keys()
     except KeyError:
@@ -142,7 +146,7 @@ def feeds():
 @app.route('/articles')
 def articles():
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    articles = json.loads(fetch_docs('articles'))
+    articles = json.loads(fetch_docs('articles'))['data']
     try:
         keys = articles[0].keys()
     except KeyError:
@@ -176,6 +180,23 @@ def json_urls(start=0, stop=100):
     return fetch_docs('urls', stop)
 
 
+@app.route('/visualizations/timeline/')
+def timeline():
+    return render_template('pages/indextimeline.html')
+
+
+@app.route('/visualizations/timeline/data.jsonp')
+def json_timeline():
+    Articles = json.loads(fetch_docs('articles'))['data']
+    fixed_articles = []
+    for art in Articles:
+        art['published'] = datetime.date.fromtimestamp(art['published']['$date']/1000.).strftime("%d,%m,%Y")
+        fixed_articles.append(art)
+
+    dados = render_template('pages/timeline.json', busca='NAMD FGV', articles=fixed_articles)
+    return Response(dados, mimetype='application/json')
+
+
 @app.route("/query/<coll_name>", methods=['GET'])
 def mongo_query(coll_name):
     """
@@ -189,7 +210,6 @@ def mongo_query(coll_name):
     Return json with requested data or error
     """
     try:
-        conf = models.Configuration.query.first()
         conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
         coll = db[coll_name]
@@ -240,7 +260,7 @@ def fix_json_output(json_obj):
             for k in d:
                 data[_fix_json(k)] = _fix_json(d[k])
             return data
-        elif data_type == pymongo.binary.Binary:
+        elif data_type == bson.Binary:
             ud = base64.encodestring(d)
             return {'$binary': ud, '$type': d.subtype }
         else:
@@ -254,12 +274,10 @@ def fetch_docs(colname, limit=100):
     Query MongoDB in the collection specified
     Return json with requested data or error
     """
-    conf = models.Configuration.query.first()
-    host = conf.mongohost
     try:
-        conn = pymongo.Connection(host = host)
+        conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
         db = conn.MCDB
-        coll = db['colname']
+        coll = db[colname]
         resp = {}
         # query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
         # limit = 10
@@ -271,7 +289,7 @@ def fetch_docs(colname, limit=100):
         #     skip = int(request.GET['skip'])
         # if 'sort' in request.GET:
         #     sort = json.loads(request.GET['sort'])
-        cur = coll.find(limit=limit)
+        cur = coll.find({}, limit=limit)
         cnt = cur.count()
         # if sort:
         #     cur = cur.sort(sort)
