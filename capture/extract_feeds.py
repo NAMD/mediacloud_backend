@@ -10,7 +10,10 @@ __docformat__ = 'restructuredtext en'
 
 import argparse
 import logging
+
+import pymongo
 from pymongo.errors import OperationFailure
+
 import pymongo
 import feedfinder
 import urlscanner
@@ -68,6 +71,8 @@ def scan_url(url, depth):
         return
     u2 = urlscanner.url_scanner(url.strip(), depth)
     for U in u2:
+        if U.strip().lower().endswith('robots.txt'):
+            continue
         logger.info("searching for feeds in: %s", U)
         feeds = feedfinder.feeds(U.strip())
         logger.info("found %s feeds", len(feeds))
