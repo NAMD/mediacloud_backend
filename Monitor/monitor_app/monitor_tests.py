@@ -31,10 +31,8 @@ class MonitorTestCase(unittest.TestCase):
         rv = self.app.get('/articles/json')
         self.assertIn("aaData", json.loads(rv.data))
         self.assertGreater(len(json.loads(rv.data)["aaData"]), 0)
-
-
         rv = self.app.get('/query/urls')
-        self.assertIn('{"meta": {"count": 0}', rv.data)
+        self.assertIn('{"meta": {"count":', rv.data)
 
 if __name__ == '__main__':
     unittest.main()
