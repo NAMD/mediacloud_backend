@@ -14,6 +14,7 @@ import pymongo
 from bson import json_util
 import bson
 from pymongo.errors import ConnectionFailure
+from jinja2 import Markup
 
 from forms import *
 import models
@@ -56,7 +57,7 @@ _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 def linebreaks(value):
     result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>')
                           for p in _paragraph_re.split(value))
-    return result
+    return Markup(result)
 
 
 
