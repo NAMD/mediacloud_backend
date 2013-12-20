@@ -7,15 +7,18 @@ from logging import Formatter, FileHandler
 import json
 import base64
 import datetime
+import re
 
 from flask import render_template, flash, request, redirect, url_for, Response
 import pymongo
 from bson import json_util
 import bson
+from pymongo.errors import ConnectionFailure
 
 from forms import *
 import models
 from appinit import app, db
+
 
 
 #----------------------------------------------------------------------------#
@@ -45,6 +48,16 @@ def shutdown_session(exception=None):
 #             flash('You need to login first.')
 #             return redirect(url_for('login'))
 #     return wrap
+
+_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
+
+
+@app.template_filter('linebreaks')
+def linebreaks(value):
+    result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>')
+                          for p in _paragraph_re.split(value))
+    return result
+
 
 
 @app.route('/dbstats')
@@ -135,9 +148,13 @@ def config():
 def feeds():
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     nfeeds = C.MCDB.feeds.count()
-    feeds = json.loads(fetch_docs('feeds'))['data']
+    response = json.loads(fetch_docs('feeds'))
+    if 'data' in response:
+        feed_list = response['data']
+    else:
+        flash('Error searching for articles')
     try:
-        keys = feeds[0].keys()
+        keys = feed_list[0].keys()
     except KeyError:
         keys = ["No", "feeds", "in", "Database"]
     return render_template('pages/feeds.html', nfeeds=nfeeds, feeds=feeds, keys=keys)
@@ -145,13 +162,17 @@ def feeds():
 
 @app.route('/articles')
 def articles():
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    articles = json.loads(fetch_docs('articles'))['data']
+
+    response = json.loads(fetch_docs('articles'))
+    if 'data' in response:
+        article_list = response['data']
+    else:
+        flash('Error searching for articles')
     try:
-        keys = articles[0].keys()
+        keys = article_list[0].keys()
     except KeyError:
         keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', articles=articles, keys=keys)
+    return render_template('pages/articles.html', articles=article_list, keys=keys)
 
 
 @app.route('/urls')
@@ -289,12 +310,14 @@ def fetch_docs(colname, limit=100):
         #     skip = int(request.GET['skip'])
         # if 'sort' in request.GET:
         #     sort = json.loads(request.GET['sort'])
-        cur = coll.find({}, limit=limit)
+        cur = coll.find({}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
         cnt = cur.count()
         # if sort:
         #     cur = cur.sort(sort)
         resp = [a for a in cur]
         json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
+    except ConnectionFailure:
+        json_response = json.dumps({'error': "Can't connect to database on {}".format(app.config["MEDIACLOUD_DATABASE_HOST"])})
     except Exception, e:
         print e
         import traceback
@@ -335,7 +358,7 @@ if not app.debug:
 
 # Default port:
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
 
 # Or specify port manually:
 '''
