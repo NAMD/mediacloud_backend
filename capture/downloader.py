@@ -21,7 +21,7 @@ from logging.handlers import RotatingFileHandler
 import feedparser
 import pymongo
 import requests
-from requests.exceptions import ConnectionError, MissingSchema
+from requests.exceptions import ConnectionError, MissingSchema, Timeout
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import bson
@@ -96,6 +96,8 @@ class RSSDownload(object):
             except MissingSchema:
                 logger.error("Failed to fetch %s because of missing link.", entry.get('link'))
                 continue
+            except Timeout:
+                logger.error("Timed out while fetching %s", entry.get('link'))
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
