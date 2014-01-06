@@ -13,7 +13,8 @@ class FeedFinderTests(unittest.TestCase):
             self.urls = [s.strip() for s in f.readlines()]
 
     def tearDown(self):
-        downloader.FEEDS.drop()
+        pass
+        # downloader.FEEDS.drop()
 
     def test_get_page(self):
         page = feedfinder.get_page('https://www.google.com')

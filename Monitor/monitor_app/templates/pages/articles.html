@@ -1,41 +1,60 @@
 {% extends 'layouts/main.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<script type="text/javascript">
-$(document).ready(function() {
-    var oTable = $('#articles').dataTable( {
-        "bProcessing": true,
-        "sAjaxSource": "/articles/json",
-        "aoColumns": [
-            {% for key in keys %}
-            { "mData": "{{ key }}" },
-            {% endfor %}
-        ]
-    } );
-} );
-</script>
-<div class="page-header">
-  <h1>Articles Downloaded</h1>
-<table cellpadding="5" cellspacing="0" border="0" class="display" id="articles">
-    <thead>
-        <tr>
-            {% for key in keys %}
-            <th width="auto">{{ key }}</th>
-            {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var oTable = $('#articles').dataTable({
+                "bProcessing": true,
+                "fnInitComplete": function(oSettings, json) {
+                    $(".text").linker();
+                    },
+                "bFilter": true,
+                "sAjaxSource": "/articles/json",
+                "aoColumns": [
+                    {% for key in keys %}
+                        {% if key == "link" %}
+                        { "mData": "{{ key }}", sType: "html" },
+                        {% else %}
+                        { "mData": "{{ key }}", sClass: "text"},
+                        {% endif %}
+                    {% endfor %}
+                ]
+            });
+        $(".text").linker();
+        });
+    </script>
+    <div class="page-header">
+        <h1>Articles Downloaded</h1>
+        <p>We currently have {{ n_articles }} articles in our database.</p>
+    </div>
 
-    </tbody>
-    <tfoot>
-        <tr>
-            {% for key in keys %}
-            <th width="auto">{{ key }}</th>
-            {% endfor %}
-        </tr>
-    </tfoot>
-</table>
-</div>
+        <div id="dynamic">
+            <div id="article_wrapper" class="dataTables_wrapper" role="grid">
 
+                <table id="articles" cellpadding="5" cellspacing="0" border="0" class="display dataTable">
+                    <thead>
+                    <tr>
+                        {% for key in keys %}
+                            <th width="20%" class="sorting_asc" role="columnheader" tabindex="0"
+                                aria-controls="articles" rowspan="1" colspan="1" style="width: 132px;"
+                                aria-sort="ascending"
+                                aria-label="{{ key }}: activate to sort column descending">{{ key }}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        {% for key in keys %}
+                            <th rowspan="1" colspan="1">{{ key }}</th>
+                        {% endfor %}
+                    </tr>
+                    </tfoot>
+                </table>
+                </div>
+            </div>
+        </div>
 
 {% endblock %}
