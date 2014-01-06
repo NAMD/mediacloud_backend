@@ -98,6 +98,7 @@ class RSSDownload(object):
                 continue
             except Timeout:
                 logger.error("Timed out while fetching %s", entry.get('link'))
+                continue
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
