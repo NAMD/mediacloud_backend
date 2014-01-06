@@ -41,7 +41,6 @@ def url_scanner(url, depth=1):
     except OSError:
         print "Directory not found"
     try:
-        os.remove(os.path.join(tempdir, 'cookies.txt'))
         os.remove(os.path.join(tempdir, 'hts-log.txt'))
         if os.path.exists(os.path.join(tempdir, 'cookies.txt')):
             os.remove(os.path.join(tempdir, 'cookies.txt'))
