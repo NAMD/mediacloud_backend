@@ -4,16 +4,17 @@ Fetches all urls in a google query for RSS feeds in Brasil
 """
 __author__ = 'fccoelho'
 
-
-import GoogleScraper
 from urlparse import unquote
-import pymongo
-import logging
-import settings
 import argparse
 import datetime
 import time
+
+import pymongo
 from pymongo.errors import DuplicateKeyError
+
+import GoogleScraper
+import settings
+
 
 ##### Setup URL Collection ############
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
@@ -41,7 +42,7 @@ def main(subject='', n=5):
             #print url
             #print(unquote(url.geturl()))
             try:
-                U = unquote(url.geturl()).split("&sa=U&ei=")[0]  # Remove googlebot crap
+                U = unquote(url.geturl()).split("&")[0]#sa=U&ei=")[0]  # Remove googlebot crap
                 URLS.insert({'url': U, 'tags': [subject], 'fetched_on': datetime.datetime.now()})
             except DuplicateKeyError:
                 pass
