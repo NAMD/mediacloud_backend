@@ -158,7 +158,7 @@ def feeds():
         keys = feed_list[0].keys()
     except KeyError:
         keys = ["No", "feeds", "in", "Database"]
-    maintained_keys = set(['title', 'link', 'feed_link', 'language', 'published', 'last_visited', 'subtitle_detail'])
+    maintained_keys = set(['title', 'link', 'feed_link', 'language', 'published', 'last_visited'])
 
 
     return render_template('pages/feeds.html', nfeeds=nfeeds, keys=list(maintained_keys))
@@ -230,9 +230,12 @@ def clean_feeds(data):
         for f in maintained_keys:
             if f not in feed:
                 feed[f] = 'NA'
+            if f == 'link':
+                feed[f] = r'<a href="{}">{}</a>'.format(feed[f], feed[f][:20]+'...')
         try:
             if 'subtitle_detail' in feed:
-                feed['feed_link'] = feed.get('base', feed['subtitle_detail'].get('base', 'NA'))
+                u = feed.get('base', feed['subtitle_detail'].get('base', 'NA'))
+                feed['feed_link'] = r'<a href="{}">{}</a>'.format(u, u)
         except AttributeError:
             continue
         print feed

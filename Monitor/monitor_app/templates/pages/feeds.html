@@ -38,13 +38,19 @@
             var oTable = $('#feeds').dataTable({
                 "bProcessing": true,
                 "fnInitComplete": function(oSettings, json) {
-                    $(".text").linker();
+                   //$(".text").linker();
                 },
                 "bFilter": true,
                 "sAjaxSource": "/feeds/json",
                 "aoColumns": [
                     {% for key in keys %}
-                        { "mData": "{{ key }}", sClass: "text" },
+                        {% if key == "feed_link" %}
+                            { "mData": "{{ key }}", sType: "html" },
+                        {% elif key == "link" %}
+                            { "mData": "{{ key }}", sType: "html" },
+                        {% else %}
+                            { "mData": "{{ key }}", sClass: "text" },
+                        {% endif %}
                     {% endfor %}
                 ]
             });
