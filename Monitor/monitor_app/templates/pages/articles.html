@@ -13,14 +13,16 @@
                 "aoColumns": [
                     {% for key in keys %}
                         {% if key == "link" %}
-                        { "mData": "{{ key }}", sType: "html" },
+                            { "mData": "{{ key }}", sType: "html" },
+                        {% elif key == "published" %}
+                            { "mData": "{{ key }}", sType: "date" },
                         {% else %}
-                        { "mData": "{{ key }}", sClass: "text"},
+                            { "mData": "{{ key }}", sClass: "text"},
                         {% endif %}
                     {% endfor %}
                 ]
             });
-        $(".text").linker();
+        // $(".text").linker();
         });
     </script>
     <div class="page-header">

@@ -158,43 +158,17 @@ def feeds():
         keys = feed_list[0].keys()
     except KeyError:
         keys = ["No", "feeds", "in", "Database"]
-<<<<<<< HEAD
-    return render_template('pages/feeds.html', nfeeds=nfeeds, feeds=feeds, keys=keys)
-=======
     maintained_keys = set(['title', 'link', 'feed_link', 'language', 'published', 'last_visited', 'subtitle_detail'])
 
 
-
     return render_template('pages/feeds.html', nfeeds=nfeeds, keys=list(maintained_keys))
->>>>>>> 1ee76a4... Improved display of links in Article Table
+
 
 
 @app.route('/articles')
 def articles():
-<<<<<<< HEAD
-
-    response = json.loads(fetch_docs('articles'))
-    if 'data' in response:
-        article_list = response['data']
-    else:
-        flash('Error searching for articles')
-    try:
-        keys = article_list[0].keys()
-    except KeyError:
-        keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', articles=article_list, keys=keys)
-
-
-@app.route('/urls')
-def urls():
     C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    urls = json.loads(fetch_docs('urls'))
-    try:
-        keys = articles[0].keys()
-    except KeyError:
-        keys = ["No", "URLs", "in", "Database"]
-    return render_template('pages/urls.html', urls=urls, keys=keys)
-=======
+    nart = C.MCDB.articles.count()
     response = json.loads(fetch_docs('articles'))
     maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
     removed_fields = set(response['data'][0].keys()) - maintained_keys
@@ -203,7 +177,7 @@ def urls():
         keys += feed.keys()
     if not keys:
         keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', keys=list(maintained_keys))
+    return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys))
 
 
 def clean_articles(data):
@@ -265,18 +239,36 @@ def clean_feeds(data):
         feed_list.append(feed)
 
     return feed_list
->>>>>>> 1ee76a4... Improved display of links in Article Table
+
+
+
+@app.route('/urls')
+def urls():
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
+    urls = json.loads(fetch_docs('urls'))
+    try:
+        keys = articles[0].keys()
+    except KeyError:
+        keys = ["No", "URLs", "in", "Database"]
+    return render_template('pages/urls.html', urls=urls, keys=keys)
 
 
 @app.route("/feeds/json")
 def json_feeds(start=0, stop=100):
-    return fetch_docs('feeds', stop)
+    result = json.loads(fetch_docs('feeds', stop))
+    return json.dumps({"aaData": clean_feeds(result['data'])})
 
 
 @app.route("/articles/json")
 def json_articles(start=0, stop=100):
-    return fetch_docs('articles', stop)
+    result = json.loads(fetch_docs('articles', stop))
+    articles = []
+    for article in result['data']:
+        article['published'] = datetime.date.fromtimestamp(article['published']['$date']/1000.).strftime("%b %d, %Y")
+        article.pop('link_content')
+        articles.append(article)
 
+    return json.dumps({"aaData": clean_articles(articles)})
 
 @app.route("/urls/json")
 def json_urls(start=0, stop=100):
@@ -288,7 +280,6 @@ def timeline():
     return render_template('pages/indextimeline.html')
 
 
-<<<<<<< HEAD
 @app.route('/visualizations/timeline/data.jsonp')
 def json_timeline():
     Articles = json.loads(fetch_docs('articles'))['data']
@@ -299,9 +290,7 @@ def json_timeline():
 
     dados = render_template('pages/timeline.json', busca='NAMD FGV', articles=fixed_articles)
     return Response(dados, mimetype='application/json')
-=======
-    return json.dumps({"aaData": clean_articles(articles)})
->>>>>>> 1ee76a4... Improved display of links in Article Table
+
 
 
 @app.route("/query/<coll_name>", methods=['GET'])
