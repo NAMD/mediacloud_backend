@@ -32,6 +32,7 @@ import os
 
 
 sys.path.append(os.getcwd() + '..')
+from capture.downloader import decompress_content
 
 from pysolr import Solr, SolrError
 
@@ -117,10 +118,13 @@ class DocManager():
         the backend engine and add the document in there. The input will
         always be one mongo document, represented as a Python dictionary.
         """
+        # Decompress the content of the article before sending to Solr
+        doc["link_content"] = decompress_content(doc["link_content"])
         try:
             self.solr.add([self.clean_doc(doc)], commit=True)
         except SolrError:
             logging.error("Could not insert %r into Solr" % (doc,))
+
 
     def remove(self, doc):
         """Removes documents from Solr
