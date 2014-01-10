@@ -220,6 +220,7 @@
          also applies synonyms. -->
     <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
+        <charFilter class="solr.HTMLStripCharFilterFactory"/>
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
         <!-- in this example, we will only use synonyms at query time
@@ -531,6 +532,7 @@
     <!-- Portuguese -->
     <fieldType name="text_pt" class="solr.TextField" positionIncrementGap="100">
       <analyzer>
+        <charFilter class="solr.HTMLStripCharFilterFactory"/>
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_pt.txt" format="snowball" enablePositionIncrements="true"/>
@@ -567,14 +569,14 @@
      default: a value that should be used if no value is specified
        when adding a document.
    -->
-   <field name="name" type="string" indexed="true" stored="true" />
-   <field name="created" type="string" indexed="true" stored="true" />
-   <field name="author" type="string" indexed="true" stored="true" />
+   <field name="title" type="string" indexed="true" stored="true" />
+   <field name="summary" type="string" indexed="true" stored="true" />
+   <field name="link" type="string" indexed="true" stored="true" />
    <field name="_id" type="string" indexed="true" stored="true" />
    <field name="_ts" type="long" indexed="true" stored="true" />
    <field name="ns" type="string" indexed="true" stored="true"/>
 
-   <field name="id" type="string" indexed="true" stored="true" />
+   <field name="link_content" type="string" indexed="true" stored="true" />
    <field name="sku" type="text_en_splitting_tight" indexed="true" stored="true" omitNorms="true"/>
    <field name="alphaNameSort" type="alphaOnlySort" indexed="true" stored="false"/>
    <field name="manu" type="text_general" indexed="true" stored="true" omitNorms="true"/>
