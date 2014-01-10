@@ -27,6 +27,11 @@ import re
 import json
 import logging
 from threading import Timer
+import sys
+import os
+
+
+sys.path.append(os.getcwd() + '..')
 
 from pysolr import Solr, SolrError
 
