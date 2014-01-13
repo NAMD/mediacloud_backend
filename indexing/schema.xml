@@ -569,7 +569,7 @@
      default: a value that should be used if no value is specified
        when adding a document.
    -->
-   <field name="title" type="text_general" indexed="true" stored="true" />
+   <field name="title" type="text_pt" indexed="true" stored="true" />
    <field name="summary" type="text_pt" indexed="true" stored="true" />
    <field name="link" type="string" indexed="true" stored="true" />
    <field name="_id" type="string" indexed="true" stored="true" />
@@ -582,7 +582,7 @@
 
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->
-   <field name="text" type="text_general" indexed="true" stored="false" multiValued="true"/>
+   <field name="text" type="text_pt" indexed="true" stored="false" multiValued="true"/>
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
@@ -661,9 +661,9 @@
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
 
-   <copyField source="cat" dest="text"/>
-   <copyField source="name" dest="text"/>
-   <copyField source="manu" dest="text"/>
+   <copyField source="title" dest="text"/>
+   <copyField source="summary" dest="text"/>
+   <copyField source="link_content" dest="text"/>
    <copyField source="features" dest="text"/>
    <copyField source="includes" dest="text"/>
 

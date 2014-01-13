@@ -31,7 +31,8 @@ import sys
 import os
 
 
-sys.path.append(os.getcwd() + '..')
+sys.path.append(os.getcwd() + '/..')
+print os.getcwd() + '/..'
 from capture.downloader import decompress_content
 
 from pysolr import Solr, SolrError
@@ -51,7 +52,7 @@ class DocManager():
     multiple, slightly different versions of a doc.
     """
 
-    def __init__(self, url, auto_commit=False, unique_key='_id'):
+    def __init__(self, url, auto_commit=False, unique_key='_id', **kwargs):
         """Verify Solr URL and establish a connection.
         """
         self.solr = Solr(url)
@@ -111,6 +112,11 @@ class DocManager():
         """
         self.auto_commit = False
 
+    def decompress(self, doc):
+        # Decompress the content of the article before sending to Solr
+        doc["link_content"] = decompress_content(doc["link_content"])
+        return doc
+
     def upsert(self, doc):
         """Update or insert a document into Solr
 
@@ -118,8 +124,8 @@ class DocManager():
         the backend engine and add the document in there. The input will
         always be one mongo document, represented as a Python dictionary.
         """
-        # Decompress the content of the article before sending to Solr
-        doc["link_content"] = decompress_content(doc["link_content"])
+        if "link_content" in doc:
+            doc = self.decompress(doc)
         try:
             self.solr.add([self.clean_doc(doc)], commit=True)
         except SolrError:
