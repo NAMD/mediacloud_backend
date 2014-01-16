@@ -130,6 +130,8 @@ class DocManager():
             self.solr.add([self.clean_doc(doc)], commit=True)
         except SolrError:
             logging.error("Could not insert %r into Solr" % (doc,))
+        except ValueError:
+            logging.error("Could not insert %r into Solr because of encoding issues", doc)
 
 
     def remove(self, doc):
