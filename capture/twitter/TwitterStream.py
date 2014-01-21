@@ -34,6 +34,7 @@ iterator = TWstream.statuses.sample()
 
 def capture(twiterator):
     for tweet in twiterator:
+    for tweet in it:
         try:
             if not tweet['lang'].startswith('pt'):
                 continue
