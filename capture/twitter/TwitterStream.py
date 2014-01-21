@@ -13,7 +13,8 @@ logging.basicConfig(filename='/tmp/twitterstream.log', format=FORMAT, level=logg
 
 mongo_host = config.MONGO_HOST if config.MONGO_HOST else 'localhost'
 
-client = MongoClient(mongo_host)
+#client = MongoClient(mongo_host)
+client = MongoClient()
 mcdb = client.MCDB
 coll = mcdb.tweets
 # credentials
@@ -31,17 +32,15 @@ TWstream = twitter.TwitterStream(auth=twitter.OAuth(access_token_key,
 iterator = TWstream.statuses.sample()
 
 
-
-def capture(twiterator):
-    for tweet in twiterator:
+#I put the database and the iterator as parameters so they could be changed during the tests.
+def capture(it = iterator, db = coll):
     for tweet in it:
         try:
             if not tweet['lang'].startswith('pt'):
                 continue
             if not tweet.get('text'):
                 continue
-            #print (tweet['text'])
-            coll.insert(tweet, w=1)
+            db.insert(tweet, w=1)
         except twitter.TwitterError(420):
             logging.warning('Error 420: Rate limit problem')
         except KeyError as e:
@@ -51,5 +50,5 @@ def capture(twiterator):
 if __name__ == '__main__':
 
     logging.info("Started running")
-    capture(iterator)
+    capture()
     logging.critical("Stopped running")
