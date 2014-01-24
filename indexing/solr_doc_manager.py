@@ -26,7 +26,7 @@ import logging
 import zlib
 import cPickle as CP
 from threading import Timer
-
+from bson import json_util
 from pysolr import Solr, SolrError
 from mongo_connector import errors
 from mongo_connector.util import retry_until_ok
@@ -147,8 +147,8 @@ class DocManager():
             self.solr.add([self.clean_doc(doc)], commit=True)
         except SolrError:
             logging.error( "Could not insert %r into Solr" % doc)
-            # raise errors.OperationFailed(
-            #     "Could not insert %r into Solr" % doc)#json.dumps(doc, default=json_util))
+            raise errors.OperationFailed(
+                 "Could not insert %r into Solr" % json.dumps(doc, default=json_util))
 
     def bulk_upsert(self, docs):
         """Update or insert multiple documents into Solr
