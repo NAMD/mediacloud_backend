@@ -1,4 +1,4 @@
-# Copyright 2012 10gen, Inc.
+# Copyright 2013-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file will be used with PyPi in order to package and distribute the final
-# product.
-
 """Receives documents from the oplog worker threads and indexes them
 into the backend.
 
@@ -26,22 +23,39 @@ replace the method definitions with API calls for the desired backend.
 import re
 import json
 import logging
+import zlib
+import cPickle as CP
 from threading import Timer
-import sys
-import os
-
-
-sys.path.append(os.getcwd() + '/..')
-print os.getcwd() + '/..'
-from capture.downloader import decompress_content
 
 from pysolr import Solr, SolrError
-
+from mongo_connector import errors
 from mongo_connector.util import retry_until_ok
 
-ADMIN_URL = 'admin/luke?show=Schema&wt=json'
+
+# create console handler and set level to debug
+logger = logging.getLogger("Solr")
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# add formatter to ch
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+ADMIN_URL = 'collection1/schema/?wt=json'
 
 decoder = json.JSONDecoder()
+
+def decompress_content(compressed_html):
+    """
+    Decompress data compressed by `compress_content`
+    :param compressed_html: compressed html document
+    :return: original html
+    """
+    decompressed = zlib.decompress(compressed_html)
+    orig_html = CP.loads(decompressed)
+    return orig_html
 
 class DocManager():
     """The DocManager class creates a connection to the backend engine and
@@ -68,10 +82,11 @@ class DocManager():
     def _parse_fields(self, result, field_name):
         """ If Schema access, parse fields and build respective lists
         """
+        # print field_name, result
         field_list = []
-        for key, value in result.get('schema', {}).get(field_name, {}).items():
-            if key not in field_list:
-                field_list.append(key)
+        for field in result.get('schema', {}).get(field_name, {}):
+            if field["name"] not in field_list:
+                field_list.append(field)
         return field_list
 
     def build_fields(self):
@@ -87,6 +102,9 @@ class DocManager():
         used by Solr. This WILL remove fields that aren't in the schema, so
         the document may actually get altered.
         """
+        if "link_content" in doc:
+            doc = self.decompress(doc)
+
         if not self.field_list:
             return doc
 
@@ -98,7 +116,7 @@ class DocManager():
             # Dynamic strings. * can occur only at beginning and at end
             else:
                 for field in self.dynamic_field_list:
-                    if field[0] == '*':
+                    if field["name"] == '*':
                         regex = re.compile(r'\w%s\b' % (field))
                     else:
                         regex = re.compile(r'\b%s\w' % (field))
@@ -124,15 +142,25 @@ class DocManager():
         the backend engine and add the document in there. The input will
         always be one mongo document, represented as a Python dictionary.
         """
-        if "link_content" in doc:
-            doc = self.decompress(doc)
+
         try:
             self.solr.add([self.clean_doc(doc)], commit=True)
         except SolrError:
-            logging.error("Could not insert %r into Solr" % (doc,))
-        except ValueError:
-            logging.error("Could not insert %r into Solr because of encoding issues", doc)
+            logging.error( "Could not insert %r into Solr" % doc)
+            # raise errors.OperationFailed(
+            #     "Could not insert %r into Solr" % doc)#json.dumps(doc, default=json_util))
 
+    def bulk_upsert(self, docs):
+        """Update or insert multiple documents into Solr
+
+        docs may be any iterable
+        """
+        try:
+            cleaned = (self.clean_doc(d) for d in docs)
+            self.solr.add(cleaned, commit=True)
+        except SolrError:
+            raise errors.OperationFailed(
+                "Could not bulk-insert documents into Solr")
 
     def remove(self, doc):
         """Removes documents from Solr
