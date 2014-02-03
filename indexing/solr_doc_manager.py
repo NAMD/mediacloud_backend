@@ -26,7 +26,6 @@ import logging
 import zlib
 import cPickle as CP
 from threading import Timer
-from bson import json_util
 from pysolr import Solr, SolrError
 from mongo_connector import errors
 from mongo_connector.util import retry_until_ok
@@ -43,7 +42,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-ADMIN_URL = 'collection1/schema/?wt=json'
+ADMIN_URL = 'mediacloud/schema/?wt=json'
 
 decoder = json.JSONDecoder()
 
@@ -82,11 +81,10 @@ class DocManager():
     def _parse_fields(self, result, field_name):
         """ If Schema access, parse fields and build respective lists
         """
-        # print field_name, result
         field_list = []
         for field in result.get('schema', {}).get(field_name, {}):
-            if field["name"] not in field_list:
-                field_list.append(field)
+            if field['name'] not in field_list:
+                field_list.append(field['name'])
         return field_list
 
     def build_fields(self):
@@ -105,10 +103,12 @@ class DocManager():
         if "link_content" in doc:
             doc = self.decompress(doc)
 
+        print self.field_list[0]
         if not self.field_list:
             return doc
 
         fixed_doc = {}
+        doc[self.unique_key] = doc["_id"]
         for key, value in doc.items():
             if key in self.field_list[0]:
                 fixed_doc[key] = value
@@ -116,13 +116,18 @@ class DocManager():
             # Dynamic strings. * can occur only at beginning and at end
             else:
                 for field in self.dynamic_field_list:
-                    if field["name"] == '*':
+                    if field[0] == '*':
                         regex = re.compile(r'\w%s\b' % (field))
                     else:
                         regex = re.compile(r'\b%s\w' % (field))
                     if regex.match(key):
                         fixed_doc[key] = value
-
+        try:
+            assert "_id" in fixed_doc
+        except AssertionError:
+            print(self.unique_key)
+            print(fixed_doc.keys())
+            raise AssertionError
         return fixed_doc
 
     def stop(self):
@@ -132,7 +137,7 @@ class DocManager():
 
     def decompress(self, doc):
         # Decompress the content of the article before sending to Solr
-        doc["link_content"] = decompress_content(doc["link_content"])
+        doc["link_content"] = decompress_content(doc["link_content"]).encode('utf8')
         return doc
 
     def upsert(self, doc):
@@ -146,9 +151,9 @@ class DocManager():
         try:
             self.solr.add([self.clean_doc(doc)], commit=True)
         except SolrError:
-            logging.error( "Could not insert %r into Solr" % doc)
+            logging.error("Could not insert %r into Solr" % doc["_id"])
             raise errors.OperationFailed(
-                 "Could not insert %r into Solr" % json.dumps(doc, default=json_util))
+                 "Could not insert %r into Solr" % doc["_id"])#json.dumps(doc, default=json_util))
 
     def bulk_upsert(self, docs):
         """Update or insert multiple documents into Solr
