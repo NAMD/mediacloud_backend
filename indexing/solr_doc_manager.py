@@ -42,7 +42,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-ADMIN_URL = 'mediacloud/schema/?wt=json'
+ADMIN_URL = 'schema/?wt=json'
 
 decoder = json.JSONDecoder()
 
@@ -103,7 +103,6 @@ class DocManager():
         if "link_content" in doc:
             doc = self.decompress(doc)
 
-        print self.field_list[0]
         if not self.field_list:
             return doc
 
@@ -122,12 +121,7 @@ class DocManager():
                         regex = re.compile(r'\b%s\w' % (field))
                     if regex.match(key):
                         fixed_doc[key] = value
-        try:
-            assert "_id" in fixed_doc
-        except AssertionError:
-            print(self.unique_key)
-            print(fixed_doc.keys())
-            raise AssertionError
+
         return fixed_doc
 
     def stop(self):
