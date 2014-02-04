@@ -33,7 +33,7 @@ import settings
 
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
-print sys.path[-1]
+
 from indexing.solr_doc_manager import DocManager
 
 ###########################
@@ -148,10 +148,13 @@ class RSSDownload(object):
                     pass
                 try:
                     _id = ARTICLES.insert(entry, w=1)
-                    self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
                 # print "inserted"
+                try:
+                    self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
+                except Exception as e:
+                    logger.error("Problem adding document to Solr")
 
 
 def compress_content(html):

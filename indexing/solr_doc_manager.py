@@ -157,9 +157,9 @@ class DocManager():
         try:
             cleaned = (self.clean_doc(d) for d in docs)
             self.solr.add(cleaned, commit=True)
-        except SolrError:
+        except SolrError as e:
             raise errors.OperationFailed(
-                "Could not bulk-insert documents into Solr")
+                "Could not bulk-insert documents into Solr: {}".format(e))
 
     def remove(self, doc):
         """Removes documents from Solr

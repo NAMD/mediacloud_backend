@@ -31,7 +31,7 @@ def main(subject='', n=5):
     """
     q = "{}+RSS+site:br".format(subject)
     for o in range(0, n*10, n):
-        urls = GoogleScraper.scrape(q, number_pages=n, offset=o)
+        urls = GoogleScraper.scrape(q, number_pages=n, offset=o, language='lang_pt')
         for url in urls:
             # You can access all parts of the search results like that
             # url.scheme => URL scheme specifier (Ex: 'http')

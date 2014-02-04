@@ -138,7 +138,7 @@
 
 <!-- Start of Mediacloud specific fileds -->
    <field name="title" type="text_pt" indexed="true" stored="true" />
-   <field name="summary" type="text_pt" indexed="true" stored="true" />
+   <field name="summary" type="text_pt" indexed="true" stored="true"/>
    <field name="link" type="string" indexed="true" stored="true" />
    <field name="_id" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
    <field name="_ts" type="long" indexed="true" stored="true" />
@@ -293,7 +293,7 @@
 <!--   <copyField source="price" dest="price_c"/> -->
 
    <!-- Text fields from SolrCell to search by default in our catch-all field -->
-   <copyField source="title" dest="text"/>
+   <copyField source="title" dest="text_pt"/>
    <copyField source="author" dest="text"/>
    <copyField source="description" dest="text"/>
    <copyField source="keywords" dest="text"/>
