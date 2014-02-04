@@ -62,4 +62,4 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--subject', type=str, default='', help='subject of the FEEDS')
     parser.add_argument('-f', '--filter', type=str, default='site', help='filter results by language or by domain: .br')
     args = parser.parse_args()
-    main(args.subject)
+    main(args.subject, args.filter)
