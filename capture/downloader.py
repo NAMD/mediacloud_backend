@@ -70,7 +70,7 @@ class RSSDownload(object):
     def __init__(self, feed_id, url):
         self.url = url
         self.feed_id = feed_id
-        self.solr_doc_manager = DocManager(settings.SOLR_URL)
+        self.solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud"))
 
     def parse(self):
         response = feedparser.parse(self.url)
@@ -150,6 +150,7 @@ class RSSDownload(object):
                     _id = ARTICLES.insert(entry, w=1)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
+                    return
                 # print "inserted"
                 try:
                     self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
