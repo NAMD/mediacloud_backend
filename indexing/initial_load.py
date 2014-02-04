@@ -48,7 +48,7 @@ class Indexer(object):
             except Exception as e:
                 self.mark_as_indexed(docs, False)
                 print e
-            print "indexed {} of {}".format(max(i+num_docs, num_docs), num_docs)
+            print "indexed {} of {}".format(min(i+batchsize, num_docs), num_docs)
         print "Indexed {} documents per second.".format(num_docs/(time.time() - t0))
 
     def mark_as_indexed(self, docs, status):
