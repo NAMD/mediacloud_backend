@@ -29,10 +29,7 @@ def main(subject='', results_filter='site', n=5):
     Scrape google search up to the nth page and save the results to a MongoDB collection.
     :param n:
     """
-    if results_filter == 'site':
-        q = "{}+RSS+site:br".format(subject)
-        lang = ''
-    elif results_filter == 'lang':
+    if results_filter == 'lang':
         q = "{}+RSS".format(subject)
         lang = 'lang_pt'
     else:
