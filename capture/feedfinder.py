@@ -312,8 +312,10 @@ def store_feeds(feed_list):
                 return
             try:
                 solr_doc_manager.upsert(FEEDS.find_one({"_id": _id}))
+                FEEDS.update({"_id": _id}, {"$set": {"indexed": True}})
             except Exception as e:
                 logger.error("Problem adding document to Solr:{}".format(e))
+                FEEDS.update({"_id": _id}, {"$set": {"indexed": False}})
 
 
 def feed(uri):

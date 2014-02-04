@@ -153,7 +153,9 @@ class RSSDownload(object):
                 # print "inserted"
                 try:
                     self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": True}})
                 except Exception as e:
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": False}})
                     logger.error("Problem adding document to Solr")
 
 
