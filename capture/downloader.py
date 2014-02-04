@@ -16,6 +16,8 @@ import datetime
 import zlib
 import cPickle as CP
 import cld
+import sys
+import os
 from logging.handlers import RotatingFileHandler
 
 import feedparser
@@ -29,6 +31,9 @@ from dateutil.parser import parse
 
 import settings
 
+
+sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
+from indexing.solr_doc_manager import DocManager
 
 ###########################
 #  Setting up Logging
@@ -64,6 +69,7 @@ class RSSDownload(object):
     def __init__(self, feed_id, url):
         self.url = url
         self.feed_id = feed_id
+        self.solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud_articles"))
 
     def parse(self):
         response = feedparser.parse(self.url)
@@ -140,10 +146,17 @@ class RSSDownload(object):
                     # consider parsing the string datetime into a datetime object
                     pass
                 try:
-                    ARTICLES.insert(entry, w=1)
+                    _id = ARTICLES.insert(entry, w=1)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
+                    return
                 # print "inserted"
+                try:
+                    self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": True}})
+                except Exception as e:
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": False}})
+                    logger.error("Problem adding document to Solr")
 
 
 def compress_content(html):

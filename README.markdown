@@ -39,7 +39,7 @@ Debian-based systems (such as Ubuntu), run as root:
     apt-get install python-dev build-essential libxml2-dev libxslt1-dev zlib1g-dev libssl-dev
 
 
-#### httrac
+#### httrack
 
 We also need to download and compile [httrack](http://www.httrack.com/), as we
 use it to crawl the Web pages. To install it, run as root:
@@ -132,6 +132,21 @@ there (you don't need to active a virtualenv), for example:
     python extract_feeds.py
     python downloader.py
 
+## Full Text Indexing
+
+Full text indexing must be enabled in the current version of MediaCloud. You need to configure a Solr server for this
+The project is tested with version 4.6 of Solr which can be downloaded from http://lucene.apache.org/solr/downloads.html
+After you have unpacked the tarball in a directory of your choosing, for example `/opt/`, you must go into the `/opt/solr-4.6.0/example/solr/`
+and create two new cores, similar to `collection1` (You may simply copy the contents of `collection1`), named `mediacloud_articles` and `mediacloud_feeds`.
+
+Then you must copy the `schema.xml` provided in the indexing package of mediacloud and copy it over the ones located in the `conf/` subdirectory of each core.
+
+Now you can start solr (from the `example` directory) by issuing the following command:
+
+    sudo java -Dsolr.clustering.enabled=true -jar start.jar&
+
+If the Solr server is not acessible, both the `extract_feeds` and `downloader.py` scripts will fail to run.
+
 ## Using the scripts
 
 To execute the scripts of this project you need to activate the virtualenv
@@ -191,3 +206,5 @@ The articles downloaded will be stored in MongoDB collection `articles` inside
 `MCDB` database.  Insertion in the database checks for duplicate URLs and
 doesn't re-insert them.  We recommend that this is run as a cron job every so
 often.
+
+

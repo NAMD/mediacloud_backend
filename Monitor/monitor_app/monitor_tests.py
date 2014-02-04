@@ -21,7 +21,6 @@ class MonitorTestCase(unittest.TestCase):
         os.close(self.db_fd)
         os.unlink(app.config['DATABASE'])
 
-
     def test_fetch_docs_feeds(self):
         rv = self.app.get('/feeds/json')
         self.assertIn("aaData", json.loads(rv.data))
