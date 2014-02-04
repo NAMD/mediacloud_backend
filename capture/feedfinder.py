@@ -50,6 +50,8 @@ import logging
 import time
 import datetime
 from logging.handlers import RotatingFileHandler
+import sys
+import os
 
 import requests
 import feedparser
@@ -59,9 +61,15 @@ from pymongo.errors import DuplicateKeyError
 import settings
 
 
+sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
+from indexing.solr_doc_manager import DocManager
+
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
+
+# Setting up Solr connection
+solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud_feeds"))
 
 ###########################
 #  Setting up Logging
@@ -279,7 +287,7 @@ def store_feeds(feed_list):
     Store the Feeds in the Feed collection in the database
     :param feed_list: LIst of feed URLs returned by feeds()
     """
-    #TODO: Add more test to this function
+    #TODO: Add more tests to this function
     for f in feed_list:
         response = feedparser.parse(f)
         # insert only if is not already in the database
@@ -298,9 +306,14 @@ def store_feeds(feed_list):
                         logger.error("Couldn't convert to date. %s", v)
 
             try:
-                FEEDS.insert(response.feed, w=1)
+                _id = FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:
                 logger.info("Feed %s already in database", f)
+                return
+            try:
+                solr_doc_manager.upsert(FEEDS.find_one({"_id": _id}))
+            except Exception as e:
+                logger.error("Problem adding document to Solr:{}".format(e))
 
 
 def feed(uri):

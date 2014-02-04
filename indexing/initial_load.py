@@ -69,8 +69,8 @@ def decompress_content(compressed_html):
 
 if __name__ == "__main__":
     conn = pymongo.MongoClient(settings.MONGOHOST)
-    article_indexer = Indexer(settings.SOLR_URL, "mediacloud", conn.MCDB.articles)
-    feed_indexer = Indexer(settings.SOLR_URL, "mediacloud", conn.MCDB.feeds)
+    article_indexer = Indexer(settings.SOLR_URL, "mediacloud_articles", conn.MCDB.articles)
+    feed_indexer = Indexer(settings.SOLR_URL, "mediacloud_feeds", conn.MCDB.feeds)
     article_indexer.start(200)
     feed_indexer.start(200)
 
