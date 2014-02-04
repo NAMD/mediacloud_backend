@@ -42,11 +42,18 @@ class Indexer(object):
         for i in range(0, num_docs, batchsize):
             cur = self.collection.find({}, skip=i, limit=batchsize, sort=[("_id", pymongo.ASCENDING)])
             try:
-                self.doc_manager.bulk_upsert(list(cur))
+                docs = list(cur)
+                self.doc_manager.bulk_upsert(docs)
+                self.mark_as_indexed(docs, True)
             except Exception as e:
+                self.mark_as_indexed(docs, False)
                 print e
             print "indexed {} of {}".format(max(i+num_docs, num_docs), num_docs)
         print "Indexed {} documents per second.".format(num_docs/(time.time() - t0))
+
+    def mark_as_indexed(self, docs, status):
+        for doc in docs:
+            self.collection.update({"_id": doc["_id"]}, {"$set": {"indexed": status}})
 
     def decompress(self, doc):
         """
