@@ -6,7 +6,7 @@ chromium_compact_language_detector
 cssselect
 feedparser
 flask
-lxml
+lxml>=3.2.0
 pymongo
 python-dateutil
 requests
