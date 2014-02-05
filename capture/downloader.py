@@ -233,10 +233,11 @@ def parallel_fetch():
             except UnicodeEncodeError:
                 logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
             #fetch_feed(t["base"].decode('utf8'))
-        thread_pool.map(fetch_feed, feed_urls)
-        feeds_scanned += len(feed_urls)
-        logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
-        feed_count = FEEDS.count()
+        if feed_urls:  # Only if there are urls to fetch
+            thread_pool.map(fetch_feed, feed_urls)
+            feeds_scanned += len(feed_urls)
+            logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
+            feed_count = FEEDS.count()
     thread_pool.close()
     logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
