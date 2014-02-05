@@ -38,7 +38,7 @@ class Indexer(object):
         num_docs = self.collection.count()
         t0 = time.time()
         for i in range(0, num_docs, batchsize):
-            cur = self.collection.find({}, skip=i, limit=batchsize, sort=[("_id", pymongo.ASCENDING)])
+            cur = self.collection.find({}, skip=i, limit=batchsize, sort=[("_id", pymongo.DESCENDING)])
             try:
                 docs = list(cur)
                 self.doc_manager.bulk_upsert(docs)
