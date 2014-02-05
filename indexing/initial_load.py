@@ -12,11 +12,9 @@ import sys
 import zlib
 import cPickle as CP
 import time
-
+import argparse
 import pymongo
-
 from solr_doc_manager import DocManager
-
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
 from capture import settings
@@ -75,10 +73,15 @@ def decompress_content(compressed_html):
     return orig_html
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Push ARTICLE and FEED collections into SOLR for indexing')
+    parser.add_argument('-b', '--batch_size', type=int, default=100, help='Batch size for each push to Solr')
+    args = parser.parse_args()
+
     conn = pymongo.MongoClient(settings.MONGOHOST)
     article_indexer = Indexer(settings.SOLR_URL, "mediacloud_articles", conn.MCDB.articles)
     feed_indexer = Indexer(settings.SOLR_URL, "mediacloud_feeds", conn.MCDB.feeds)
-    article_indexer.start(200)
-    feed_indexer.start(200)
+    article_indexer.start(args.batch_size)
+    feed_indexer.start(args.batch_size)
+
 
 
