@@ -102,6 +102,7 @@ class DocManager():
         """
         if "link_content" in doc:
             doc = self.decompress(doc)
+            doc = self.clean_dates(doc)
 
         if not self.field_list:
             return doc
@@ -134,6 +135,19 @@ class DocManager():
         doc["link_content"] = decompress_content(doc["link_content"]).encode('utf8')
         return doc
 
+    def clean_dates(self, doc):
+        """
+        Remove fields in which dates are in string format
+        """
+        if "published" in doc:
+            if isinstance(doc['published'], string):
+                #todo: try first to converte to datetime using dateutil
+                del doc['published']
+        if "updated" in doc:
+            if isinstance(doc['updated'], string):
+                #todo: try first to converte to datetime using dateutil
+                del doc['updated']
+        return doc
     def upsert(self, doc):
         """Update or insert a document into Solr
 
