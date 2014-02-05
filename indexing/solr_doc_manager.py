@@ -140,11 +140,11 @@ class DocManager():
         Remove fields in which dates are in string format
         """
         if "published" in doc:
-            if isinstance(doc['published'], string):
+            if isinstance(doc['published'], str):
                 #todo: try first to converte to datetime using dateutil
                 del doc['published']
         if "updated" in doc:
-            if isinstance(doc['updated'], string):
+            if isinstance(doc['updated'], str):
                 #todo: try first to converte to datetime using dateutil
                 del doc['updated']
         return doc
