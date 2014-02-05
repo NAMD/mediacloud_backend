@@ -175,6 +175,8 @@ class DocManager():
         except SolrError as e:
             logging.error("Could not bulk-insert documents into Solr: {}".format(e))
             # raise errors.OperationFailed("Could not bulk-insert documents into Solr: {}".format(e))
+        except Exception as e:
+            logging.error("Could not bulk-insert documents into Solr: {}".format(e))
 
     def remove(self, doc):
         """Removes documents from Solr
