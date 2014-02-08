@@ -76,6 +76,9 @@ class RSSDownload(object):
         if response.bozo:
             logger.error("fetching %s returned an exception: %s", self.url, response.bozo_exception)
             return
+        if not response.entries:
+            logger.warning("{} had no entries".format(self.url))
+            return
 
         self._save_articles(response.entries)
         if self.feed_id is not None:
@@ -83,7 +86,7 @@ class RSSDownload(object):
         return ((r.get('title'), r.get('link')) for r in response.entries)
 
     def _save_articles(self, entries):
-        logger.info("Downloading %s articles from %s", len(entries), self.url)
+        logger.info("Downloading %s articles from %s", len(entries), self.url
         for entry in entries:
             if "%set" in entry:  # hallmark of empty article
                 logger.error("Empty article from %s", self.url)
