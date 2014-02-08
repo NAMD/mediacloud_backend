@@ -86,7 +86,7 @@ class RSSDownload(object):
         return ((r.get('title'), r.get('link')) for r in response.entries)
 
     def _save_articles(self, entries):
-        logger.info("Downloading %s articles from %s", len(entries), self.url
+        logger.info("Downloading %s articles from %s", len(entries), self.url)
         for entry in entries:
             if "%set" in entry:  # hallmark of empty article
                 logger.error("Empty article from %s", self.url)
