@@ -42,20 +42,34 @@ How it works:
 
 _debug = 0
 
-import sgmllib, urllib, urlparse, re, sys, robotparser
-import requests
+import sgmllib
+import urlparse
+import re
 import argparse
-import feedparser
 import logging
-import settings
-import pymongo
 import time
-from pymongo.errors import DuplicateKeyError
+import datetime
 from logging.handlers import RotatingFileHandler
+import sys
+import os
+
+import requests
+import feedparser
+import pymongo
+from pymongo.errors import DuplicateKeyError
+
+import settings
+
+
+sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
+from indexing.solr_doc_manager import DocManager
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
+
+# Setting up Solr connection
+solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud_feeds"))
 
 ###########################
 #  Setting up Logging
@@ -254,13 +268,13 @@ def feeds(uri, all=False, _recurs=None):
             outfeeds.extend(filter(isFeed, filter(isXMLRelatedLink, links)))
     if all or not outfeeds:
         # print('no A tags, guessing')
-        suffixes = [ # filenames used by popular software:
-          'atom.xml', # blogger, TypePad
-          'index.atom', # MT, apparently
-          'index.rdf', # MT
-          'rss.xml', # Dave Winer/Manila
-          'index.xml', # MT
-          'index.rss' # Slash
+        suffixes = [  # filenames used by popular software:
+          'atom.xml',  # blogger, TypePad
+          'index.atom',  # MT, apparently
+          'index.rdf',  #
+          'rss.xml',  # Dave Winer/Manila
+          'index.xml',  # MT
+          'index.rss'  # Slash
         ]
         outfeeds.extend(filter(isFeed, [urlparse.urljoin(fulluri, x) for x in suffixes]))
 
@@ -273,20 +287,36 @@ def store_feeds(feed_list):
     Store the Feeds in the Feed collection in the database
     :param feed_list: LIst of feed URLs returned by feeds()
     """
+    #TODO: Add more tests to this function
     for f in feed_list:
         response = feedparser.parse(f)
         # insert only if is not already in the database
         res = FEEDS.find({"title_detail.base": f}, fields=["title_detail"])
         if not list(res):
-            # Delete fields which cannot be serialized into BSON
-
+            if 'title' not in response.feed:
+                logger.warning("Empty feed: %s", response.feed)
+                continue
             for k, v in response.feed.iteritems():
-                # Convert to datetime instead of removing
-                entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                if isinstance(v, time.struct_time):
+                    # Convert to datetime instead of removing
+                    try:
+                        response.feed[k] = datetime.datetime.fromtimestamp(time.mktime(v))
+                    except TypeError:
+                        pass  # When fields are not Dates
+                        logger.error("Couldn't convert to date. %s", v)
+
             try:
-                FEEDS.insert(response.feed, w=1)
+                _id = FEEDS.insert(response.feed, w=1)
             except DuplicateKeyError:
-                print "Feed {} already in database".format(f)
+                logger.info("Feed %s already in database", f)
+                return
+            try:
+                solr_doc_manager.upsert(FEEDS.find_one({"_id": _id}))
+                FEEDS.update({"_id": _id}, {"$set": {"indexed": True}})
+            except Exception as e:
+                logger.error("Problem adding document to Solr:{}".format(e))
+                FEEDS.update({"_id": _id}, {"$set": {"indexed": False}})
+
 
 def feed(uri):
     #todo: give preference to certain feed formats
