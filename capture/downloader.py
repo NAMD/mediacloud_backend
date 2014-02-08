@@ -201,7 +201,10 @@ def fetch_feed(feed):
         f = RSSDownload(feed[0], feed[1])
     except InvalidDocument:
         logger.error("This feed failed: %s", f)
-    f.parse()
+    try:
+        f.parse()
+    except Exception as e:
+        logger.error("An error occurred while trying to fetch feed {}: {}".format(f.url, e))
 
 
 def parallel_fetch():
