@@ -59,6 +59,9 @@ def linebreaks(value):
                           for p in _paragraph_re.split(value))
     return Markup(result)
 
+#  Setup mongo connection
+mongo_client = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
+
 
 
 @app.route('/dbstats')
@@ -147,8 +150,7 @@ def config():
 
 @app.route('/feeds')
 def feeds():
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    nfeeds = C.MCDB.feeds.count()
+    nfeeds = mongo_client.MCDB.feeds.count()
     response = json.loads(fetch_docs('feeds'))
     if 'data' in response:
         feed_list = response['data']
@@ -167,8 +169,7 @@ def feeds():
 
 @app.route('/articles')
 def articles():
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    nart = C.MCDB.articles.count()
+    nart = mongo_client.MCDB.articles.count()
     response = json.loads(fetch_docs('articles'))
     maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
     removed_fields = set(response['data'][0].keys()) - maintained_keys
@@ -247,7 +248,6 @@ def clean_feeds(data):
 
 @app.route('/urls')
 def urls():
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     urls = json.loads(fetch_docs('urls'))
     try:
         keys = articles[0].keys()
@@ -309,8 +309,7 @@ def mongo_query(coll_name):
     Return json with requested data or error
     """
     try:
-        conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-        db = conn.MCDB
+        db = mongo_client.MCDB
         coll = db[coll_name]
         resp = {}
         query = json.loads(request.args.get('q', '{}'), object_hook=json_util.object_hook)
@@ -394,8 +393,7 @@ def fetch_docs(colname, limit=100):
     Return json with requested data or error
     """
     try:
-        conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-        db = conn.MCDB
+        db = mongo_client.MCDB
         coll = db[colname]
         resp = {}
         # query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
