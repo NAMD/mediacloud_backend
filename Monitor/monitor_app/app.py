@@ -77,7 +77,7 @@ def db_stats():
     host = conf.mongohost
 
     try:
-        conn = pymongo.Connection(host=host, port=27017
+        conn = pymongo.Connection(host=host, port=27017)
         db = conn.MCDB
         resp = db.command({'dbstats': 1})
         json_response = json.dumps({'data': resp}, default=json_util.default)
