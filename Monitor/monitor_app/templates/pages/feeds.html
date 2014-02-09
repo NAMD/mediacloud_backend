@@ -1,42 +1,63 @@
 {% extends 'layouts/main.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<script type="text/javascript">
-$(document).ready(function() {
-    var oTable = $('#feeds').dataTable( {
-        "bProcessing": true,
-        "sAjaxSource": "/feeds/json",
-        "aoColumns": [
-            {% for key in keys %}
-            { "mData": "{{ key }}" },
-            {% endfor %}
-        ]
-    } );
-} );
-</script>
-<div class="page-header">
-  <h1>Feeds Being Tracked</h1>
 
-<table cellpadding="5" cellspacing="0" border="0" class="display" id="feeds">
-    <thead>
-        <tr>
-            {% for key in keys %}
-            <th width="auto">{{ key }}</th>
-            {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
+    <div class="page-header">
+        <h1>Feeds Being Tracked</h1>
+    <p>We are currently tracking {{ nfeeds }} distinct feeds.</p>
+    </div>
+    <div id="dynamic">
+        <div id="feed_wrapper" class="dataTables_wrapper" role="grid">
+            <div id="feed_processing" class="dataTables_processing" style="visibility: hidden;">Processing...</div>
+            <table id="feeds" cellpadding="5" cellspacing="0" border="0" class="display dataTable">
+                <thead>
+                <tr>
+                    {% for key in keys %}
+                        <th width="20%" class="sorting_asc" role="columnheader" tabindex="0" aria-controls="feeds"
+                            rowspan="1" colspan="1" style="width: 132px;" aria-sort="ascending"
+                            aria-label="{{ key }}: activate to sort column descending">{{ key }}</th>
 
-    </tbody>
-    <tfoot>
-        <tr>
-            {% for key in keys %}
-            <th width="auto">{{ key }}</th>
-            {% endfor %}
-        </tr>
-    </tfoot>
-</table>
-</div>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+                <tfoot>
+                <tr>
+                    {% for key in keys %}
+                        <th rowspan="1" colspan="1">{{ key }}</th>
+                    {% endfor %}
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var oTable = $('#feeds').dataTable({
+                "bProcessing": true,
+                "fnInitComplete": function(oSettings, json) {
+                   //$(".text").linker();
+                },
+                "bFilter": true,
+                "sAjaxSource": "/feeds/json",
+                "aoColumns": [
+                    {% for key in keys %}
+                        {% if key == "feed_link" %}
+                            { "mData": "{{ key }}", sType: "html" },
+                        {% elif key == "link" %}
+                            { "mData": "{{ key }}", sType: "html" },
+                        {% else %}
+                            { "mData": "{{ key }}", sClass: "text" },
+                        {% endif %}
+                    {% endfor %}
+                ]
+            });
+
+        });
+
+    </script>
 
 
 {% endblock %}

@@ -23,11 +23,15 @@ def parse_dates(collection):
                 collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
             except ValueError:
                 print "Could not parse string: {0:s}".format(doc['published'])
+            except TypeError:
+                print "Could not parse string: {0:s}".format(doc['published'])
         if "updated" in doc and not isinstance(doc['updated'], datetime.datetime):
             try:
                 collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
             except ValueError:
                 print "Could not parse string: {0:s}".format(doc['updated'])
+            except TypeError:
+                print "Could not parse string: {0:s}".format(doc['published'])
 
 if __name__ == "__main__":
     ## Media Cloud database setup
