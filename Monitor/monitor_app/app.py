@@ -77,7 +77,7 @@ def db_stats():
     host = conf.mongohost
 
     try:
-        conn = pymongo.Connection(host=host, port=27017)
+        conn = pymongo.Connection(host=host, port=27017
         db = conn.MCDB
         resp = db.command({'dbstats': 1})
         json_response = json.dumps({'data': resp}, default=json_util.default)
@@ -329,8 +329,6 @@ def mongo_query(coll_name):
         # import traceback
         # traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
-    finally:
-        conn.disconnect()
     resp = Response(json_response, mimetype='application/json',)
     return resp
 
@@ -412,15 +410,12 @@ def fetch_docs(colname, limit=100):
         #     cur = cur.sort(sort)
         resp = [a for a in cur]
         json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
-    except ConnectionFailure:
-        json_response = json.dumps({'error': "Can't connect to database on {}".format(app.config["MEDIACLOUD_DATABASE_HOST"])})
     except Exception, e:
         print e
         import traceback
         traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
-    finally:
-        conn.disconnect()
+
 
     #resp = Response(json_response, mimetype='application/json' )
     #resp['Cache-Control'] = 'no-cache'
