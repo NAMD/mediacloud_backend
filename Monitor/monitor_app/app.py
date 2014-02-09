@@ -152,8 +152,7 @@ def config():
 def feeds():
     nfeeds = mongo_client.MCDB.feeds.count()
     response = json.loads(fetch_docs('feeds'))
-    if 'data' in response:
-    response = json.loads(fetch_docs('feeds'))
+
     if 'data' in response:
         feed_list = response['data']
     else:
@@ -333,7 +332,6 @@ def mongo_query(coll_name):
         # import traceback
         # traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
-    resp = Response(json_response, mimetype='application/json',)
     resp = Response(json_response, mimetype='application/json',)
     return resp
 
