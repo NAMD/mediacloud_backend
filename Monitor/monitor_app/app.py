@@ -153,6 +153,8 @@ def feeds():
     nfeeds = mongo_client.MCDB.feeds.count()
     response = json.loads(fetch_docs('feeds'))
     if 'data' in response:
+    response = json.loads(fetch_docs('feeds'))
+    if 'data' in response:
         feed_list = response['data']
     else:
         flash('Error searching for articles')
@@ -179,6 +181,7 @@ def articles():
     if not keys:
         keys = ["No", "Articles", "in", "Database"]
     return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys))
+
 
 
 def clean_articles(data):
@@ -245,9 +248,10 @@ def clean_feeds(data):
     return feed_list
 
 
-
 @app.route('/urls')
 def urls():
+    urls = json.loads(fetch_docs('urls'))
+    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     urls = json.loads(fetch_docs('urls'))
     try:
         keys = articles[0].keys()
@@ -330,6 +334,7 @@ def mongo_query(coll_name):
         # traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
     resp = Response(json_response, mimetype='application/json',)
+    resp = Response(json_response, mimetype='application/json',)
     return resp
 
 
@@ -410,6 +415,8 @@ def fetch_docs(colname, limit=100):
         #     cur = cur.sort(sort)
         resp = [a for a in cur]
         json_response = json.dumps({'data': fix_json_output(resp), 'meta': {'count': cnt}}, default=json_util.default)
+    except ConnectionFailure:
+        json_response = json.dumps({'error': "Can't connect to database on {}".format(app.config["MEDIACLOUD_DATABASE_HOST"])})
     except Exception, e:
         print e
         import traceback
