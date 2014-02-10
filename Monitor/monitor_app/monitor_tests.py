@@ -3,7 +3,6 @@ import os
 import json
 import unittest
 import tempfile
-from app import app
 
 from app import app
 
@@ -31,9 +30,14 @@ class MonitorTestCase(unittest.TestCase):
         rv = self.app.get('/articles/json')
         self.assertIn("aaData", json.loads(rv.data))
         self.assertGreater(len(json.loads(rv.data)["aaData"]), 0)
-        rv = self.app.get('/query/urls')
-        self.assertIn('{"meta": {"count":', rv.data)
 
+    def test_fetch_docs_urls(self):
+        rv = self.app.get('/urls/json')
+        self.assertIn("meta", json.loads(rv.data))
+
+    def test_solr_query_articles(self):
+        rv = self.app.get('/solrquery/mediacloud_articles/rolezinho')
+        self.assertGreater(len(json.loads(rv.data)), 0)
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,6 +8,8 @@ import json
 import base64
 import datetime
 import re
+import os
+
 import pysolr
 from flask import render_template, flash, request, redirect, url_for, Response
 import pymongo
@@ -15,10 +17,11 @@ from bson import json_util
 import bson
 from pymongo.errors import ConnectionFailure
 from jinja2 import Markup
-import os
+
 from forms import *
 import models
 from appinit import app, db
+
 
 
 
@@ -250,10 +253,8 @@ def clean_feeds(data):
 @app.route('/urls')
 def urls():
     urls = json.loads(fetch_docs('urls'))
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    urls = json.loads(fetch_docs('urls'))
     try:
-        keys = articles[0].keys()
+        keys = urls['data'][0].keys()
     except KeyError:
         keys = ["No", "URLs", "in", "Database"]
     return render_template('pages/urls.html', urls=urls, keys=keys)
