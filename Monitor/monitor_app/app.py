@@ -170,13 +170,16 @@ def feeds():
     return render_template('pages/feeds.html', nfeeds=nfeeds, keys=list(maintained_keys))
 
 
-
 @app.route('/articles')
 def articles():
-    nart = mongo_client.MCDB.articles.count()
     response = json.loads(fetch_docs('articles'))
+    nart = mongo_client.MCDB.articles.count()
+
     maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
-    removed_fields = set(response['data'][0].keys()) - maintained_keys
+    # if response['data']:
+    #     removed_fields = set(response['data'][0].keys()) - maintained_keys
+    # else:
+    #     removed_fields = set([])
     keys = []
     for feed in response['data']:
         keys += feed.keys()
@@ -244,7 +247,7 @@ def clean_feeds(data):
                 feed['feed_link'] = r'<a href="{}">{}</a>'.format(u, u)
         except AttributeError:
             continue
-        print feed
+        #print feed
         feed_list.append(feed)
 
     return feed_list
@@ -267,8 +270,13 @@ def json_feeds(start=0, stop=100):
 
 
 @app.route("/articles/json")
-def json_articles(start=0, stop=100):
-    result = json.loads(fetch_docs('articles', stop))
+@app.route("/articles/json/<query>")
+def json_articles(start=0, stop=100, query=""):
+    if query:
+        ids = [bson.ObjectId(d["_id"]) for d in json.loads(solr_query("mediacloud_articles", query).data)]
+        result = json.loads(fetch_docs('articles', limit=10000, ids=ids))
+    else:
+        result = json.loads(fetch_docs('articles', limit=stop))
     articles = []
     for article in result['data']:
         article['published'] = datetime.date.fromtimestamp(article['published']['$date']/1000.).strftime("%b %d, %Y")
@@ -389,10 +397,13 @@ def fix_json_output(json_obj):
     return _fix_json(json_obj)
 
 
-def fetch_docs(colname, limit=100):
+def fetch_docs(colname, limit=100, ids=None):
     """
     Query MongoDB in the collection specified
-    Return json with requested data or error
+    Return json with requested data or error.
+    :param colname: Collection from which to fetch
+    :param limit: maximum number of documents
+    :param ids: list of ids to fetch.
     """
     try:
         db = mongo_client.MCDB
@@ -408,7 +419,10 @@ def fetch_docs(colname, limit=100):
         #     skip = int(request.GET['skip'])
         # if 'sort' in request.GET:
         #     sort = json.loads(request.GET['sort'])
-        cur = coll.find({}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
+        if ids:
+            cur = coll.find({"_id": {"$in": ids}}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
+        else:
+            cur = coll.find({}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
         cnt = cur.count()
         # if sort:
         #     cur = cur.sort(sort)
