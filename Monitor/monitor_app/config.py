@@ -12,3 +12,6 @@ SECRET_KEY = 'jmorivaLHBGIT&(*&*&&alsnowimglsdhgk'
 
 # Connect to the database
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'database.db')
+
+MEDIACLOUD_DATABASE_HOST = 'localhost'
+SOLR_URL = "200.20.164.152:8983"

@@ -9,3 +9,4 @@ __docformat__ = 'restructuredtext en'
 
 
 MONGOHOST = "localhost"
+SOLR_URL = "http://200.20.164.152:8983/solr"

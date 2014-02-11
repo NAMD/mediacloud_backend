@@ -1,0 +1,40 @@
+storyjs_jsonp_data ={    "timeline":
+    {
+        "headline":"Timeline MediaCloud",
+        "text":"<p>Linha do tempo com artigos sobre {{busca}}</p>",
+        "asset": {
+            "media":"",
+            "thumbnail":"",
+            "credit":"NAMD/FGV"
+        },
+        "date":  [
+        {% for art in articles %}
+            {% if not loop.last %}
+            {
+                "startDate":"{{art.published}}",
+                "endDate":"{{art.published}}",
+                "headline":"{{art.title|e}}",
+                "text":'{% if art.summary_detail.value %}{{art.summary_detail.value|linebreaks|safe}} {% else %} {{art.title_detail.value|linebreaks|safe}} {% endif %}',
+                "asset": {
+                    "media":"{{ art.link|e}}",
+                    "thumbnail":"",
+                    "credit":"{{art.author}}"
+                }
+            },
+            {%else%}
+           {
+                "startDate":"{{art.published}}",
+                "endDate":"{{art.published}}",
+                "headline":"{{art.title|e}}",
+                "text":'{{art.summary_detail.value|linebreaks|safe}}',
+                "asset": {
+                    "media":"",
+                    "thumbnail":"",
+                    "credit":"{{art.author}}"
+                }
+            }
+            {% endif %}
+        {% endfor %}
+        ]
+    }
+}

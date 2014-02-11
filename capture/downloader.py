@@ -9,25 +9,32 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
-import bs4
-import feedparser
-import pymongo
 import logging
-import requests
-import settings
 from multiprocessing.pool import ThreadPool
-from bson.errors import InvalidDocument
-from pymongo.errors import DuplicateKeyError
-import bson
 import time
 import datetime
 from nlp import send_pypln
 import zlib
 import cPickle as CP
 import cld
+import sys
+import os
+from logging.handlers import RotatingFileHandler
+
+import feedparser
+import pymongo
+import requests
+from requests.exceptions import ConnectionError, MissingSchema, Timeout
+from bson.errors import InvalidDocument
+from pymongo.errors import DuplicateKeyError
+import bson
 from dateutil.parser import parse
 
-from logging.handlers import RotatingFileHandler
+import settings
+
+
+sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
+from indexing.solr_doc_manager import DocManager
 
 ###########################
 #  Setting up Logging
@@ -54,10 +61,16 @@ MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
+config = {
+    'threads': 35,  # Number of threads used in the fetching pool
+}
+
 
 class RSSDownload(object):
-    def __init__(self, url):
+    def __init__(self, feed_id, url):
         self.url = url
+        self.feed_id = feed_id
+        self.solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud_articles"))
 
     def parse(self):
         response = feedparser.parse(self.url)
@@ -66,7 +79,9 @@ class RSSDownload(object):
             return
 
         self._save_articles(response.entries)
-        return ((r.title, r.link) for r in response.entries)
+        if self.feed_id is not None:
+            FEEDS.update({"_id": self.feed_id}, {"$set": {"last_visited": datetime.datetime.now()}})
+        return ((r.get('title'), r.get('link')) for r in response.entries)
 
     def _save_articles(self, entries):
         logger.info("Downloading %s articles from %s", len(entries), self.url)
@@ -74,15 +89,23 @@ class RSSDownload(object):
             if "%set" in entry:  # hallmark of empty article
                 logger.error("Empty article from %s", self.url)
                 continue
-            ks = []
+
             for k, v in entry.iteritems():
                 if isinstance(v, time.struct_time):
-                    # Convert to datetime instead of removing
+                    # Convert to datetime
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
-                    #ks.append(k)
-            #[a.pop(i) for i in ks]
 
-            r = requests.get(entry.link)
+            try:
+                r = requests.get(entry.get('link'), timeout=30)
+            except ConnectionError:
+                logger.error("Failed to fetch %s", entry.get('link'))
+                continue
+            except MissingSchema:
+                logger.error("Failed to fetch %s because of missing link.", entry.get('link'))
+                continue
+            except Timeout:
+                logger.error("Timed out while fetching %s", entry.get('link'))
+                continue
             # print r.encoding
             try:
                 encoding = r.encoding if r.encoding is not None else 'utf8'
@@ -106,11 +129,12 @@ class RSSDownload(object):
                 else:
                     entry['updated'] = datetime.datetime.now()
             except UnicodeDecodeError:
-                print "could not decode page as ", encoding
+                print "could not decode page as ", r.encoding
                 continue
             # Turn the tags field into a simple list of tags
             try:
-                entry['tags'] = [i['term'] for i in entry.tags]
+                tag_list = [tag['term'] for tag in entry.tags]
+                entry['tags'] = tag_list
             except AttributeError:
                 logger.info("This feed has no tags: %s", entry.link)
             try:
@@ -124,10 +148,17 @@ class RSSDownload(object):
                     # consider parsing the string datetime into a datetime object
                     pass
                 try:
-                    ARTICLES.insert(entry, w=1)
+                    _id = ARTICLES.insert(entry, w=1)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
+                    return
                 # print "inserted"
+                try:
+                    self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": True}})
+                except Exception as e:
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": False}})
+                    logger.error("Problem adding document to Solr")
 
 
 def compress_content(html):
@@ -142,14 +173,14 @@ def compress_content(html):
     return encoded
 
 
-def decompress_content(comphtml):
+def decompress_content(compressed_html):
     """
     Decompress data compressed by `compress_content`
-    :param comphtml: compressed html document
+    :param compressed_html: compressed html document
     :return: original html
     """
-    # unencoded = b64.urlsafe_b64decode(str(comphtml))
-    decompressed = zlib.decompress(comphtml)
+    # unencoded = b64.urlsafe_b64decode(str(compressed_html))
+    decompressed = zlib.decompress(compressed_html)
     orig_html = CP.loads(decompressed)
     return orig_html
 
@@ -166,7 +197,7 @@ def detect_language(text):
 
 def fetch_feed(feed):
     try:
-        f = RSSDownload(feed)
+        f = RSSDownload(feed[0], feed[1])
     except InvalidDocument:
         logger.error("This feed failed: %s", f)
     f.parse()
@@ -176,25 +207,41 @@ def parallel_fetch():
     """
     Starts parallel threads to fetch feeds.
     """
-    feeds = FEEDS.find()
-    feedurls = []
+    feed_count = FEEDS.count()  # Needed for first round of while
+    feed_urls = []
     t0 = time.time()
-    for feed in feeds:
-        t = feed.get('title_detail', feed.get('subtitle_detail', None))
-        if t is None:
-            logger.error("Feed %s does not contain ", feed.get('link', None))
-            continue
-        try:
-            feedurls.append(t["base"].decode('utf8'))
-        except KeyError:
-            logger.error("Feed %s does not contain base URL", feed.get('link', None))
-        except UnicodeEncodeError:
-            logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
-        #fetch_feed(t["base"].decode('utf8'))
-
-    P = ThreadPool(30)
-    P.map(fetch_feed, feedurls)
-    logger.info("Time taken to download %s feeds: %s minutes.", len(feedurls), (time.time()-t0)/60.)
+    feeds_scanned = 0
+    thread_pool = ThreadPool(config['threads'])
+    while feeds_scanned < feed_count:
+        feed_cursor = FEEDS.find({}, skip=feeds_scanned, limit=100, sort=[("last_visited", pymongo.DESCENDING),
+                                                                          ("updated", pymongo.DESCENDING)])
+        for feed in feed_cursor:
+            if "updated" in feed:
+                try:
+                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": parse(feed["updated"])}})
+                except ValueError:
+                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": datetime.datetime.now()}})
+                except:
+                    logger.error("Failed to parse updated field.")
+                    pass
+            feed_title = feed.get('title_detail', feed.get('subtitle_detail', None))
+            if feed_title is None:
+                logger.error("Feed %s does not contain a title or subtitle ", feed.get('link', None))
+                continue
+            try:
+                feed_urls.append((feed['_id'], feed_title["base"].decode('utf8')))
+            except KeyError:
+                logger.error("Feed %s does not contain base URL", feed.get('link', None))
+            except UnicodeEncodeError:
+                logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
+            #fetch_feed(t["base"].decode('utf8'))
+        if feed_urls:  # Only if there are urls to fetch
+            thread_pool.map(fetch_feed, feed_urls)
+            feeds_scanned += len(feed_urls)
+            logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
+            feed_count = FEEDS.count()
+    thread_pool.close()
+    logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 
 if __name__ == "__main__":
     parallel_fetch()

@@ -4,16 +4,17 @@ Fetches all urls in a google query for RSS feeds in Brasil
 """
 __author__ = 'fccoelho'
 
-
-import GoogleScraper
 from urlparse import unquote
-import pymongo
-import logging
-import settings
 import argparse
 import datetime
 import time
+
+import pymongo
 from pymongo.errors import DuplicateKeyError
+
+import GoogleScraper
+import settings
+
 
 ##### Setup URL Collection ############
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
@@ -23,14 +24,19 @@ URLS.ensure_index('url', unique=True)
 ###########
 
 
-def main(subject='', n=5):
+def main(subject='', results_filter='site', n=5):
     """
     Scrape google search up to the nth page and save the results to a MongoDB collection.
     :param n:
     """
     q = "{}+RSS+site:br".format(subject)
+    lang = ''
+    if results_filter == 'lang':
+        q = "{}+RSS".format(subject)
+        lang = 'lang_pt'
+
     for o in range(0, n*10, n):
-        urls = GoogleScraper.scrape(q, number_pages=n, offset=o)
+        urls = GoogleScraper.scrape(q, number_pages=n, offset=o, language=lang)
         for url in urls:
             # You can access all parts of the search results like that
             # url.scheme => URL scheme specifier (Ex: 'http')
@@ -41,7 +47,7 @@ def main(subject='', n=5):
             #print url
             #print(unquote(url.geturl()))
             try:
-                U = unquote(url.geturl()).split("&sa=U&ei=")[0]  # Remove googlebot crap
+                U = unquote(url.geturl()).split("&")[0]#sa=U&ei=")[0]  # Remove googlebot crap
                 URLS.insert({'url': U, 'tags': [subject], 'fetched_on': datetime.datetime.now()})
             except DuplicateKeyError:
                 pass
@@ -51,5 +57,6 @@ def main(subject='', n=5):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Search for urls listing RSS feeds on with google')
     parser.add_argument('-s', '--subject', type=str, default='', help='subject of the FEEDS')
+    parser.add_argument('-f', '--filter', type=str, default='site', help='filter results by language or by domain: .br')
     args = parser.parse_args()
-    main(args.subject)
+    main(args.subject, args.filter)

@@ -2,10 +2,9 @@
 __author__ = 'fccoelho'
 
 import unittest
-from capture import feedfinder, urlscanner, downloader
 import subprocess
-from capture import googlerss
-import bson
+from capture import feedfinder, urlscanner, downloader,googlerss
+
 
 
 class FeedFinderTests(unittest.TestCase):
@@ -14,7 +13,8 @@ class FeedFinderTests(unittest.TestCase):
             self.urls = [s.strip() for s in f.readlines()]
 
     def tearDown(self):
-        downloader.FEEDS.drop()
+        pass
+        # downloader.FEEDS.drop()
 
     def test_get_page(self):
         page = feedfinder.get_page('https://www.google.com')
@@ -27,7 +27,7 @@ class FeedFinderTests(unittest.TestCase):
         self.assertEquals(feedfinder.isFeed(feed), 1)
 
     def test_find_on_single_page(self):
-        fs = feedfinder.feeds(self.urls[0], all=True)
+        fs = feedfinder.feeds('http://www.engadget.com/', all=True)
         self.assertNotEquals(fs, [], msg="feeds returned an empty list.")
 
     def test_store_feed(self):
@@ -48,7 +48,7 @@ class TestUrlScanner(unittest.TestCase):
 
 class TestDownloader(unittest.TestCase):
     def setUp(self):
-        self.d = downloader.RSSDownload('http://estadao.feedsportal.com/c/33043/f/534104/index.rss')
+        self.d = downloader.RSSDownload(None, 'http://estadao.feedsportal.com/c/33043/f/534104/index.rss')
 
     def tearDown(self):
         downloader.ARTICLES.drop()
