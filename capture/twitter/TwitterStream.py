@@ -2,8 +2,10 @@
 #coding:utf8
 
 import logging
+import json
 
 from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure
 import tweepy
 from tweepy.streaming import StreamListener
 
@@ -15,8 +17,10 @@ logging.basicConfig(filename='/tmp/twitterstream.log', format=FORMAT, level=logg
 
 mongo_host = config.MONGO_HOST if config.MONGO_HOST else 'localhost'
 
-#client = MongoClient(mongo_host)
-client = MongoClient(mongo_host)
+try:
+    client = MongoClient(mongo_host)
+except ConnectionFailure:
+    client = MongoClient('localhost')
 mcdb = client.MCDB
 coll = mcdb.tweets
 # credentials
@@ -55,9 +59,10 @@ class Filteredcapture(StreamListener):
     This is a basic listener that just prints received tweets to stdout.
     """
     def on_data(self, data):
-        # print data
-        coll.insert(data, w=1)
+        # print data, type(data)
+        coll.insert(json.loads(data), w=1)
         return True
+
     def on_error(self, status):
         # print status
         logging.error("Invalid Tweet: %s" % status)

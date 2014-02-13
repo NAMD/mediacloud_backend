@@ -1,4 +1,4 @@
-# coding=utf-8
+# coding: utf-8
 import os
 
 # To use this module create the file below in your home directory and put the required keys there, in the order specified below.
@@ -14,7 +14,10 @@ consumer_secret = key_4.strip()
 MONGO_HOST = '172.16.4.51'
 
 TRACK = [
-    'dengue',
-    'aedes aegypti',
-    'manifesta',
+    'dengue', 'aedes aegypti', 'manifesta', 'copa', u'eleição', 'eleicao',
+    'ProtestoSP', 'vemprarua', 'ogiganteacordou', 'protesto', 'Protesto', 'changebrasil', u'política', 'politica', 'gigante',
+    'prefeitura', 'dilma', 'mudabrasil', 'MudaBrasil', u'verásqueumfilhoteunãofogealuta', 'verasqueumfilhoteunaofogealuta',
+    'brasil', 'brazil', u'manifestação', 'manifestacao', 'PazSemVandalismo', u'MenosCorrupçãoEMais', 'PasseLivre',
+    'ACORDAPOVOBRASILEIRO', 'Encontro', 'protestobrasil', 'foradilma', 'ProtestoRJ', 'vandalismo', 'paespalho',
+    u'manifestação', 'manifestacao', 'changebrasil', 'changebrazil', u'corrupção', 'corrupcao', 'corrupto',
 ]
