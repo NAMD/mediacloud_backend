@@ -22,7 +22,8 @@ def url_scanner(url, depth=1):
     :return: list of urls
     """
     current_dir = os.getcwd()
-    os.chdir(tempfile.gettempdir())
+    tempdir = tempfile.gettempdir()
+    os.chdir(tempdir)
     agent = "Mozilla/5.0 (X11; U; Linux; i686; en-US; rv:1.6) Gecko Debian/1.6-7"
     try:
         subprocess.check_output(['httrack', '-p0', '-%P', '-b1', '-i', '-d', '-T1', '-R1', '-r%s' % depth, '-c16', '-F "%s"' % agent, url])
@@ -34,11 +35,15 @@ def url_scanner(url, depth=1):
         urls = []
         for l in t:
             urls.append(l['URL'])
-    shutil.rmtree('hts-cache', ignore_errors=True)
-    shutil.rmtree(url.split("://")[-1])
     try:
-        os.remove('cookies.txt')
-        os.remove('hts-log.txt')
+        shutil.rmtree('hts-cache', ignore_errors=True)
+        shutil.rmtree(url.split("://")[-1])
+    except OSError:
+        print "Directory not found"
+    try:
+        os.remove(os.path.join(tempdir, 'hts-log.txt'))
+        if os.path.exists(os.path.join(tempdir, 'cookies.txt')):
+            os.remove(os.path.join(tempdir, 'cookies.txt'))
     except OSError as e:
         print e
     os.chdir(current_dir)

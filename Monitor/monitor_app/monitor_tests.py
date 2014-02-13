@@ -1,8 +1,11 @@
 #-*- coding:utf-8 -*-
 import os
-from app import app
+import json
 import unittest
 import tempfile
+
+from app import app
+
 
 class MonitorTestCase(unittest.TestCase):
 
@@ -18,11 +21,17 @@ class MonitorTestCase(unittest.TestCase):
         os.close(self.db_fd)
         os.unlink(app.config['DATABASE'])
 
-    def test_mongo_query_with_empty_collections(self):
-        rv = self.app.get('/query/feeds')
-        self.assertIn('{"error": "ValueError(', rv.data)
-        rv = self.app.get('/query/articles')
-        self.assertIn('{"error": "ValueError(', rv.data)
+    def test_fetch_docs_feeds(self):
+        rv = self.app.get('/feeds/json')
+        self.assertIn("aaData", json.loads(rv.data))
+        self.assertGreater(len(json.loads(rv.data)["aaData"]), 0)
+
+    def test_fetch_docs_articles(self):
+        rv = self.app.get('/articles/json')
+        self.assertIn("aaData", json.loads(rv.data))
+        self.assertGreater(len(json.loads(rv.data)["aaData"]), 0)
+        rv = self.app.get('/query/urls')
+        self.assertIn('{"meta": {"count":', rv.data)
 
 if __name__ == '__main__':
     unittest.main()

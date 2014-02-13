@@ -16,12 +16,14 @@ import datetime
 import zlib
 import cPickle as CP
 import cld
+import sys
+import os
 from logging.handlers import RotatingFileHandler
 
 import feedparser
 import pymongo
 import requests
-from requests.exceptions import ConnectionError, MissingSchema
+from requests.exceptions import ConnectionError, MissingSchema, Timeout
 from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import bson
@@ -29,6 +31,9 @@ from dateutil.parser import parse
 
 import settings
 
+
+sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
+from indexing.solr_doc_manager import DocManager
 
 ###########################
 #  Setting up Logging
@@ -56,7 +61,7 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
 config = {
-    'threads': 15,  # Number of threads used in the fetching pool
+    'threads': 35,  # Number of threads used in the fetching pool
 }
 
 
@@ -64,6 +69,7 @@ class RSSDownload(object):
     def __init__(self, feed_id, url):
         self.url = url
         self.feed_id = feed_id
+        self.solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud_articles"))
 
     def parse(self):
         response = feedparser.parse(self.url)
@@ -89,12 +95,15 @@ class RSSDownload(object):
                     entry[k] = datetime.datetime.fromtimestamp(time.mktime(v))
 
             try:
-                r = requests.get(entry.get('link'))
+                r = requests.get(entry.get('link'), timeout=30)
             except ConnectionError:
                 logger.error("Failed to fetch %s", entry.get('link'))
                 continue
             except MissingSchema:
                 logger.error("Failed to fetch %s because of missing link.", entry.get('link'))
+                continue
+            except Timeout:
+                logger.error("Timed out while fetching %s", entry.get('link'))
                 continue
             # print r.encoding
             try:
@@ -137,10 +146,17 @@ class RSSDownload(object):
                     # consider parsing the string datetime into a datetime object
                     pass
                 try:
-                    ARTICLES.insert(entry, w=1)
+                    _id = ARTICLES.insert(entry, w=1)
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
+                    return
                 # print "inserted"
+                try:
+                    self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": True}})
+                except Exception as e:
+                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": False}})
+                    logger.error("Problem adding document to Solr")
 
 
 def compress_content(html):
@@ -217,10 +233,11 @@ def parallel_fetch():
             except UnicodeEncodeError:
                 logger.error("Feed %s failed Unicode decoding", feed.get('link', None))
             #fetch_feed(t["base"].decode('utf8'))
-        thread_pool.map(fetch_feed, feed_urls)
-        feeds_scanned += len(feed_urls)
-        logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
-        feed_count = FEEDS.count()
+        if feed_urls:  # Only if there are urls to fetch
+            thread_pool.map(fetch_feed, feed_urls)
+            feeds_scanned += len(feed_urls)
+            logger.info("%s feeds scanned after %s minutes", feeds_scanned, (time.time()-t0)/60.)
+            feed_count = FEEDS.count()
     thread_pool.close()
     logger.info("Time taken to download %s feeds: %s minutes.", len(feed_urls), (time.time()-t0)/60.)
 

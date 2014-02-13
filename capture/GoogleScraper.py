@@ -42,11 +42,12 @@ __WEBSITE__ = 'incolumitas.com'
 # http://docs.python.org/3.2/library/itertools.html
 
 import sys
-import gzip
 import re
-import lxml.html
 from urlparse import urlparse
 from random import choice
+
+import lxml.html
+
 
 try:
     import requests
@@ -99,7 +100,8 @@ class GoogleScraper:
         'q': '', 		# the search term
         'num': '', 		# the number of results per page
         'start': '0',	# the offset to the search results. page number = (start / num) + 1
-        'pws': '0'		# personalization turned off
+        'pws': '0',		# personalization turned off
+        'lr': ''  # Language of the pages
     }
 
     _HEADERS = {
@@ -126,13 +128,14 @@ class GoogleScraper:
 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1) ; .NET CLR 3.5.30729)'
     ]
 
-    def __init__(self, search_term, number_results_page=50, offset=0):
+    def __init__(self, search_term, number_results_page=50, offset=0, language=''):
         self.search_term = search_term
         if number_results_page not in [10, 25, 50, 100]:
             raise InvalidNumberResultsException(number_results_page)
 
         self.number_results_page = number_results_page
         self.offset = offset
+        self.language = language
 
     # Front end
     # This function returns a list of 5-tuples:
@@ -160,9 +163,10 @@ class GoogleScraper:
         self._GOOGLE_SEARCH_PARAMS['q'] = self.search_term
         self._GOOGLE_SEARCH_PARAMS['num'] = self.number_results_page
         self._GOOGLE_SEARCH_PARAMS['start'] = str(self.offset)
+        self._GOOGLE_SEARCH_PARAMS['lr'] = self.language
 
         if random:
-            _HEADERS['User-Agent'] = choice(_UAS)
+            self._HEADERS['User-Agent'] = choice(self._UAS)
 
     # Search via google and parse with lxml
     # private function
@@ -237,10 +241,10 @@ class GoogleScraper:
 
         return cleaned
 
-def scrape(query, results_per_page=100, number_pages=1, offset=0):
+def scrape(query, results_per_page=100, number_pages=1, offset=0, language=''):
     """
     Search for terms and return a list of all URLs.
     """
-    scraper = GoogleScraper(query, number_results_page=results_per_page, offset=offset)
+    scraper = GoogleScraper(query, number_results_page=results_per_page, offset=offset, language=language)
     results = scraper.search(number_pages=number_pages)
     return [url for url in results]

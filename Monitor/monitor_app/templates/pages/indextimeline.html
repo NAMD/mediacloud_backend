@@ -1,0 +1,21 @@
+{% extends 'layouts/main.html' %}
+{% block title %}Home{% endblock %}
+{% block extra_head %}
+    <script type = "text/javascript" src="/static/js/storyjs-embed.js"></script>
+    <script>
+    $(document).ready(function() {
+        createStoryJS({
+            type:       'timeline',
+            width:      '1000',
+            height:     '600',
+            source:     '{{ url_for('json_timeline') }}',
+            lang: '/static/js/locale/pt-br.js',
+            embed_id:   'my-timeline'
+        });
+    });
+    </script>
+{% endblock %}
+
+{% block content %}
+<div id='my-timeline'></div>
+{% endblock %}
