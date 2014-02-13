@@ -16,7 +16,7 @@ logging.basicConfig(filename='/tmp/twitterstream.log', format=FORMAT, level=logg
 mongo_host = config.MONGO_HOST if config.MONGO_HOST else 'localhost'
 
 #client = MongoClient(mongo_host)
-client = MongoClient()
+client = MongoClient(mongo_host)
 mcdb = client.MCDB
 coll = mcdb.tweets
 # credentials
@@ -55,11 +55,11 @@ class Filteredcapture(StreamListener):
     This is a basic listener that just prints received tweets to stdout.
     """
     def on_data(self, data):
-        print data
+        # print data
         coll.insert(data, w=1)
         return True
     def on_error(self, status):
-        print status
+        # print status
         logging.error("Invalid Tweet: %s" % status)
 
 
