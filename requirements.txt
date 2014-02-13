@@ -13,3 +13,4 @@ requests
 nose
 pysolr
 mongo-connector
+pypln.api

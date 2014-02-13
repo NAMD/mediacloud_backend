@@ -13,7 +13,6 @@ import logging
 from multiprocessing.pool import ThreadPool
 import time
 import datetime
-from nlp import send_pypln
 import zlib
 import cPickle as CP
 import cld
@@ -30,6 +29,7 @@ from pymongo.errors import DuplicateKeyError
 import bson
 from dateutil.parser import parse
 
+from nlp import send_pypln
 import settings
 
 
@@ -62,7 +62,7 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
 config = {
-    'threads': 35,  # Number of threads used in the fetching pool
+    'threads': 45,  # Number of threads used in the fetching pool
 }
 
 
