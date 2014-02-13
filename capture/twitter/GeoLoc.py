@@ -10,7 +10,7 @@ from dateutil import parser
 
 
 FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(filename='tweet_geoloc.log',format = FORMAT, level=logging.DEBUG)
+logging.basicConfig(filename='tweet_geoloc.log', format=FORMAT, level=logging.DEBUG)
 
 # Initialize connection
 client = MongoClient()
@@ -78,6 +78,7 @@ def fetch_loc(location):
             logging.info("%s not found by Geonames" % location)
     return lat, lon
 
+
 # add the same dafault parameters for the functions:  save_tweet_as_geojson e process_tweet
 def save_tweet_as_geojson(_id, coords, db_source = coll, db_location = geoj):
     """
@@ -103,6 +104,7 @@ def save_tweet_as_geojson(_id, coords, db_source = coll, db_location = geoj):
     db_location.insert({"originalID": ObjectId(tweet["_id"]),
                  "geoJSONproperty": twgj, }, w=1)
     data["features"].append(twgj)
+
 
 def process_tweet(db_source = coll):
     try:

@@ -68,6 +68,3 @@ if __name__ == '__main__':
     stream = tweepy.Stream(auth, listener)
     stream.filter(track=config.TRACK, languages=['pt'])
 
-    # logging.info("Started running")
-    # capture(sample_iterator)
-    # logging.critical("Stopped running")
