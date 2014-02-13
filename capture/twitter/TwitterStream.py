@@ -15,7 +15,8 @@ logging.basicConfig(filename='/tmp/twitterstream.log', format=FORMAT, level=logg
 
 mongo_host = config.MONGO_HOST if config.MONGO_HOST else 'localhost'
 
-client = MongoClient(mongo_host)
+#client = MongoClient(mongo_host)
+client = MongoClient()
 mcdb = client.MCDB
 coll = mcdb.tweets
 # credentials
@@ -57,7 +58,6 @@ class Filteredcapture(StreamListener):
         print data
         coll.insert(data, w=1)
         return True
-
     def on_error(self, status):
         print status
         logging.error("Invalid Tweet: %s" % status)

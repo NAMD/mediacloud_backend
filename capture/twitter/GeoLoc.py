@@ -28,25 +28,33 @@ def geoloc_tweet(_id):
     """
     Attempts to geolocate a tweet specified by `_id`
     """
-    tweet = coll.find({"_id": _id})[0]
+    tweet = coll.find_one({"_id": _id})
+    
+    #I changed the tries' order because search for "geo" is considerably faster since fetch_loc is not called.
+    #furthermore, i had not found any tweet with 'geo'but without 'place'.
+    try:
+        if tweet['geo'] is not None:
+            lat, lon = tweet['geo']['coordinates']
+            #print tweet["_id"], "geo"
+            return lat, lon
+    except KeyError:
+        logging.info('keyError: %s', 'geo')
+   
     try:
         if tweet['place'] is not None:
             fullgeo = tweet[u'place'][u'full_name']
             lat, lon = fetch_loc(fullgeo)
+            #print tweet["_id"], "place"
             return lat, lon
     except KeyError:
         logging.info('keyError: %s', 'place')
-    try:
-        if tweet['geo'] is not None:
-            lat, lon = tweet['geo']['coordinates']
-            return lat, lon
-    except KeyError:
-        logging.info('keyError: %s', 'geo')
+   
     try:
         if u'user' in tweet:
             if u'location' in tweet[u'user']:
                 fullgeo = tweet[u'user'][u'location']
                 lat, lon = fetch_loc(fullgeo)
+                #print tweet["_id"], "user location"
                 return lat, lon
     except KeyError:
         logging.info('keyError: %s', u'user')
@@ -70,12 +78,12 @@ def fetch_loc(location):
             logging.info("%s not found by Geonames" % location)
     return lat, lon
 
-
-def save_tweet_as_geojson(_id, coords):
+# add the same dafault parameters for the functions:  save_tweet_as_geojson e process_tweet
+def save_tweet_as_geojson(_id, coords, db_source = coll, db_location = geoj):
     """
     Saves the tweets as GeoJSON in MongoDb
     """
-    tweet = coll.find({"_id": _id})[0]
+    tweet = db_source.find_one({"_id": _id})
     if coords is None:
         return
     twgj = {"type": "Feature",
@@ -92,29 +100,25 @@ def save_tweet_as_geojson(_id, coords):
              "date": datet,
             }
     twgj["properties"] = props
-    geoj.insert({"originalID": ObjectId(tweet["_id"]),
+    db_location.insert({"originalID": ObjectId(tweet["_id"]),
                  "geoJSONproperty": twgj, }, w=1)
     data["features"].append(twgj)
 
-def process_tweet():
+def process_tweet(db_source = coll):
     try:
-        ids_to_process = list(coll.find({'geolocated': {'$exists': False}}, fields=["_id"]))
+        ids_to_process = list(db_source.find({'geolocated': {'$exists': False}}, fields=["_id"]))
         for _id in ids_to_process:
-            c = geoloc_tweet(_id)
-            if c is None:
-                coll.update({'_id': _id}, {'$set': {'geolocated': False}})
-            save_tweet_as_geojson(_id, c)
-            coll.update({'_id': _id}, {'$set': {'geolocated': True}})
+            c = geoloc_tweet(_id["_id"])
+            #c = geoloc_tweet(_id) não funciona pois _id = {"_id" : ...}
+            if c == (None, None):
+                db_source.update({'_id': _id["_id"]}, {'$set': {'geolocated': False}})
+            save_tweet_as_geojson(_id["_id"], c)
+            db_source.update({'_id': _id["_id"]}, {'$set': {'geolocated': True}})
             #print _id, c
     except OperationFailure:
         logging.error("operationFailure")
 
 if __name__ == "__main__":
-    size = geoj.find({{'geochecked': {'$exists': False}}}).count()
-    logging.info("%s tweets left to geolocate", size)
     process_tweet()
-    current_size = geoj.count()
-    variation = current_size - size
-    logging.critical('End of the analysis, total of {} geolocated tweets, {} new geolocated tweets' .format(size, variation))
 
 
