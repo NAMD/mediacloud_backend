@@ -1,9 +1,11 @@
+#!/usr/bin/env python
 #coding:utf8
+
 import logging
 
-import oauth2 as oauth
 from pymongo import MongoClient
-import twitter
+import tweepy
+from tweepy.streaming import StreamListener
 
 import config
 
@@ -21,34 +23,51 @@ access_token_key = config.access_token_key
 access_token_secret = config.access_token_secret
 consumer_key = config.consumer_key
 consumer_secret = config.consumer_secret
+#############
+# Tweepy setup
+#############
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token_key, access_token_secret)
+# Construct the API instance
+api = tweepy.API(auth)
+##################
 
 
-oauth_token = oauth.Token(key=access_token_key, secret=access_token_secret)
-oauth_consumer = oauth.Consumer(key=consumer_key, secret=consumer_secret)
+#
+# def capture(twiterator):
+#     for tweet in twiterator:
+#         try:
+#             if not tweet['lang'].startswith('pt'):
+#                 continue
+#             if not tweet.get('text'):
+#                 continue
+#             #print (tweet['text'])
+#             coll.insert(tweet, w=1)
+#         except twitter.TwitterError(420):
+#             logging.warning('Error 420: Rate limit problem')
+#         except KeyError as e:
+#             logging.error("Invalid Tweet: %s" % e)
 
-TWstream = twitter.TwitterStream(auth=twitter.OAuth(access_token_key,
-                            access_token_secret, consumer_key, consumer_secret))
-iterator = TWstream.statuses.sample()
 
+class Filteredcapture(StreamListener):
+    """ A listener handles tweets are the received from the stream.
+    This is a basic listener that just prints received tweets to stdout.
+    """
+    def on_data(self, data):
+        print data
+        coll.insert(data, w=1)
+        return True
 
-
-def capture(twiterator):
-    for tweet in twiterator:
-        try:
-            if not tweet['lang'].startswith('pt'):
-                continue
-            if not tweet.get('text'):
-                continue
-            #print (tweet['text'])
-            coll.insert(tweet, w=1)
-        except twitter.TwitterError(420):
-            logging.warning('Error 420: Rate limit problem')
-        except KeyError as e:
-            logging.error("Invalid Tweet: %s" % e)
+    def on_error(self, status):
+        print status
+        logging.error("Invalid Tweet: %s" % status)
 
 
 if __name__ == '__main__':
+    listener = Filteredcapture()
+    stream = tweepy.Stream(auth, listener)
+    stream.filter(track=config.TRACK, languages=['pt'])
 
-    logging.info("Started running")
-    capture(iterator)
-    logging.critical("Stopped running")
+    # logging.info("Started running")
+    # capture(sample_iterator)
+    # logging.critical("Stopped running")

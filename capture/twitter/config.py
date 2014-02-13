@@ -11,4 +11,10 @@ access_token_secret = key_2.strip()
 consumer_key = key_3.strip()
 consumer_secret = key_4.strip()
 
-MONGO_HOST = ''
+MONGO_HOST = '172.16.4.51'
+
+TRACK = [
+    'dengue',
+    'aedes aegypti',
+    'manifesta',
+]

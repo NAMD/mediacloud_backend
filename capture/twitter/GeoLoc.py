@@ -110,7 +110,6 @@ def process_tweet():
         logging.error("operationFailure")
 
 if __name__ == "__main__":
-
     size = geoj.find({{'geochecked': {'$exists': False}}}).count()
     logging.info("%s tweets left to geolocate", size)
     process_tweet()
