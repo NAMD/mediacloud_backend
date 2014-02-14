@@ -25,6 +25,7 @@ from appinit import app, db
 
 
 
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -174,6 +175,7 @@ def feeds():
 def articles():
     response = json.loads(fetch_docs('articles'))
     nart = mongo_client.MCDB.articles.count()
+    q = request.args.get("query", "")
 
     maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
     # if response['data']:
@@ -185,7 +187,7 @@ def articles():
         keys += feed.keys()
     if not keys:
         keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys))
+    return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys), query=q)
 
 
 
@@ -270,6 +272,7 @@ def json_feeds(start=0, stop=100):
 
 
 @app.route("/articles/json")
+@app.route("/articles/json/")
 @app.route("/articles/json/<query>")
 def json_articles(start=0, stop=100, query=""):
     if query:

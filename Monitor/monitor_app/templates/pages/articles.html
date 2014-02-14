@@ -11,7 +11,7 @@
                     $(".text").linker();
                 },
                 "bFilter": true,
-                "sAjaxSource": "/articles/json",
+                "sAjaxSource": "/articles/json/{{ query }}",
                 "aoColumns": [
                     {% for key in keys %}
                         {% if key == "link" %}
@@ -37,12 +37,14 @@
 
         <div class="row">
             <div class="col-lg-6">
+                <form action="{{ url_for("articles", query=query)}}" method="get">
                 <div class="input-group">
-                    <input id="search-box" type="text" class="form-control">
+                    <input id="search-box" type="text" class="form-control" name="query">
                     <span class="input-group-btn">
-                        <button class="btn btn-default" type="button" onclick="recriaTabela()">Buscar!</button>
+                        <button class="btn btn-default" type="submit">Buscar!</button>
                     </span>
                 </div><!-- /input-group -->
+                </form>
             </div><!-- /.col-lg-6 -->
         </div><!-- /.row -->
 
