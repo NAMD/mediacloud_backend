@@ -26,6 +26,7 @@ from appinit import app, db
 
 
 
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -278,6 +279,7 @@ def json_articles(start=0, stop=100, query=""):
     if query:
         ids = [bson.ObjectId(d["_id"]) for d in json.loads(solr_query("mediacloud_articles", query).data)]
         result = json.loads(fetch_docs('articles', limit=10000, ids=ids))
+        flash('Your query for {} matched articles.'.format(query))
     else:
         result = json.loads(fetch_docs('articles', limit=stop))
     articles = []
