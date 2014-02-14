@@ -5,6 +5,7 @@ import unittest
 import tempfile
 
 from app import app
+from app import fetch_docs, mongo_client
 
 
 class MonitorTestCase(unittest.TestCase):
@@ -30,8 +31,24 @@ class MonitorTestCase(unittest.TestCase):
         rv = self.app.get('/articles/json')
         self.assertIn("aaData", json.loads(rv.data))
         self.assertGreater(len(json.loads(rv.data)["aaData"]), 0)
-        rv = self.app.get('/query/urls')
-        self.assertIn('{"meta": {"count":', rv.data)
+
+    def test_fetch_docs_urls(self):
+        rv = self.app.get('/urls/json')
+        self.assertIn("meta", json.loads(rv.data))
+
+    def test_solr_query_articles(self):
+        rv = self.app.get('/solrquery/mediacloud_articles/rolezinho')
+        self.assertGreater(len(json.loads(rv.data)), 0)
+
+    def test_fetch_docs_from_list_of_ids(self):
+        ids = [d["_id"] for d in mongo_client.MCDB.articles.find({}, fields=[], limit=10)]
+        res = json.loads(fetch_docs("articles", ids=ids))
+        # print len(ids), res
+        self.assertEqual(len(res['data']), 10)
+
+    @unittest.skip("wont work because Solr server is not indexing local db")
+    def test_fetch_docs_from_query(self):
+        rv = self.app.get('/articles/json/noticia')
 
 if __name__ == '__main__':
     unittest.main()
