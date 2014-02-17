@@ -72,7 +72,7 @@ def fetch_loc(location):
 
 
 # add the same dafault parameters for the functions:  save_tweet_as_geojson e process_tweet
-def save_tweet_as_geojson(_id, coords, db_source = coll, db_location = geoj):
+def save_tweet_as_geojson(_id, coords, db_source=coll, db_location=geoj):
     """
     Saves the tweets as GeoJSON in MongoDb
     """
@@ -103,11 +103,11 @@ def process_tweet(db_source = coll):
         ids_to_process = list(db_source.find({'geolocated': {'$exists': False}}, fields=["_id"]))
         for _id in ids_to_process:
             c = geoloc_tweet(_id["_id"])
-            #c = geoloc_tweet(_id) não funciona pois _id = {"_id" : ...}
             if c == (None, None):
                 db_source.update({'_id': _id["_id"]}, {'$set': {'geolocated': False}})
-            save_tweet_as_geojson(_id["_id"], c)
-            db_source.update({'_id': _id["_id"]}, {'$set': {'geolocated': True}})
+            else:
+                db_source.update({'_id': _id["_id"]}, {'$set': {'geolocated': True}})
+                save_tweet_as_geojson(_id["_id"], c)
             #print _id, c
     except OperationFailure:
         logging.error("operationFailure")
