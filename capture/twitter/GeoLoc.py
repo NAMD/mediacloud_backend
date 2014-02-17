@@ -110,7 +110,7 @@ def process_tweet(db_source = coll):
                 save_tweet_as_geojson(_id["_id"], c)
             #print _id, c
     except OperationFailure:
-        logging.error("operationFailure")
+        logging.error("operationFailure on tweet id: {}".format(_id))
 
 if __name__ == "__main__":
     process_tweet()
