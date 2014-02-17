@@ -13,5 +13,4 @@ requests
 nose
 pysolr
 mongo-connector
-twitter
 tweepy

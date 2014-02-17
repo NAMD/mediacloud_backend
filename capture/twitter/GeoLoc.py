@@ -32,32 +32,24 @@ def geoloc_tweet(_id):
     
     #I changed the tries' order because search for "geo" is considerably faster since fetch_loc is not called.
     #furthermore, i had not found any tweet with 'geo'but without 'place'.
-    try:
-        if tweet['geo'] is not None:
-            lat, lon = tweet['geo']['coordinates']
-            #print tweet["_id"], "geo"
-            return lat, lon
-    except KeyError:
-        logging.info('keyError: %s', 'geo')
-   
-    try:
-        if tweet['place'] is not None:
-            fullgeo = tweet[u'place'][u'full_name']
-            lat, lon = fetch_loc(fullgeo)
-            #print tweet["_id"], "place"
-            return lat, lon
-    except KeyError:
-        logging.info('keyError: %s', 'place')
-   
-    try:
-        if u'user' in tweet:
-            if u'location' in tweet[u'user']:
-                fullgeo = tweet[u'user'][u'location']
-                lat, lon = fetch_loc(fullgeo)
-                #print tweet["_id"], "user location"
-                return lat, lon
-    except KeyError:
-        logging.info('keyError: %s', u'user')
+
+    if tweet['geo'] is not None and 'coordinates' in tweet['geo']:
+        lat, lon = tweet['geo']['coordinates']
+        #print tweet["_id"], "geo"
+        return lat, lon
+    elif tweet['place'] is not None and 'full_name' in tweet['place']:
+        fullgeo = tweet[u'place'][u'full_name']
+        lat, lon = fetch_loc(fullgeo)
+        #print tweet["_id"], "place"
+        return lat, lon
+    elif u'user' in tweet and u'location' in tweet[u'user']:
+        fullgeo = tweet[u'user'][u'location']
+        lat, lon = fetch_loc(fullgeo)
+        #print tweet["_id"], "user location"
+        return lat, lon
+    else:
+        logging.info("No geolocation possible.")
+
 
 
 def fetch_loc(location):
