@@ -13,3 +13,5 @@ requests
 nose
 pysolr
 mongo-connector
+tweepy
+geopy
