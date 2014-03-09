@@ -43,6 +43,15 @@ client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 URLS = MCDB.urls  # Feed collection
 
+## Ensure indices are created
+FEEDS = MCDB.feeds
+ARTICLES = MCDB.articles
+FEEDS.ensure_index({"subtitle_detail.base":1})
+FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
+ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
+ARTICLES.ensure_index({"published": -1})
+
+
 
 def main(urls, depth):
     if urls:
