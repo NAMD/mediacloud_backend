@@ -27,6 +27,7 @@ from appinit import app, db
 
 
 
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -306,6 +307,7 @@ def json_timeline():
     fixed_articles = []
     for art in Articles:
         art['published'] = datetime.date.fromtimestamp(art['published']['$date']/1000.).strftime("%d,%m,%Y")
+        print art['title']
         fixed_articles.append(art)
 
     dados = render_template('pages/timeline.json', busca='NAMD FGV', articles=fixed_articles)

@@ -61,10 +61,10 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
 ## Ensure indices are created
-FEEDS.ensure_index({"subtitle_detail.base": 1})
+FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
 FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
 ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
-ARTICLES.ensure_index({"published": -1})
+ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
 
 
 
