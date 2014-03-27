@@ -14,9 +14,9 @@ storyjs_jsonp_data ={    "timeline":
                 "startDate":"{{art.published}}",
                 "endDate":"{{art.published}}",
                 "headline":"{{art.title|e}}",
-                "text":'{% if art.summary_detail.value %}{{art.summary_detail.value|linebreaks|safe}} {% else %} {{art.title_detail.value|linebreaks|safe}} {% endif %}',
+                "text":"{% if art.summary_detail.value%}{{art.summary_detail.value|tojson|forceescape}} {% else %} {{art.title|tojson|forceescape}} {% endif %}",
                 "asset": {
-                    "media":"{{ art.link|e}}",
+                    "media":"{{art.link|e}}",
                     "thumbnail":"",
                     "credit":"{{art.author}}"
                 }
@@ -26,7 +26,7 @@ storyjs_jsonp_data ={    "timeline":
                 "startDate":"{{art.published}}",
                 "endDate":"{{art.published}}",
                 "headline":"{{art.title|e}}",
-                "text":'{{art.summary_detail.value|linebreaks|safe}}',
+                "text":'{{art.summary_detail.value|tojson|forceescape}}',
                 "asset": {
                     "media":"",
                     "thumbnail":"",
