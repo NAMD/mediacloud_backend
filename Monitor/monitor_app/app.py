@@ -305,7 +305,9 @@ def json_timeline():
     Articles = json.loads(fetch_docs('articles'))['data']
     fixed_articles = []
     for art in Articles:
-        art['published'] = datetime.date.fromtimestamp(art['published']['$date']/1000.).strftime("%d,%m,%Y")
+        art['published'] = datetime.date.fromtimestamp(art['published']['$date']/1000.).strftime("%Y,%m,%d")
+        if 'summary_detail' not in art:
+            art['summary_detail'] = {'value': ''}
         fixed_articles.append(art)
 
     dados = render_template('pages/timeline.json', busca='NAMD FGV', articles=fixed_articles)
