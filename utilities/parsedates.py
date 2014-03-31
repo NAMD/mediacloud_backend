@@ -31,6 +31,7 @@ def parse_dates(collection):
                     collection.update({"_id": doc["_id"]}, {"%set": {"published": parse_pt_date(doc['published'])}})
                 except:
                     print "Could not parse string: {0:s}".format(doc['published'])
+
         if "updated" in doc and not isinstance(doc['updated'], datetime.datetime):
             try:
                 collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
