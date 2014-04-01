@@ -20,6 +20,7 @@ import settings
 
 
 
+
 ###########################
 #  Setting up Logging
 ###########################
@@ -70,7 +71,7 @@ def main(urls, depth):
         urls_count = URLS.count()
         urls_scanned = 0
         while urls_scanned < urls_count:
-            cursor = URLS.find({}, skip=urls_scanned, limit=100, sort=[("_id", pymongo.DESCENDING)])
+            cursor = URLS.find({}, skip=urls_scanned, limit=100, sort=[("fetched_on", pymongo.ASCENDING), ("_id", pymongo.DESCENDING)])
             try:
                 for doc in cursor:
                     print "scanning {} with depth {}".format(doc['url'], depth)
