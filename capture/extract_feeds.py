@@ -56,6 +56,11 @@ ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
 
 
 def main(urls, depth):
+    """
+    Starting capturing of
+    :param urls:
+    :param depth:
+    """
     if urls:
         with open(urls) as f:
             for u in f:
