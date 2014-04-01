@@ -21,6 +21,7 @@ import settings
 
 
 
+
 ###########################
 #  Setting up Logging
 ###########################
@@ -53,6 +54,7 @@ FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING), ("link", pymong
 FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
 ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
 ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
+URLS.ensure_index([("fetched_on", pymongo.ASCENDING)])
 
 
 
