@@ -60,6 +60,15 @@ MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
+## Ensure indices are created
+FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
+FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
+ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
+ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
+
+
+
+
 config = {
     'threads': 35,  # Number of threads used in the fetching pool
 }

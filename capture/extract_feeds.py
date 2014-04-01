@@ -11,13 +11,13 @@ __docformat__ = 'restructuredtext en'
 import argparse
 import logging
 
-import pymongo
 from pymongo.errors import OperationFailure
-
 import pymongo
+
 import feedfinder
 import urlscanner
 import settings
+
 
 
 ###########################
@@ -43,8 +43,24 @@ client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 URLS = MCDB.urls  # Feed collection
 
+## Ensure indices are created
+FEEDS = MCDB.feeds
+ARTICLES = MCDB.articles
+FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
+# the index below is key to ensure uniqueness of feeds in the table
+FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING), ("link", pymongo.ASCENDING)], unique=True, dropDups=True)
+FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
+ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
+ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
+
+
 
 def main(urls, depth):
+    """
+    Starting capturing of
+    :param urls:
+    :param depth:
+    """
     if urls:
         with open(urls) as f:
             for u in f:
