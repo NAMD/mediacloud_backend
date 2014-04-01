@@ -38,6 +38,8 @@ def parse_dates(collection):
         if "updated" in doc and not isinstance(doc['updated'], datetime.datetime):
             try:
                 collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
+            except DuplicateKeyError:
+                print "could not update this document:\n{}".format(doc)
             except ValueError:
                 try:
                     collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse_pt_date(doc['updated'])}})
