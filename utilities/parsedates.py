@@ -13,6 +13,7 @@ import sys
 
 from dateutil.parser import parse
 import pymongo
+from pymongo.errors import DuplicateKeyError
 
 
 def parse_dates(collection):
@@ -21,6 +22,8 @@ def parse_dates(collection):
             print "updating {0:s}".format(doc["_id"])
             try:
                 collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
+            except DuplicateKeyError:
+                print "could not update this document:\n{}".format(doc)
             except ValueError:
                 try:
                     collection.update({"_id": doc["_id"]}, {"%set": {"published": parse_pt_date(doc['published'])}})
