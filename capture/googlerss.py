@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#coding: utf8
 """
 Fetches all urls in a google query for RSS feeds in Brasil
 """
@@ -8,12 +9,16 @@ from urlparse import unquote
 import argparse
 import datetime
 import time
+import random
 
 import pymongo
 from pymongo.errors import DuplicateKeyError
 
 import GoogleScraper
 import settings
+
+
+
 
 
 ##### Setup URL Collection ############
@@ -23,18 +28,26 @@ URLS = MCDB.urls  # Collection of urls to extract feeds from
 URLS.ensure_index('url', unique=True)
 ###########
 
+SUBJECTS = ["Brasil", "Economia", "Politica", "ciência", "colunistas", "ambiente", "saúde",
+            "educação", "matemática", "europa", "Mundo", "china", "EUA", "esporte", "Internacional",
+            "Cidade", "Tecnologia", "energia", "sustentabilidade", "dinheiro", "alimento", "comercio",
+            "policia", "Segurança", "violência", "água", "cinema", "cultura", "musica", "moda", "televisão",
+            "filmes", "democracia", "Diario", "Eleições", "Senado", "Camara", "Brasilia",
+    ]
 
 def main(subject='', results_filter='site', n=5):
     """
     Scrape google search up to the nth page and save the results to a MongoDB collection.
     :param n:
     """
+    if not subject:
+        subject = "+".join(random.sample(SUBJECTS, 5))
     q = "{}+RSS+site:br".format(subject)
     lang = ''
     if results_filter == 'lang':
         q = "{}+RSS".format(subject)
         lang = 'lang_pt'
-
+    print "searching for {}.".format(subject)
     for o in range(0, n*10, n):
         urls = GoogleScraper.scrape(q, number_pages=n, offset=o, language=lang)
         for url in urls:

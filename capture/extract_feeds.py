@@ -11,13 +11,17 @@ __docformat__ = 'restructuredtext en'
 import argparse
 import logging
 
-import pymongo
 from pymongo.errors import OperationFailure
-
 import pymongo
+
 import feedfinder
 import urlscanner
 import settings
+
+
+
+
+
 
 
 ###########################
@@ -43,8 +47,25 @@ client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 URLS = MCDB.urls  # Feed collection
 
+## Ensure indices are created
+FEEDS = MCDB.feeds
+ARTICLES = MCDB.articles
+FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
+# the index below is key to ensure uniqueness of feeds in the table
+FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING), ("link", pymongo.ASCENDING)], unique=True, dropDups=True)
+FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
+ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
+ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
+URLS.ensure_index([("fetched_on", pymongo.ASCENDING)])
+
+
 
 def main(urls, depth):
+    """
+    Starting capturing of
+    :param urls:
+    :param depth:
+    """
     if urls:
         with open(urls) as f:
             for u in f:
@@ -54,7 +75,7 @@ def main(urls, depth):
         urls_count = URLS.count()
         urls_scanned = 0
         while urls_scanned < urls_count:
-            cursor = URLS.find({}, skip=urls_scanned, limit=100, sort=[("_id", pymongo.DESCENDING)])
+            cursor = URLS.find({}, skip=urls_scanned, limit=100, sort=[("fetched_on", pymongo.ASCENDING), ("_id", pymongo.DESCENDING)])
             try:
                 for doc in cursor:
                     print "scanning {} with depth {}".format(doc['url'], depth)

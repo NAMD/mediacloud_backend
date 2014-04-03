@@ -3,8 +3,9 @@ __author__ = 'fccoelho'
 
 import unittest
 import subprocess
-from capture import feedfinder, urlscanner, downloader,googlerss
+import json
 
+from capture import feedfinder, urlscanner, downloader,googlerss
 
 
 class FeedFinderTests(unittest.TestCase):
@@ -81,6 +82,14 @@ class TestGoogleRSS(unittest.TestCase):
     def test_save_urls(self):
         googlerss.main()
         assert googlerss.MCDB.urls.count() > 0
+
+
+class Test_Tweet_Geolocate(unittest.TestCase):
+    def setUp(self):
+        with open('data/sample_tweet.json') as f:
+            self._test_tweet = json.loads(f.read())
+    def test_geoloc_tweet(self):
+        pass
 
 
 if __name__ == '__main__':

@@ -61,6 +61,15 @@ MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 
+## Ensure indices are created
+FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
+FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
+ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
+ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
+
+
+
+
 config = {
     'threads': 45,  # Number of threads used in the fetching pool
 }
@@ -76,6 +85,9 @@ class RSSDownload(object):
         response = feedparser.parse(self.url)
         if response.bozo:
             logger.error("fetching %s returned an exception: %s", self.url, response.bozo_exception)
+            return
+        if not response.entries:
+            logger.warning("{} had no entries".format(self.url))
             return
 
         self._save_articles(response.entries)
@@ -200,7 +212,10 @@ def fetch_feed(feed):
         f = RSSDownload(feed[0], feed[1])
     except InvalidDocument:
         logger.error("This feed failed: %s", f)
-    f.parse()
+    try:
+        f.parse()
+    except Exception as e:
+        logger.error("An error occurred while trying to fetch feed {}: {}".format(f.url, e))
 
 
 def parallel_fetch():

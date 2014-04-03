@@ -8,7 +8,9 @@ import json
 import base64
 import datetime
 import re
+import os
 
+import pysolr
 from flask import render_template, flash, request, redirect, url_for, Response
 import pymongo
 from bson import json_util
@@ -19,6 +21,12 @@ from jinja2 import Markup
 from forms import *
 import models
 from appinit import app, db
+
+
+
+
+
+
 
 
 
@@ -58,6 +66,9 @@ def linebreaks(value):
     result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>')
                           for p in _paragraph_re.split(value))
     return Markup(result)
+
+#  Setup mongo connection
+mongo_client = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
 
 
 
@@ -147,9 +158,9 @@ def config():
 
 @app.route('/feeds')
 def feeds():
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    nfeeds = C.MCDB.feeds.count()
+    nfeeds = mongo_client.MCDB.feeds.count()
     response = json.loads(fetch_docs('feeds'))
+
     if 'data' in response:
         feed_list = response['data']
     else:
@@ -164,20 +175,24 @@ def feeds():
     return render_template('pages/feeds.html', nfeeds=nfeeds, keys=list(maintained_keys))
 
 
-
 @app.route('/articles')
 def articles():
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-    nart = C.MCDB.articles.count()
     response = json.loads(fetch_docs('articles'))
+    nart = mongo_client.MCDB.articles.count()
+    q = request.args.get("query", "")
+
     maintained_keys = set(['title', 'summary', 'link', 'language', 'published'])
-    removed_fields = set(response['data'][0].keys()) - maintained_keys
+    # if response['data']:
+    #     removed_fields = set(response['data'][0].keys()) - maintained_keys
+    # else:
+    #     removed_fields = set([])
     keys = []
     for feed in response['data']:
         keys += feed.keys()
     if not keys:
         keys = ["No", "Articles", "in", "Database"]
-    return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys))
+    return render_template('pages/articles.html', n_articles=nart, keys=list(maintained_keys), query=q)
+
 
 
 def clean_articles(data):
@@ -238,19 +253,17 @@ def clean_feeds(data):
                 feed['feed_link'] = r'<a href="{}">{}</a>'.format(u, u)
         except AttributeError:
             continue
-        print feed
+        #print feed
         feed_list.append(feed)
 
     return feed_list
 
 
-
 @app.route('/urls')
 def urls():
-    C = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
     urls = json.loads(fetch_docs('urls'))
     try:
-        keys = articles[0].keys()
+        keys = urls['data'][0].keys()
     except KeyError:
         keys = ["No", "URLs", "in", "Database"]
     return render_template('pages/urls.html', urls=urls, keys=keys)
@@ -263,8 +276,15 @@ def json_feeds(start=0, stop=100):
 
 
 @app.route("/articles/json")
-def json_articles(start=0, stop=100):
-    result = json.loads(fetch_docs('articles', stop))
+@app.route("/articles/json/")
+@app.route("/articles/json/<query>")
+def json_articles(start=0, stop=100, query=""):
+    if query:
+        ids = [bson.ObjectId(d["_id"]) for d in json.loads(solr_query("mediacloud_articles", query).data)]
+        result = json.loads(fetch_docs('articles', limit=10000, ids=ids))
+        flash('Your query for {} matched articles.'.format(query))
+    else:
+        result = json.loads(fetch_docs('articles', limit=stop))
     articles = []
     for article in result['data']:
         article['published'] = datetime.date.fromtimestamp(article['published']['$date']/1000.).strftime("%b %d, %Y")
@@ -288,7 +308,9 @@ def json_timeline():
     Articles = json.loads(fetch_docs('articles'))['data']
     fixed_articles = []
     for art in Articles:
-        art['published'] = datetime.date.fromtimestamp(art['published']['$date']/1000.).strftime("%d,%m,%Y")
+        art['published'] = datetime.date.fromtimestamp(art['published']['$date']/1000.).strftime("%Y,%m,%d")
+        if 'summary_detail' not in art:
+            art['summary_detail'] = {'value': ''}
         fixed_articles.append(art)
 
     dados = render_template('pages/timeline.json', busca='NAMD FGV', articles=fixed_articles)
@@ -309,8 +331,7 @@ def mongo_query(coll_name):
     Return json with requested data or error
     """
     try:
-        conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-        db = conn.MCDB
+        db = mongo_client.MCDB
         coll = db[coll_name]
         resp = {}
         query = json.loads(request.args.get('q', '{}'), object_hook=json_util.object_hook)
@@ -330,10 +351,28 @@ def mongo_query(coll_name):
         # import traceback
         # traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
-    finally:
-        conn.disconnect()
     resp = Response(json_response, mimetype='application/json',)
     return resp
+
+
+@app.route("/solrquery/<index_name>/<query>", methods=["GET", "POST"])
+def solr_query(index_name, query=""):
+    """
+    Perform a query in Solr server and return the documents stored in the index as JSON
+    """
+    try:
+        assert index_name in ['mediacloud_articles', 'mediacloud_feeds']
+    except AssertionError:
+        flash('Wrong Index Name {}'.format(index_name))
+        return redirect(url_for('home'))
+    options = {
+        'hl': 'true',
+        'hl.fragsize': 10,
+    }
+
+    server = pysolr.Solr(os.path.join(app.config["SOLR_URL"], index_name))
+    results = server.search(query, **options)
+    return Response(json.dumps(results.docs), mimetype='application/json')
 
 #-----------------------------#
 # Utility functions
@@ -368,14 +407,16 @@ def fix_json_output(json_obj):
     return _fix_json(json_obj)
 
 
-def fetch_docs(colname, limit=100):
+def fetch_docs(colname, limit=100, ids=None):
     """
     Query MongoDB in the collection specified
-    Return json with requested data or error
+    Return json with requested data or error.
+    :param colname: Collection from which to fetch
+    :param limit: maximum number of documents
+    :param ids: list of ids to fetch.
     """
     try:
-        conn = pymongo.MongoClient(app.config["MEDIACLOUD_DATABASE_HOST"])
-        db = conn.MCDB
+        db = mongo_client.MCDB
         coll = db[colname]
         resp = {}
         # query = json.loads(request.GET['q'], object_hook=json_util.object_hook)
@@ -388,7 +429,10 @@ def fetch_docs(colname, limit=100):
         #     skip = int(request.GET['skip'])
         # if 'sort' in request.GET:
         #     sort = json.loads(request.GET['sort'])
-        cur = coll.find({}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
+        if ids:
+            cur = coll.find({"_id": {"$in": ids}}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
+        else:
+            cur = coll.find({}, sort=[("_id", pymongo.DESCENDING)], limit=limit)
         cnt = cur.count()
         # if sort:
         #     cur = cur.sort(sort)
@@ -401,8 +445,7 @@ def fetch_docs(colname, limit=100):
         import traceback
         traceback.print_stack()
         json_response = json.dumps({'error': repr(e)})
-    finally:
-        conn.disconnect()
+
 
     #resp = Response(json_response, mimetype='application/json' )
     #resp['Cache-Control'] = 'no-cache'

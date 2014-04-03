@@ -213,7 +213,14 @@ def isFeed(url):
     Check if content corresponds to an html document (returns 0)
     or a feed (returns >0).
     """
-    p = feedparser.parse(url)
+    try:
+        p = feedparser.parse(url)
+    except TypeError:  # Sometimes Feedparser fails with a type error here
+        logging.error("Bad url: {}".format(url))
+        return 0
+    except UnicodeEncodeError:
+        logging.error("Unicode Encode Error")
+        return 0
     version = p.get("version")
     return int(version != "")
 

@@ -19,14 +19,25 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 pypln = PyPLN(settings.PYPLNHOST, settings.PYPLN_CREDENTIALS)
 
-# Add an article corpus
-article_corpus = pypln.add_corpus(name='MC_articles', description='MediaCloud Articles')
+
+def get_corpus():
+    """
+    Return the existing Mediacloud corpus or create it and return.
+    :rtype : Corpus object
+    """
+    try:
+        article_corpus = pypln.add_corpus(name='MC_articles', description='MediaCloud Articles')
+    except RuntimeError:
+        article_corpus = [c for c in pypln.corpora() if c.name == "MC_articles"][0]
+
+    return article_corpus
 
 
 def send_to_pypln(document):
     """
     Takes a mediacloud document from the articles collection and insert into a pypln corpus.
     """
+    article_corpus = get_corpus()
     article = article_corpus.add_document(decompress_content(document['link_content']))
 
 

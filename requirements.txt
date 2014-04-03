@@ -13,4 +13,6 @@ requests
 nose
 pysolr
 mongo-connector
+tweepy
 pypln.api
+geopy
