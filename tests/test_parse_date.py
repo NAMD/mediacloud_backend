@@ -31,3 +31,9 @@ class TestParsePtDate(unittest.TestCase):
         result = parse_pt_date('23 de Dezembro de 2013')
         expected = datetime.datetime(2013, 12, 23, 0, 0, 0)
         self.assertEqual(result, expected)
+
+    def test_date_with_error_before(self):
+        date_string = u":  Use of undefined constant dataini_con - assumed 'dataini_con' in  on line \n\n:  A non well formed numeric value encountered in  on line \nWed, 31 Dec 1969 20:33:33 -0300"
+        result = parse_pt_date(date_string)
+        expected = datetime.datetime(1969, 12, 31, 23, 33, 33)
+        self.assertEqual(result, expected)

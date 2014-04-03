@@ -20,17 +20,27 @@ from pymongo.errors import DuplicateKeyError
 
 BSON_DATE = ord(bson.BSONDAT) # WTF, pymongo?
 MONTHS = {'jan': 1, 'fev': 2, 'mar': 3, 'abr': 4,  'mai': 5,  'jun': 6,
-          'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12}
-FULL_MONTHS = {'janeiro': 1,  'fevereiro': 2, u'março': 3,    'abril': 4,
-               'maio': 5,     'junho': 6,     'julho': 7,     'agosto': 8,
-               'setembro': 9, 'outubro': 10,  'novembro': 11, 'dezembro': 12}
+          'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12,
+
+          'feb': 2, 'apr': 4, 'may': 5, 'aug': 8,  'sep': 9,  'oct': 10,
+          'dec': 12}
+FULL_MONTHS = {'janeiro': 1,   'fevereiro': 2, u'março': 3,    'abril': 4,
+               'maio': 5,      'junho': 6,     'julho': 7,     'agosto': 8,
+               'setembro': 9,  'outubro': 10,  'novembro': 11, 'dezembro': 12,
+
+               'january': 1,   'februrary': 2, 'march': 3,     'april': 4,
+               'may': 5,       'june': 6,      'july': 7,      'august': 8,
+               'september': 9, 'october': 10,  'november': 11, 'december': 12,}
 
 def parse_pt_date(date_string):
     '''Parses a date-time string and return datetime object
        The format is like this:
        'Seg, 21 Out 2013 22:14:36 -0200'
     '''
-    date_info = date_string.lower().split()
+    date_info = date_string.lower().strip()
+    if '\n' in date_info:
+        date_info = date_info.split('\n')[-1].strip()
+    date_info = date_info.split()
     if date_info.count('de') == 2 or len(date_info) == 3:
         if ',' in date_info[0]:
             date_string = date_string.split(',')[1]
