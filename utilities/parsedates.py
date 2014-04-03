@@ -11,6 +11,8 @@ import argparse
 import datetime
 import sys
 
+from re import compile as regexp_compile
+
 import bson
 import pymongo
 
@@ -31,6 +33,21 @@ FULL_MONTHS = {'janeiro': 1,   'fevereiro': 2, u'março': 3,    'abril': 4,
                'january': 1,   'februrary': 2, 'march': 3,     'april': 4,
                'may': 5,       'june': 6,      'july': 7,      'august': 8,
                'september': 9, 'october': 10,  'november': 11, 'december': 12,}
+regexp_almost_iso_date = \
+        regexp_compile(r'([0-9]{4}-[0-9]{2}-[0-9]{2})t([0-9]{2}:[0-9]{2}:[0-9]{2})([+-]+[0-9:]*)')
+
+
+def get_offset_datetime(offset):
+    if offset.lower() == 'gmt':
+        offset = '+0000'
+    offset_signal = int(offset[0] + '1')
+    offset_hours = int(offset[1:3])
+    offset_minutes = int(offset[3:5])
+    total_offset_seconds = offset_signal * (offset_hours * 3600 +
+                                            offset_minutes * 60)
+    offset_in_days = total_offset_seconds / (3600.0 * 24)
+    return datetime.timedelta(offset_in_days)
+
 
 def parse_pt_date(date_string):
     '''Parses a date-time string and return datetime object
@@ -41,6 +58,8 @@ def parse_pt_date(date_string):
     if '\n' in date_info:
         date_info = date_info.split('\n')[-1].strip()
     date_info = date_info.split()
+    regexp_results = regexp_almost_iso_date.findall(' '.join(date_info))
+
     if date_info.count('de') == 2 or len(date_info) == 3:
         if ',' in date_info[0]:
             date_string = date_string.split(',')[1]
@@ -53,24 +72,30 @@ def parse_pt_date(date_string):
         date_iso = '{}-{:02d}-{:02d}'.format(year, int(month), int(day))
         date_object = datetime.datetime.strptime(date_iso, '%Y-%m-%d')
         return date_object
+    elif regexp_results:
+        date_almost_iso = list(regexp_results[0])
+        if date_almost_iso[2][0] in '+-' and date_almost_iso[2][1] in '+-':
+            date_almost_iso[2] = date_almost_iso[2][1:]
+        date_almost_iso[2] = date_almost_iso[2].replace(':', '')
+        if len(date_almost_iso[2]) == 4:
+            date_almost_iso[2] = '{}0{}'.format(date_almost_iso[2][0],
+                    date_almost_iso[2][1:])
+
+        date_iso = '{0}T{1}'.format(*date_almost_iso)
+        date_object = datetime.datetime.strptime(date_iso, '%Y-%m-%dT%H:%M:%S')
+        offset = get_offset_datetime(date_almost_iso[2])
+        return date_object - offset
     else:
         _, day, month_pt, year, hour_minute_second, offset = date_info
 
-        if offset.lower() == 'gmt':
-            offset = '+0000'
-        offset_signal = int(offset[0] + '1')
-        offset_hours = int(offset[1:3])
-        offset_minutes = int(offset[3:5])
-        total_offset_seconds = offset_signal * (offset_hours * 3600 +
-                                                offset_minutes * 60)
-        offset_in_days = total_offset_seconds / (3600.0 * 24)
+        offset = get_offset_datetime(offset)
 
         month = MONTHS[month_pt]
         datetime_iso = '{}-{:02d}-{:02d}T{}'.format(year, month, int(day),
                 hour_minute_second)
         datetime_object = datetime.datetime.strptime(datetime_iso,
                 '%Y-%m-%dT%H:%M:%S')
-        return datetime_object - datetime.timedelta(offset_in_days)
+        return datetime_object - offset
 
 
 def parse_date(value):

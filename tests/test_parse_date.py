@@ -37,3 +37,9 @@ class TestParsePtDate(unittest.TestCase):
         result = parse_pt_date(date_string)
         expected = datetime.datetime(1969, 12, 31, 23, 33, 33)
         self.assertEqual(result, expected)
+
+    def test_date_with_minus_and_plus_signals(self):
+        date_string = '2013-10-14T10:40:00+-3:00'
+        result = parse_pt_date(date_string)
+        expected = datetime.datetime(2013, 10, 14, 13, 40, 00)
+        self.assertEqual(result, expected)
