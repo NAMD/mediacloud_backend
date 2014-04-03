@@ -18,36 +18,37 @@ from pymongo.errors import DuplicateKeyError
 
 def parse_dates(collection):
     for doc in collection.find():
+        # TODO: only iterate over documents with non-ISODate 'updated' field
         if "published" in doc and not isinstance(doc['published'], datetime.datetime):
             print "updating {0:s}".format(doc["_id"])
             try:
-                collection.update({"_id": doc["_id"]}, {"%set": {"published": parse(doc['published'])}})
+                collection.update({"_id": doc["_id"]}, {"$set": {"published": parse(doc['published'])}})
             except DuplicateKeyError:
                 print "could not update this document:\n{}".format(doc)
             except ValueError:
                 try:
-                    collection.update({"_id": doc["_id"]}, {"%set": {"published": parse_pt_date(doc['published'])}})
+                    collection.update({"_id": doc["_id"]}, {"$set": {"published": parse_pt_date(doc['published'])}})
                 except:
                     print "Could not parse string: {0:s}".format(doc['published'])
             except TypeError:
                 try:
-                    collection.update({"_id": doc["_id"]}, {"%set": {"published": parse_pt_date(doc['published'])}})
+                    collection.update({"_id": doc["_id"]}, {"$set": {"published": parse_pt_date(doc['published'])}})
                 except:
                     print "Could not parse string: {0:s}".format(doc['published'])
 
         if "updated" in doc and not isinstance(doc['updated'], datetime.datetime):
             try:
-                collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse(doc['updated'])}})
+                collection.update({"_id": doc["_id"]}, {"$set": {"updated": parse(doc['updated'])}})
             except DuplicateKeyError:
                 print "could not update this document:\n{}".format(doc)
             except ValueError:
                 try:
-                    collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse_pt_date(doc['updated'])}})
+                    collection.update({"_id": doc["_id"]}, {"$set": {"updated": parse_pt_date(doc['updated'])}})
                 except:
                     print "Could not parse string: {0:s}".format(doc['updated'])
             except TypeError:
                 try:
-                    collection.update({"_id": doc["_id"]}, {"%set": {"updated": parse_pt_date(doc['updated'])}})
+                    collection.update({"_id": doc["_id"]}, {"$set": {"updated": parse_pt_date(doc['updated'])}})
                 except:
                     print "Could not parse string: {0:s}".format(doc['updated'])
 
