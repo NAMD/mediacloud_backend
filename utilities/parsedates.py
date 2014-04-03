@@ -1,57 +1,24 @@
-#-*- coding:utf-8 -*-
-"""
-This module helps migrating dates from strings to date objetcs in the article collection in MDCB
-Created on 23/10/13
-by fccoelho with contribution of parse_pt_date by @turicas
-license: GPL V3 or Later
-"""
+#!/usr/bin/env python
+# coding: utf-8
+
+"""Script to migrate dates/datetimes from strings to date objetcs"""
+
+from __future__ import print_function
 
 __docformat__ = 'restructuredtext en'
 
+import argparse
 import datetime
 import sys
 
-from dateutil.parser import parse
+import bson
 import pymongo
+
+from dateutil.parser import parse as dateutil_parse_date
 from pymongo.errors import DuplicateKeyError
 
 
-def parse_dates(collection):
-    for doc in collection.find():
-        # TODO: only iterate over documents with non-ISODate 'updated' field
-        if "published" in doc and not isinstance(doc['published'], datetime.datetime):
-            print "updating {0:s}".format(doc["_id"])
-            try:
-                collection.update({"_id": doc["_id"]}, {"$set": {"published": parse(doc['published'])}})
-            except DuplicateKeyError:
-                print "could not update this document:\n{}".format(doc)
-            except ValueError:
-                try:
-                    collection.update({"_id": doc["_id"]}, {"$set": {"published": parse_pt_date(doc['published'])}})
-                except:
-                    print "Could not parse string: {0:s}".format(doc['published'])
-            except TypeError:
-                try:
-                    collection.update({"_id": doc["_id"]}, {"$set": {"published": parse_pt_date(doc['published'])}})
-                except:
-                    print "Could not parse string: {0:s}".format(doc['published'])
-
-        if "updated" in doc and not isinstance(doc['updated'], datetime.datetime):
-            try:
-                collection.update({"_id": doc["_id"]}, {"$set": {"updated": parse(doc['updated'])}})
-            except DuplicateKeyError:
-                print "could not update this document:\n{}".format(doc)
-            except ValueError:
-                try:
-                    collection.update({"_id": doc["_id"]}, {"$set": {"updated": parse_pt_date(doc['updated'])}})
-                except:
-                    print "Could not parse string: {0:s}".format(doc['updated'])
-            except TypeError:
-                try:
-                    collection.update({"_id": doc["_id"]}, {"$set": {"updated": parse_pt_date(doc['updated'])}})
-                except:
-                    print "Could not parse string: {0:s}".format(doc['updated'])
-
+BSON_DATE = ord(bson.BSONDAT) # WTF, pymongo?
 MONTHS = {'jan': 1, 'fev': 2, 'mar': 3, 'abr': 4,  'mai': 5,  'jun': 6,
           'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12}
 FULL_MONTHS = {'janeiro': 1,  'fevereiro': 2, u'março': 3,    'abril': 4,
@@ -95,12 +62,69 @@ def parse_pt_date(date_string):
                 '%Y-%m-%dT%H:%M:%S')
         return datetime_object - datetime.timedelta(offset_in_days)
 
-if __name__ == "__main__":
-    ## Media Cloud database setup
-    client = pymongo.MongoClient(sys.argv[1])
-    MCDB = client.MCDB
-    if len(sys.argv) > 2:
-        Collection = MCDB[sys.argv[2]]  # user-defined collection
-    else:
-        Collection = MCDB['articles']  # Article collection (default)
-    parse_dates(Collection)
+
+def parse_date(value):
+    try:
+        new_value = dateutil_parse_date(value)
+    except (ValueError, TypeError):
+        try:
+            new_value = parse_pt_date(value)
+        except (ValueError, TypeError, IndexError):
+            raise ValueError()
+    return new_value
+
+
+def parse_dates_in(collection):
+    published = {'$and': [{'published': {'$exists': True}},
+                          {'published': {'$not': {'$type': BSON_DATE}}}]}
+    updated = {'$and': [{'updated': {'$exists': True}},
+                        {'updated': {'$not': {'$type': BSON_DATE}}}]}
+    date_filter = {'$or': [published, updated]}
+    fields = {'updated': True, 'published': True, '_id': True}
+    cursor = collection.find(date_filter, fields)
+
+    date_fields = ['published', 'updated']
+    undesired_types = (type(None), datetime.datetime, datetime.date)
+    updated_documents = 0
+    total = cursor.count()
+
+    for document in cursor:
+        print('Updating document {}...'.format(document['_id']), end='')
+
+        updated = False
+        for field_name in date_fields:
+            value = document.get(field_name, None)
+            if type(value) not in undesired_types:
+                try:
+                    new_value = parse_date(value)
+                except ValueError:
+                    print(' ERROR ({} = {})'.format(field_name, repr(value)),
+                            end='')
+                else:
+                    print(' UPDATED ({}: {} -> {})'.format(field_name,
+                        repr(value), repr(new_value)), end='')
+                    collection.update({'_id': document['_id']},
+                            {'$set': {field_name: new_value}})
+                    updated = True
+            print('')
+        if updated:
+            updated_documents += 1
+
+    print('Total documents updates: {}. Found: {}'
+            .format(updated_documents, total))
+
+
+if __name__ == '__main__':
+    args = argparse.ArgumentParser(description=globals()['__doc__'])
+    args.add_argument('host', type=str, help='MongoDB host to connect to')
+    args.add_argument('--port', type=int, default=27017,
+            help='MongoDB port to connect to')
+    args.add_argument('database', type=str)
+    args.add_argument('collection', type=str)
+    argv = args.parse_args()
+
+    client = pymongo.MongoClient(host=argv.host, port=argv.port)
+    database = client[argv.database]
+    collection = database[argv.collection]
+
+    parse_dates_in(collection)
