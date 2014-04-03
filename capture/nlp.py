@@ -20,13 +20,13 @@ ARTICLES = MCDB.articles  # Article Collection
 pypln = PyPLN(settings.PYPLNHOST, settings.PYPLN_CREDENTIALS)
 
 
-def get_corpus():
+def get_corpus(corpus_name='MC_articles'):
     """
     Return the existing Mediacloud corpus or create it and return.
     :rtype : Corpus object
     """
     try:
-        article_corpus = pypln.add_corpus(name='MC_articles', description='MediaCloud Articles')
+        article_corpus = pypln.add_corpus(name=corpus_name, description='MediaCloud Articles')
     except RuntimeError:
         article_corpus = [c for c in pypln.corpora() if c.name == "MC_articles"][0]
 
