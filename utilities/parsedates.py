@@ -124,7 +124,7 @@ def parse_dates_in(collection):
     total = cursor.count()
 
     for document in cursor:
-        print('Updating document {}...'.format(document['_id']), end='')
+        print('Updating document "{}"...'.format(document['_id']), end='')
 
         updated = False
         for field_name in date_fields:
@@ -141,7 +141,7 @@ def parse_dates_in(collection):
                     collection.update({'_id': document['_id']},
                             {'$set': {field_name: new_value}})
                     updated = True
-            print('')
+        print('')
         if updated:
             updated_documents += 1
 
