@@ -9,6 +9,7 @@ __docformat__ = 'restructuredtext en'
 
 import argparse
 import datetime
+import sys
 
 from re import compile as regexp_compile
 
@@ -16,6 +17,7 @@ import bson
 import pymongo
 
 from dateutil.parser import parse as dateutil_parse_date
+from pymongo.errors import DuplicateKeyError
 
 
 BSON_DATE = ord(bson.BSONDAT) # WTF, pymongo?
@@ -136,7 +138,8 @@ def parse_dates_in(collection):
                 else:
                     print(' UPDATED ({}: {} -> {})'.format(field_name,
                         repr(value), repr(new_value)), end='')
-                    collection.update(lecraizer@gmail.com)
+                    collection.update({'_id': document['_id']},
+                                        {'$set': {field_name: new_value}})
                     updated = True
         print('')
         if updated:
