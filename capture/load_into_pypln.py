@@ -16,7 +16,6 @@ import settings
 
 
 client = pymongo.MongoClient(host=settings.MONGOHOST)
-
 articles = client.MCDB.articles
 
 
@@ -27,16 +26,14 @@ def load(corpus_name='MC_articles'):
     art_loaded = 0
     while art_loaded < article_count:
         cursor = articles.find({}, skip=art_loaded, limit=100, sort=[("_id", pymongo.DESCENDING)])
-        for art in cursor:
-            document = corpus.add_document(art['link_content'])
-            articles.update({'_id': art['_id']},
-                            {'$set': {"pypln_url": document.url}})
-            art_loaded += 1
+        to_insert = cursor.count()
+        nlp.send_to_pypln(list(cursor), corpus_name)
+        art_loaded += to_insert
 
 
 if __name__=="__main__":
     if len(sys.argv) > 1:
-        print "loading documents into copus '{}'".format(sys.argv[1])
+        print "loading documents into corpus '{}'".format(sys.argv[1])
         load(sys.argv[1])
     else:
         load()
