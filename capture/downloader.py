@@ -29,7 +29,6 @@ from pymongo.errors import DuplicateKeyError
 import bson
 from dateutil.parser import parse
 
-from nlp import send_pypln
 import settings
 
 
@@ -124,7 +123,6 @@ class RSSDownload(object):
                 # Articles are first decoded with the declared encoding and then compressed with zlib
                 dec_content = r.content.decode(encoding)
                 entry['link_content'] = compress_content(dec_content)
-                entry['pypln_json'] = send_pypln(dec_content).json()
                 entry['compressed'] = True
                 entry['language'] = detect_language(dec_content)
                 # Parsing date strings
