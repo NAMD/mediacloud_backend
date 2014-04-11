@@ -20,30 +20,40 @@ articles = client.MCDB.articles
 
 
 
-def load(corpus_name='MC_articles'):
+def load(corpus_name, skip, limit):
     corpus = nlp.get_corpus(corpus_name)
-    #article_count = articles.count()
-    article_count = 10
-    art_loaded = 0
-    while art_loaded < article_count:
-        cursor = articles.find({'pypln_url': {'$exists': False}},
-                skip=art_loaded, limit=5, sort=[("_id", pymongo.DESCENDING)])
-        for article in cursor:
-            pypln_document = nlp.send_to_pypln(article, corpus)
-            _id = article['_id']
-            articles.update({'_id': _id},
-                            {'$set': {"pypln_url": pypln_document.url}})
-            # getting `cursor.count()` did not work. Even with
-            # `with_limit_and_skip=True`, so we just count the loaded articles.
-            art_loaded += 1
-            sys.stdout.write(('inserted document with id {} into'
-                    'PyPLN\n').format(_id))
+
+    filter_ = {'pypln_url': {'$exists': False}}
+
+    find_kwargs = {'sort': [("_id", pymongo.DESCENDING)]}
+    if skip:
+        find_kwargs.update({'skip': skip})
+    if limit:
+        find_kwargs.update({'limit': limit})
+
+    cursor = articles.find(filter_, **find_kwargs)
+    for article in cursor:
+        pypln_document = nlp.send_to_pypln(article, corpus)
+        _id = article['_id']
+        articles.update({'_id': _id},
+                        {'$set': {"pypln_url": pypln_document.url}})
+        sys.stdout.write(('inserted document with id {} into'
+                'PyPLN\n').format(_id))
 
 
 
 if __name__=="__main__":
-    if len(sys.argv) > 1:
-        print "loading documents into corpus '{}'".format(sys.argv[1])
-        load(sys.argv[1])
-    else:
-        load()
+    import argparse
+    parser = argparse.ArgumentParser(description=("Load MediaCloud documents"
+        "into a PyPLN instance"))
+
+    parser.add_argument("-c", "--corpus_name", type=str, metavar="NAME",
+            default="MC_articles",
+            help="Uploads documents to a corpus named NAME")
+    parser.add_argument("-l", "--limit", metavar='N', type=int, default=0,
+        help="Adds limit=N to the mongo query")
+    parser.add_argument("-s", "--skip", metavar='N', type=int, default=0,
+        help="Adds skip=N to the mongo query")
+    args = parser.parse_args()
+
+    load(args.corpus_name, args.skip, args.limit)
