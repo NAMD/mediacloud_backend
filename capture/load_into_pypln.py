@@ -28,7 +28,13 @@ def load(corpus_name='MC_articles'):
         cursor = articles.find({}, skip=art_loaded, limit=100, sort=[("_id", pymongo.DESCENDING)])
         to_insert = cursor.count()
         for article in cursor:
-            nlp.send_to_pypln(article, corpus_name)
+            pypln_document = nlp.send_to_pypln(article, corpus_name)
+            _id = article['_id']
+            articles.update({'_id': _id},
+                            {'$set': {"pypln_url": pypln_document.url}})
+            sys.stdout.write(('inserted document with id {} into'
+                    'PyPLN\n').format(_id))
+
         art_loaded += to_insert
 
 
