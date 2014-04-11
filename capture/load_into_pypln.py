@@ -26,8 +26,8 @@ def load(corpus_name='MC_articles'):
     article_count = 10
     art_loaded = 0
     while art_loaded < article_count:
-        cursor = articles.find({}, skip=art_loaded, limit=5, sort=[("_id",
-            pymongo.DESCENDING)])
+        cursor = articles.find({'pypln_url': {'$exists': False}},
+                skip=art_loaded, limit=5, sort=[("_id", pymongo.DESCENDING)])
         for article in cursor:
             pypln_document = nlp.send_to_pypln(article, corpus)
             _id = article['_id']
