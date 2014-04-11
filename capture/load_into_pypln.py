@@ -37,9 +37,7 @@ def load(corpus_name, skip, limit):
         _id = article['_id']
         articles.update({'_id': _id},
                         {'$set': {"pypln_url": pypln_document.url}})
-        sys.stdout.write(('inserted document with id {} into'
-                'PyPLN\n').format(_id))
-
+        sys.stdout.write('inserted document with id {} into PyPLN\n'.format(_id))
 
 
 if __name__=="__main__":

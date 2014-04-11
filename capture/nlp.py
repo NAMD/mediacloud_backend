@@ -19,6 +19,7 @@ FEEDS = MCDB.feeds  # Feed collection
 ARTICLES = MCDB.articles  # Article Collection
 pypln = PyPLN(settings.PYPLNHOST, settings.PYPLN_CREDENTIALS)
 
+ARTICLES.ensure_index([("pypln_url", pymongo.ASCENDING)], sparse=True)
 
 def get_corpus(corpus_name='MC_articles'):
     """
