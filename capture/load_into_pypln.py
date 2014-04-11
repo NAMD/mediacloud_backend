@@ -21,14 +21,14 @@ articles = client.MCDB.articles
 
 
 def load(corpus_name='MC_articles'):
-    corpus = nlp.get_corpus(corpus_name) #XXX: This is not needed
+    corpus = nlp.get_corpus(corpus_name)
     article_count = articles.count()
     art_loaded = 0
     while art_loaded < article_count:
         cursor = articles.find({}, skip=art_loaded, limit=100, sort=[("_id", pymongo.DESCENDING)])
         to_insert = cursor.count()
         for article in cursor:
-            pypln_document = nlp.send_to_pypln(article, corpus_name)
+            pypln_document = nlp.send_to_pypln(article, corpus)
             _id = article['_id']
             articles.update({'_id': _id},
                             {'$set': {"pypln_url": pypln_document.url}})

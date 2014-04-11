@@ -33,12 +33,11 @@ def get_corpus(corpus_name='MC_articles'):
     return article_corpus
 
 
-def send_to_pypln(downloaded_article, corpus_name='MC_articles'):
+def send_to_pypln(downloaded_article, corpus):
     """
     Takes a mediacloud document from the articles collection and insert into a pypln corpus.
     """
-    article_corpus = get_corpus(corpus_name)
-    pypln_document = article_corpus.add_document(
+    pypln_document = corpus.add_document(
             decompress_content(downloaded_article['link_content']))
     return pypln_document
 
