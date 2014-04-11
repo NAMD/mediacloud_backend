@@ -42,7 +42,6 @@ def send_to_pypln(downloaded_article, corpus_name='MC_articles'):
             decompress_content(downloaded_article['link_content']))
     ARTICLES.update({'_id': downloaded_article['_id']},
                     {'$set': {"pypln_url": pypln_document.url}})
-    print "inserted 1 document into PyPLN"
 
 
 def decompress_content(compressed_html):
