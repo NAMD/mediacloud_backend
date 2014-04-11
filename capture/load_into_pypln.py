@@ -22,20 +22,23 @@ articles = client.MCDB.articles
 
 def load(corpus_name='MC_articles'):
     corpus = nlp.get_corpus(corpus_name)
-    article_count = articles.count()
+    #article_count = articles.count()
+    article_count = 10
     art_loaded = 0
     while art_loaded < article_count:
-        cursor = articles.find({}, skip=art_loaded, limit=100, sort=[("_id", pymongo.DESCENDING)])
-        to_insert = cursor.count()
+        cursor = articles.find({}, skip=art_loaded, limit=5, sort=[("_id",
+            pymongo.DESCENDING)])
         for article in cursor:
             pypln_document = nlp.send_to_pypln(article, corpus)
             _id = article['_id']
             articles.update({'_id': _id},
                             {'$set': {"pypln_url": pypln_document.url}})
+            # getting `cursor.count()` did not work. Even with
+            # `with_limit_and_skip=True`, so we just count the loaded articles.
+            art_loaded += 1
             sys.stdout.write(('inserted document with id {} into'
                     'PyPLN\n').format(_id))
 
-        art_loaded += to_insert
 
 
 if __name__=="__main__":
