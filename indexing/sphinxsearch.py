@@ -15,6 +15,7 @@ import sphinxapi
 client = sphinxapi.SphinxClient()
 client.SetServer('127.0.0.1', 9312)
 
+
 def do_query(q, ind):
     return client.Query(query=" ".join(q), index=ind)
 
