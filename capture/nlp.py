@@ -38,17 +38,10 @@ def send_to_pypln(document, corpus_name='MC_articles'):
     Takes a mediacloud document from the articles collection and insert into a pypln corpus.
     """
     article_corpus = get_corpus(corpus_name)
-    if isinstance(document, dict):  # single document
-        article = article_corpus.add_document(decompress_content(document['link_content']))
-        ARTICLES.update({'_id': article['_id']},
-                        {'$set': {"pypln_url": document.url}})
-        print "inserted 1 document into PyPLN"
-    elif isinstance(document, list):
-        inserted = article_corpus.add_documents([decompress_content(art['link_content']) for art in document])[0]
-        for i in inserted:
-            ARTICLES.update({'_id': i['_id']},
-                        {'$set': {"pypln_url": i.url}})
-        print "inserted {} document into PyPLN".format(len(document))
+    article = article_corpus.add_document(decompress_content(document['link_content']))
+    ARTICLES.update({'_id': article['_id']},
+                    {'$set': {"pypln_url": document.url}})
+    print "inserted 1 document into PyPLN"
 
 
 def decompress_content(compressed_html):
