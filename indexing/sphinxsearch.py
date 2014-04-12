@@ -12,7 +12,7 @@ import sphinxapi
 
 
 client = sphinxapi.SphinxClient()
-client.SetServer('127.0.0.1', 9312)
+
 
 def do_query(q, ind):
     return client.Query(query=" ".join(q), index=ind)
@@ -31,7 +31,9 @@ if __name__ == "__main__":
     parser.add_argument('--index', '-i', required=False, default="MCDB_ARTICLES", help="Index")
     parser.add_argument('--query', '-q', required=True, type=str, nargs="+", help="query words")
     args = parser.parse_args()
-    print args.query
+
+    client.SetServer(args.host, args.port)
+
     r = do_query(args.query, args.index)
     print r
 
