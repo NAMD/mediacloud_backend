@@ -8,8 +8,23 @@ license: GPL V3 or Later
 __docformat__ = 'restructuredtext en'
 
 import argparse
-
+from sphinxit.core.processor import Search
 import sphinxapi
+
+
+class SphinxitConfig(object):
+    DEBUG = True
+    WITH_META = True
+    WITH_STATUS = True
+    POOL_SIZE = 5
+    SEARCHD_CONNECTION = {
+        'host': '127.0.0.1',
+        'port': 9306,
+    }
+
+search_articles = Search(indexes=['MCDB_ARTICLES'], config=SphinxitConfig)
+search_feeds = Search(indexes=['MCDB_FEEDS'], config=SphinxitConfig)
+search_all = Search(indexes=['MCDB_ARTICLES', 'MCDB_FEEDS'], config=SphinxitConfig)
 
 
 client = sphinxapi.SphinxClient()

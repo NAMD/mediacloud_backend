@@ -15,3 +15,4 @@ pysolr
 mongo-connector
 tweepy
 geopy
+sphinxit

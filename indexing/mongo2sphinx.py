@@ -90,13 +90,14 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
     SW.write(header)
     schema = get_schema_tag(schema_head, fields, attrs)
     SW.write(schema)
-    i = 1
+
     for doc in cursor:
+        id = int('0x' + str(doc['_id']), 16)
         doc.update(locationdic)
         try:
-            ser_doc = serialize(doc, i)
+            ser_doc = serialize(doc, id)
             SW.write(ser_doc)
-            i += 1
+
         except IOError as e:
             with open("IOError.log", 'w') as f:
                 f.write(schema + '\n\n')
