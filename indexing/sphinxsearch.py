@@ -8,23 +8,7 @@ license: GPL V3 or Later
 __docformat__ = 'restructuredtext en'
 
 import argparse
-from sphinxit.core.processor import Search
 import sphinxapi
-
-
-class SphinxitConfig(object):
-    DEBUG = True
-    WITH_META = True
-    WITH_STATUS = True
-    POOL_SIZE = 5
-    SEARCHD_CONNECTION = {
-        'host': '127.0.0.1',
-        'port': 9306,
-    }
-
-search_articles = Search(indexes=['MCDB_ARTICLES'], config=SphinxitConfig)
-search_feeds = Search(indexes=['MCDB_FEEDS'], config=SphinxitConfig)
-search_all = Search(indexes=['MCDB_ARTICLES', 'MCDB_FEEDS'], config=SphinxitConfig)
 
 
 client = sphinxapi.SphinxClient()
@@ -32,6 +16,13 @@ client.SetServer('127.0.0.1', 9312)
 
 def do_query(q, ind):
     return client.Query(query=" ".join(q), index=ind)
+
+def get_full_docs(id_list):
+    """
+    Fetch the docs from mongodb corresponding to the ids in id_list
+    :param id:
+    :return:
+    """
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Perform a query on sphinxsearch and return it as a json object')
