@@ -15,6 +15,12 @@ client = sphinxapi.SphinxClient()
 
 
 def do_query(q, ind):
+    """
+    very simple query function to test the indexing
+    :param q: query expression
+    :param ind: index to search
+    :return: dictionary with the results
+    """
     return client.Query(query=" ".join(q), index=ind)
 
 def get_full_docs(id_list):
