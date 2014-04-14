@@ -139,7 +139,7 @@ def parse_dates_in(collection):
                     print(' UPDATED ({}: {} -> {})'.format(field_name,
                         repr(value), repr(new_value)), end='')
                     collection.update({'_id': document['_id']},
-                            {'$set': {field_name: new_value}})
+                                        {'$set': {field_name: new_value}})
                     updated = True
         print('')
         if updated:
