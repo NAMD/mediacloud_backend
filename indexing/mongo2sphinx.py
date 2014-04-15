@@ -19,6 +19,7 @@ __author__ = 'Flavio Codeço Coelho'
 
 import argparse
 from xml.etree.ElementTree import Element, tostring, SubElement
+import time
 import sys
 import zlib
 import cPickle as CP
@@ -29,10 +30,10 @@ from pymongo import MongoClient
 SW = sys.stdout  #Stream Writer
 header = '<?xml version="1.0" encoding="utf-8"?><sphinx:docset>'
 schema_head = """<sphinx:schema>
-                    <sphinx:attr name="db" type="string"/>
-                    <sphinx:attr name="collection" type="string"/>
-                    <sphinx:attr name="_id" type="string"/>
-                    """
+<sphinx:attr name="db" type="string"/>
+<sphinx:attr name="collection" type="string"/>
+<sphinx:attr name="_id" type="string"/>
+"""
 
 attr_type_dict = {"published": "timestamp",
                   "links": "json",
@@ -44,9 +45,9 @@ def get_schema_tag(head, fields, attrs):
     Returns the schema tag
     """
     for a in attrs:
-        head += '<sphinx:attr name="{}" type="{}"/>'.format(a, attr_type_dict.get(a, "string"))
+        head += '<sphinx:attr name="{}" type="{}"/>\n'.format(a, attr_type_dict.get(a, "string"))
     for n in fields:
-        head += '<sphinx:field name="%s"/>' % n
+        head += '<sphinx:field name="%s"/>\n' % n
     return head + "</sphinx:schema>"
 
 
@@ -63,6 +64,8 @@ def serialize(doc, id):
             continue
         elif k == "link_content":
             SubElement(document, k).text = decompress_content(v)
+        elif k == "published":
+            SubElement(document, k).text = time.mktime(v.timetuple())
         else:
             SubElement(document, k).text = v
     return tostring(document)
@@ -79,6 +82,8 @@ def decompress_content(compressed_html):
     orig_html = CP.loads(decompressed)
     return orig_html
 
+
+
 def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
     """
     Given a mongo db, a collection and a list of fields, writes a stream of XML to stdout
@@ -87,22 +92,23 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
     coll = conn[db][collection]
     cursor = coll.find({}, fields=fields)
     locationdic = {'db': db, 'collection': collection}
-    SW.write(header)
     schema = get_schema_tag(schema_head, fields, attrs)
+    SW.write(header)
     SW.write(schema)
-
+    i=1
     for doc in cursor:
         id = int('0x' + str(doc['_id']), 16)
         doc.update(locationdic)
         try:
-            ser_doc = serialize(doc, id)
+            ser_doc = serialize(doc, i)
             SW.write(ser_doc)
 
         except IOError as e:
             with open("IOError.log", 'w') as f:
-                f.write(schema + '\n\n')
-                f.write(ser_doc)
+                f.write(header+schema + '\n\n')
+                f.write(ser_doc+"</sphinx:docset>")
             raise IOError('Failed! see IOError logfile')
+        i += 1
     SW.write("</sphinx:docset>")
 
 
