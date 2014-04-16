@@ -23,6 +23,7 @@ import time
 import sys
 import zlib
 import cPickle as CP
+import json
 
 from pymongo import MongoClient
 
@@ -36,8 +37,8 @@ schema_head = """<sphinx:schema>
 """
 
 attr_type_dict = {"published": "timestamp",
-                  "links": "json",
-                  "language": "json",
+                  "links": "string",
+                  "language": "string",
                  }
 
 def get_schema_tag(head, fields, attrs):
@@ -51,23 +52,32 @@ def get_schema_tag(head, fields, attrs):
     return head + "</sphinx:schema>"
 
 
-def serialize(doc, id):
+def serialize(doc, id, fields):
     """
     Receives raw MongoDB document data and returns XML.
     SphinxSearch demands that each document is identified by
     an unique unsigned integer `id`. We use a counter for this.
     """
     document = Element("sphinx:document", attrib={'id': str(id)})
-    for k, v in doc.iteritems():
-        if k == '_id':
-            SubElement(document, k).text = str(v)
-            continue
-        elif k == "link_content":
-            SubElement(document, k).text = decompress_content(v)
-        elif k == "published":
-            SubElement(document, k).text = time.mktime(v.timetuple())
-        else:
-            SubElement(document, k).text = v
+    try:
+        for k, v in doc.iteritems():
+            if k not in fields:
+                continue
+            if k == '_id':
+                SubElement(document, k).text = str(v)
+                continue
+            elif k == "link_content":
+                SubElement(document, k).text = decompress_content(v)
+            elif k == "published":
+                SubElement(document, k).text = str(time.mktime(v.timetuple()))
+            elif k == "links":
+                SubElement(document, k).text = json.dumps({"links": v})
+            elif k == "language":
+                SubElement(document, k).text = json.dumps(v)
+            else:
+                SubElement(document, k).text = v
+    except IndexError as e:
+        print k, v
     return tostring(document)
 
 
@@ -100,7 +110,7 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
         id = int('0x' + str(doc['_id']), 16)
         doc.update(locationdic)
         try:
-            ser_doc = serialize(doc, i)
+            ser_doc = serialize(doc, i, fields)
             SW.write(ser_doc)
 
         except IOError as e:
