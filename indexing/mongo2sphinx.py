@@ -37,8 +37,8 @@ schema_head = """<sphinx:schema>
 """
 
 attr_type_dict = {"published": "timestamp",
-                  "links": "string",
-                  "language": "string",
+                  "links": "json",
+                  "language": "json",
                  }
 
 def get_schema_tag(head, fields, attrs):
@@ -102,6 +102,7 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
     coll = conn[db][collection]
     cursor = coll.find({}, fields=fields)
     locationdic = {'db': db, 'collection': collection}
+    fields += locationdic.keys()
     schema = get_schema_tag(schema_head, fields, attrs)
     SW.write(header)
     SW.write(schema)
