@@ -6,18 +6,27 @@ __author__ = 'fccoelho'
 
 import argparse
 import datetime
+
 import pymongo
 from pypln.api import PyPLN
+
 
 Today = datetime.datetime.today()
 
 def get_htod(d):
-    end = Today + datetime.timedelta(1)
-    arts = ARTICLES.find({"published": {"$gte": Today, "$lt": end}}, fields=["pypln_url"])
+    arts = fetch_articles(d)
     for article in arts:
         pass
 
-
+def fetch_articles(d=None):
+    if d is None:
+        d = Today
+    else:
+        year, month, day = [int(i) for i in d.split('-')]
+        d = datetime.datetime(year, month, day)
+    end = d + datetime.timedelta(1)
+    arts = ARTICLES.find({"published": {"$gte": d, "$lt": end}}, fields=["published", "pypln_url"])
+    return arts
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=("Calculate 'Hot Topics of the Day'.\nA ranking of the most mentioned subjects"))
