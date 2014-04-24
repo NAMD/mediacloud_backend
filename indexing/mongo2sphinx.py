@@ -39,7 +39,8 @@ schema_head = """<sphinx:schema>
 attr_type_dict = {"published": "timestamp",
                   "links": "json",
                   "language": "json",
-                 }
+}
+
 
 def get_schema_tag(head, fields, attrs):
     """
@@ -72,12 +73,9 @@ def serialize(doc, id, fields):
                 try:
                     SubElement(document, k).text = str(time.mktime(v.timetuple()))
                 except AttributeError:
-<<<<<<< HEAD
-                    SubElement(document, k).text = '0'
-=======
                     # In case 'published' is not a ISODate
                     SubElement(document, k).text = 0
->>>>>>> a9f0820a0927b2d159c991e9d2abcc45feb6e743
+
             elif k == "links":
                 SubElement(document, k).text = json.dumps({"links": v})
             elif k == "language":
@@ -101,7 +99,6 @@ def decompress_content(compressed_html):
     return orig_html
 
 
-
 def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
     """
     Given a mongo db, a collection and a list of fields, writes a stream of XML to stdout
@@ -114,7 +111,7 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
     schema = get_schema_tag(schema_head, fields + locationdic.keys(), attrs)
     SW.write(header)
     SW.write(schema)
-    i=1
+    i = 1
     for doc in cursor:
         id = int('0x' + str(doc['_id']), 16)
         doc.update(locationdic)
@@ -124,8 +121,8 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
 
         except IOError as e:
             with open("IOError.log", 'w') as f:
-                f.write(header+schema + '\n\n')
-                f.write(ser_doc+"</sphinx:docset>")
+                f.write(header + schema + '\n\n')
+                f.write(ser_doc + "</sphinx:docset>")
             raise IOError('Failed! see IOError logfile')
         i += 1
     SW.write("</sphinx:docset>")
@@ -139,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument('--port', '-p', type=int, default=27017, help="port")
     parser.add_argument('--fields', '-f', required=True, type=str, nargs="+", help="Fields to be indexed")
     parser.add_argument('--attrs', '-a', required=True, type=str, nargs="+", help="Extra Attributes")
-    args = parser.parse_args()  #    print args, args.prune
+    args = parser.parse_args()  # print args, args.prune
 
     query(db=args.db, collection=args.col, fields=args.fields, attrs=args.attrs, host=args.host, port=args.port)
     #TODO: allow the user to specify an unique integer id field to be used in cases where the index needs to be updated if it is not provided, a counter should be used.
