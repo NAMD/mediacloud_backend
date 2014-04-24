@@ -32,6 +32,11 @@ def get_htod(d):
 
 
 def get_doc_freqdist(url):
+    """
+    Get Freqdist for a given pypln document given its URL
+    :param url: URL of the Document
+    :return: Freqdist (list of lists)
+    """
     try:
         doc = Document.from_url(url, (PYPLNUSER, PYPLNPASSWORD))
         fd = doc.get_property("freqdist")
@@ -39,7 +44,13 @@ def get_doc_freqdist(url):
         fd = []
     return fd
 
+
 def fetch_articles(d=None):
+    """
+    Fetch Articles published on a single Day
+    :param d: Day in 'YYYY-MM-DD' format
+    :return: articles (list of dictionaries)
+    """
     if d is None:
         d = Today
     else:
@@ -49,11 +60,13 @@ def fetch_articles(d=None):
     arts = ARTICLES.find({"published": {"$gte": d, "$lt": end}}, fields=["published", "pypln_url"])
     return arts
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=("Calculate 'Hot Topics of the Day'.\nA ranking of the most mentioned subjects"))
+    parser = argparse.ArgumentParser(
+        description=("Calculate 'Hot Topics of the Day'.\nA ranking of the most mentioned subjects"))
 
     parser.add_argument("-d", "--date", type=str, default="{}-{}-{}".format(Today.year, Today.month, Today.day),
-            help="Date to Analyse in YEAR-MO-DD format")
+                        help="Date to Analyse in YEAR-MO-DD format")
     parser.add_argument("-h", '--host', type=str, help='MongoDB host to connect to')
     parser.add_argument("-p", '--port', type=int, default=27017, help='MongoDB port to connect to')
     parser.add_argument("--pyplhost", type=str, help="PyPLN host to use.")
