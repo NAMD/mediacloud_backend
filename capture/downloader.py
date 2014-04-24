@@ -70,7 +70,7 @@ ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
 
 
 config = {
-    'threads': 35,  # Number of threads used in the fetching pool
+    'threads': 45,  # Number of threads used in the fetching pool
 }
 
 

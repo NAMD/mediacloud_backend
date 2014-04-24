@@ -19,6 +19,8 @@ import settings
 
 
 
+
+
 ##### Setup URL Collection ############
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
