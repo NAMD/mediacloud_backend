@@ -25,6 +25,8 @@ class TestHtod(unittest.TestCase):
     def setUp(self):
         htod.client = pymongo.MongoClient('localhost', 27017)
         htod.ARTICLES = htod.client.MCDB.articles
+        htod.PYPLNUSER = "mediacloud2"
+        htod.PYPLNPASSWORD = "senha do mediacloud"
 
     def test_fetch_today_articles(self):
         d = "2014-02-14"
@@ -33,3 +35,10 @@ class TestHtod(unittest.TestCase):
         for a in arts:
             self.assertGreaterEqual(a["published"], datetime.datetime(2014, 02, 14))
             self.assertLess(a["published"], datetime.datetime(2014, 02, 15))
+
+    def test_get_doc_freqdist(self):
+        d = "2014-02-14"
+        arts = [a for a in htod.fetch_articles(d) if "pypln_url" in a]
+        fd = htod.get_doc_freqdist(arts[0]['pypln_url'])
+        self.assertIsInstance(fd, dict)
+

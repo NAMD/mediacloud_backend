@@ -8,7 +8,7 @@ import argparse
 import datetime
 
 import pymongo
-from pypln.api import PyPLN
+from pypln.api import PyPLN, Document
 
 
 Today = datetime.datetime.today()
@@ -16,7 +16,14 @@ Today = datetime.datetime.today()
 def get_htod(d):
     arts = fetch_articles(d)
     for article in arts:
-        pass
+        if "pypln_url" in article:
+            fd = get_doc_freqdist(article['pypln_url'])
+
+
+def get_doc_freqdist(url):
+    doc = Document.from_url(url, (PYPLNUSER, PYPLNPASSWORD))
+    fd = dict(doc.get_property("freqdist"))
+    return fd
 
 def fetch_articles(d=None):
     if d is None:
@@ -45,6 +52,8 @@ if __name__ == "__main__":
     MCDB = client.MCDB
     FEEDS = MCDB.feeds  # Feed collection
     ARTICLES = MCDB.articles  # Article Collection
+    PYPLNUSER = args.pyplnuser
+    PYPLNPASSWORD = args.pyplnpassword
     pypln = PyPLN(args.pyplnhost, (args.pyplnuser, args.pyplnpassword))
 
     get_htod(args.date)
