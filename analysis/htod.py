@@ -6,6 +6,7 @@ __author__ = 'fccoelho'
 
 import argparse
 import datetime
+from collections import Counter
 
 import pymongo
 from pypln.api import PyPLN, Document
@@ -13,16 +14,29 @@ from pypln.api import PyPLN, Document
 
 Today = datetime.datetime.today()
 
+
 def get_htod(d):
+    """
+    Calculates "Hot token of the day"
+    :param d: day in 'YYYY-MM-DD' format
+    :return: Counter object with the counts of topics
+    """
     arts = fetch_articles(d)
+    total = Counter()  # Use Counters to add up freqdists
     for article in arts:
         if "pypln_url" in article:
             fd = get_doc_freqdist(article['pypln_url'])
+            total += Counter(dict(fd))
+
+    return total
 
 
 def get_doc_freqdist(url):
-    doc = Document.from_url(url, (PYPLNUSER, PYPLNPASSWORD))
-    fd = dict(doc.get_property("freqdist"))
+    try:
+        doc = Document.from_url(url, (PYPLNUSER, PYPLNPASSWORD))
+        fd = doc.get_property("freqdist")
+    except RuntimeError as e:
+        fd = []
     return fd
 
 def fetch_articles(d=None):

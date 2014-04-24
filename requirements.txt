@@ -1,3 +1,4 @@
+pandas
 Flask-SQLAlchemy
 Flask-WTF
 beautifulsoup4

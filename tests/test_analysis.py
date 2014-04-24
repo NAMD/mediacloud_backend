@@ -9,6 +9,7 @@ __docformat__ = 'restructuredtext en'
 
 import unittest
 import datetime
+from collections import Counter
 
 import pymongo
 
@@ -40,5 +41,11 @@ class TestHtod(unittest.TestCase):
         d = "2014-02-14"
         arts = [a for a in htod.fetch_articles(d) if "pypln_url" in a]
         fd = htod.get_doc_freqdist(arts[0]['pypln_url'])
-        self.assertIsInstance(fd, dict)
+        self.assertIsInstance(fd, list)
+
+    def test_get_htod(self):
+        d = "2014-02-14"
+        count = htod.get_htod(d)
+        self.assertIsInstance(count, Counter)
+        self.assertGreater(len(count), 0)
 
