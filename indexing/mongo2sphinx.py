@@ -72,7 +72,12 @@ def serialize(doc, id, fields):
                 try:
                     SubElement(document, k).text = str(time.mktime(v.timetuple()))
                 except AttributeError:
+<<<<<<< HEAD
                     SubElement(document, k).text = '0'
+=======
+                    # In case 'published' is not a ISODate
+                    SubElement(document, k).text = 0
+>>>>>>> a9f0820a0927b2d159c991e9d2abcc45feb6e743
             elif k == "links":
                 SubElement(document, k).text = json.dumps({"links": v})
             elif k == "language":
@@ -101,12 +106,12 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
     """
     Given a mongo db, a collection and a list of fields, writes a stream of XML to stdout
     """
+    locationdic = {'db': db, 'collection': collection}
     conn = MongoClient(host, port)
     coll = conn[db][collection]
-    cursor = coll.find({}, fields=fields)
-    locationdic = {'db': db, 'collection': collection}
-    fields += locationdic.keys()
-    schema = get_schema_tag(schema_head, fields, attrs)
+    fields_to_fetch = fields + attrs
+    cursor = coll.find({}, fields=fields_to_fetch)
+    schema = get_schema_tag(schema_head, fields + locationdic.keys(), attrs)
     SW.write(header)
     SW.write(schema)
     i=1
@@ -114,7 +119,7 @@ def query(db, collection, fields, attrs, host='127.0.0.1', port=27017):
         id = int('0x' + str(doc['_id']), 16)
         doc.update(locationdic)
         try:
-            ser_doc = serialize(doc, i, fields)
+            ser_doc = serialize(doc, i, fields_to_fetch)
             SW.write(ser_doc)
 
         except IOError as e:
