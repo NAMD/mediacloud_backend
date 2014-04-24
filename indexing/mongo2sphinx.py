@@ -69,7 +69,10 @@ def serialize(doc, id, fields):
             elif k == "link_content":
                 SubElement(document, k).text = decompress_content(v)
             elif k == "published":
-                SubElement(document, k).text = str(time.mktime(v.timetuple()))
+                try:
+                    SubElement(document, k).text = str(time.mktime(v.timetuple()))
+                except AttributeError:
+                    SubElement(document, k).text = '0'
             elif k == "links":
                 SubElement(document, k).text = json.dumps({"links": v})
             elif k == "language":
