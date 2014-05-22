@@ -38,7 +38,7 @@ schema_head = """<sphinx:schema>
 
 attr_type_dict = {"published": "timestamp",
                   "links": "json",
-                  "language": "json",
+                  "language": "string",
 }
 
 
@@ -79,7 +79,10 @@ def serialize(doc, id, fields):
             elif k == "links":
                 SubElement(document, k).text = json.dumps({"links": v})
             elif k == "language":
-                SubElement(document, k).text = json.dumps(v)
+                if isinstance(v, dict):
+                    SubElement(document, k).text = v['code']
+                else:
+                    SubElement(document, k).text = v
             else:
                 SubElement(document, k).text = v
     except IndexError as e:
