@@ -16,3 +16,4 @@ mongo-connector
 tweepy
 pypln.api
 geopy
+sphinxit
