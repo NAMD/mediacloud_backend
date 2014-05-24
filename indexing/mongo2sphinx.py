@@ -75,6 +75,8 @@ def serialize(doc, id, fields):
                 except AttributeError:
                     # In case 'published' is not a ISODate
                     SubElement(document, k).text = 0
+                except ValueError:
+                    SubElement(document, k).text = 0
 
             elif k == "links":
                 SubElement(document, k).text = json.dumps({"links": v})
