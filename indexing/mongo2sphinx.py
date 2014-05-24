@@ -97,8 +97,11 @@ def decompress_content(compressed_html):
     :return: original html
     """
     # unencoded = b64.urlsafe_b64decode(str(compressed_html))
-    decompressed = zlib.decompress(compressed_html)
-    orig_html = CP.loads(decompressed)
+    try: #TODO: find a better solution to this
+        decompressed = zlib.decompress(compressed_html)
+        orig_html = CP.loads(decompressed)
+    except UnicodeEncodeError:
+        orig_html = ""
     return orig_html
 
 

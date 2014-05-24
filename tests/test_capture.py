@@ -60,7 +60,7 @@ class TestDownloader(unittest.TestCase):
         self.assertGreater(res, 0, "{} is not greater than 0".format(res))
 
     def test_compress_decompress(self):
-        page = feedfinder.get_page('http://www.fgv.br')
+        page = feedfinder.get_page('http://www.oglobo.globo.com')
         cp = downloader.compress_content(page)
         self.assertEqual(page, downloader.decompress_content(cp))
 
