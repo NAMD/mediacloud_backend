@@ -9,7 +9,7 @@ from geopy.geocoders.googlev3 import GQueryError, GTooManyQueriesError
 from dateutil import parser
 
 
-FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename='tweet_geoloc.log', format=FORMAT, level=logging.DEBUG)
 
 # Initialize connection
