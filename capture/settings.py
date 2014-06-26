@@ -18,4 +18,4 @@ SOLR_URL = "http://200.20.164.152:8983/solr"
 ##########
 PYPLNHOST = "http://fgv.pypln.org/"
 PYPLN_CREDENTIALS = ("mediacloud2", "senha do mediacloud")
-
+CORPUS_NAME = "MC_articles"

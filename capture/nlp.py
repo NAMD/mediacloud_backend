@@ -21,11 +21,12 @@ pypln = PyPLN(settings.PYPLNHOST, settings.PYPLN_CREDENTIALS)
 
 ARTICLES.ensure_index([("pypln_url", pymongo.ASCENDING)], sparse=True)
 
-def get_corpus(corpus_name='MC_articles'):
+
+def get_corpus():
     """
     Return the existing Mediacloud corpus or create it and return.
-    :rtype : Corpus object
     """
+    corpus_name = settings.CORPUS_NAME
     try:
         article_corpus = pypln.add_corpus(name=corpus_name, description='MediaCloud Articles')
     except RuntimeError:

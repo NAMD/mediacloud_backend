@@ -28,8 +28,8 @@ from bson.errors import InvalidDocument
 from pymongo.errors import DuplicateKeyError
 import bson
 from dateutil.parser import parse
-
 import settings
+from nlp import send_to_pypln
 
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
