@@ -1,4 +1,4 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 u"""
 Created on 03/04/14
 by fccoelho
@@ -40,23 +40,23 @@ def load(skip, limit=0):
             _id = article['_id']
             articles.update({'_id': _id},
                             {'$set': {"pypln_url": pypln_document.url}})
-            sys.stdout.write('inserted document with id {} into PyPLN\n'.format(_id))
+            sys.stdout.write('inserted document {} of {}, with id {} into PyPLN\n'.format(articles_sent, count, _id))
             articles_sent += 1
 
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description=("Load MediaCloud documents"
-        "into a PyPLN instance"))
+                                                  "into a PyPLN instance"))
 
     # parser.add_argument("-c", "--corpus_name", type=str, metavar="NAME",
     # default="MC_articles",
     #         help="Uploads documents to a corpus named NAME")
     parser.add_argument("-l", "--limit", metavar='N', type=int, default=0,
-        help="Adds limit=N to the mongo query")
+                        help="Adds limit=N to the mongo query")
     parser.add_argument("-s", "--skip", metavar='N', type=int, default=0,
-        help="Adds skip=N to the mongo query")
+                        help="Adds skip=N to the mongo query")
     args = parser.parse_args()
 
     load(args.skip, args.limit)
