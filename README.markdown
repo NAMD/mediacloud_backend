@@ -134,18 +134,21 @@ there (you don't need to active a virtualenv), for example:
 
 ## Full Text Indexing
 
-Full text indexing must be enabled in the current version of MediaCloud. You need to configure a Solr server for this
-The project is tested with version 4.6 of Solr which can be downloaded from http://lucene.apache.org/solr/downloads.html
-After you have unpacked the tarball in a directory of your choosing, for example `/opt/`, you must go into the `/opt/solr-4.6.0/example/solr/`
-and create two new cores, similar to `collection1` (You may simply copy the contents of `collection1`), named `mediacloud_articles` and `mediacloud_feeds`.
+Full text indexing must be enabled in the current version of MediaCloud. You
+need to configure a Sphinx server for this. The project is tested with version
+2.2.3-beta of Sphinx which can be downloaded from
+http://sphinxsearch.com/downloads/ . After installing Sphinx, you need to start
+the search deamon using the provided configuration file
+(`indexing/sphinx.conf`):
 
-Then you must copy the `schema.xml` provided in the indexing package of mediacloud and copy it over the ones located in the `conf/` subdirectory of each core.
+    /usr/bin/sphinx-searchd --nodetach --config indexing/sphinx.conf
 
-Now you can start solr (from the `example` directory) by issuing the following command:
+and then create the index (you will need to create the necessary directories):
 
-    sudo java -Dsolr.clustering.enabled=true -jar start.jar&
+    cd indexing/
+    mkdir -p index_articles index_feeds log/binlog
+    ./index_on_sphinx.sh
 
-If the Solr server is not acessible, both the `extract_feeds` and `downloader.py` scripts will fail to run.
 
 ## Using the scripts
 
