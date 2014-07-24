@@ -33,7 +33,6 @@ import settings
 
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
-from indexing.solr_doc_manager import DocManager
 
 ###########################
 #  Setting up Logging
@@ -78,7 +77,6 @@ class RSSDownload(object):
     def __init__(self, feed_id, url):
         self.url = url
         self.feed_id = feed_id
-        self.solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud_articles"))
 
     def parse(self):
         response = feedparser.parse(self.url)
@@ -163,12 +161,6 @@ class RSSDownload(object):
                     logger.error("Duplicate article found")
                     return
                 # print "inserted"
-                try:
-                    self.solr_doc_manager.upsert(ARTICLES.find_one({"_id": _id}))
-                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": True}})
-                except Exception as e:
-                    ARTICLES.update({"_id": _id}, {"$set": {"indexed": False}})
-                    logger.error("Problem adding document to Solr")
 
 
 def compress_content(html):

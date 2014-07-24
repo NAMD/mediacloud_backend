@@ -62,14 +62,11 @@ import settings
 
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
-from indexing.solr_doc_manager import DocManager
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 FEEDS = MCDB.feeds  # Feed collection
 
-# Setting up Solr connection
-solr_doc_manager = DocManager(os.path.join(settings.SOLR_URL, "mediacloud_feeds"))
 
 ###########################
 #  Setting up Logging
@@ -317,12 +314,6 @@ def store_feeds(feed_list):
             except DuplicateKeyError:
                 logger.info("Feed %s already in database", f)
                 return
-            try:
-                solr_doc_manager.upsert(FEEDS.find_one({"_id": _id}))
-                FEEDS.update({"_id": _id}, {"$set": {"indexed": True}})
-            except Exception as e:
-                logger.error("Problem adding document to Solr:{}".format(e))
-                FEEDS.update({"_id": _id}, {"$set": {"indexed": False}})
 
 
 def feed(uri):
