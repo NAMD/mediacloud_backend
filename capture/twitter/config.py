@@ -20,6 +20,6 @@ TRACK = [
     'brasil', 'brazil', u'manifestação', 'manifestacao', 'PazSemVandalismo', u'MenosCorrupçãoEMais', 'PasseLivre',
     'ACORDAPOVOBRASILEIRO', 'Encontro', 'protestobrasil', 'foradilma', 'ProtestoRJ', 'vandalismo', 'paespalho',
     u'manifestação', 'manifestacao', 'changebrasil', 'changebrazil', u'corrupção', 'corrupcao', 'corrupto',
-    'Eduardo Campos',
+    'Eduardo Campos', 'governo', u'presidência',
     u'Aécio Neves'
 ]
