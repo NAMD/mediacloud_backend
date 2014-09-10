@@ -10,7 +10,10 @@ import config
 mongo_client = pymongo.MongoClient(config.MONGO_HOST)
 collection = mongo_client.MCDB.tweets
 
-cursor = collection.find({'created_at_timestamp': {'$exists': False}})
+# timeout=False should make sure the cursor is not closed after 10min
+# http://api.mongodb.org/python/current/api/pymongo/collection.html#pymongo.collection.Collection.find
+cursor = collection.find({'created_at_timestamp': {'$exists': False}},
+        timeout=False)
 
 total = cursor.count()
 if total == 0:
@@ -25,3 +28,5 @@ for tweet in cursor:
     i += 1
     if (i % 1000) == 0:
         sys.stdout.write('{:010d}/{:010d} tweets updated\n'.format(i, total))
+
+cursor.close()
