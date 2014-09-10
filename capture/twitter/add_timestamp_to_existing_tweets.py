@@ -36,9 +36,12 @@ if total == 0:
 
 i = 0
 for tweet in cursor:
-    timestamp = dateutil.parser.parse(tweet['created_at']).strftime('%s')
-    collection.update({'_id': tweet['_id']}, {'$set':
-        {'created_at_timestamp': timestamp}})
+    try:
+        timestamp = dateutil.parser.parse(tweet['created_at']).strftime('%s')
+        collection.update({'_id': tweet['_id']}, {'$set':
+            {'created_at_timestamp': timestamp}})
+    except Exception as e:
+        logger.exception('_id: %s [Exception] %s', tweet['_id'], e)
     i += 1
     if (i % 1000) == 0:
         logging.info('{:010d}/{:010d} tweets updated.'.format(i, total))
