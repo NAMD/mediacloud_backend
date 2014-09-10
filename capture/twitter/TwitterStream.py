@@ -56,8 +56,11 @@ api = tweepy.API(auth)
 
 
 class Filteredcapture(StreamListener):
-    """ A listener handles tweets are the received from the stream.
-    This is a basic listener that just prints received tweets to stdout.
+    """
+    This listener will get tweets received from the stream, parse their creation
+    time, add that as a timestamp to the data (so that it can be used for
+    ordering and formatted in different ways) and save the tweet to a mongodb
+    collection.
     """
     def on_data(self, data):
         parsed_data = json.loads(data)
