@@ -39,22 +39,6 @@ api = tweepy.API(auth)
 ##################
 
 
-#
-# def capture(twiterator):
-#     for tweet in twiterator:
-#         try:
-#             if not tweet['lang'].startswith('pt'):
-#                 continue
-#             if not tweet.get('text'):
-#                 continue
-#             #print (tweet['text'])
-#             coll.insert(tweet, w=1)
-#         except twitter.TwitterError(420):
-#             logging.warning('Error 420: Rate limit problem')
-#         except KeyError as e:
-#             logging.error("Invalid Tweet: %s" % e)
-
-
 class Filteredcapture(StreamListener):
     """
     This listener will get tweets received from the stream, parse their creation
@@ -69,7 +53,6 @@ class Filteredcapture(StreamListener):
         return True
 
     def on_error(self, status):
-        # print status
         logging.error("Invalid Tweet: %s" % status)
 
 
