@@ -2,10 +2,24 @@
 #-*- coding: utf-8 -*-
 
 import dateutil.parser
+import logging
 import pymongo
 import sys
 
 import config
+
+
+# This is not defined in config.py because this log is specific to this tool,
+# and this should be run only once per database.
+
+LOG_FILE = '/tmp/tweet_timestamp_migration.log'
+LOG_FORMAT = '%(asctime)s %(message)s'
+
+logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT, level=logging.INFO)
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+logger = logging.getLogger()
+logger.addHandler(stdout_handler)
 
 mongo_client = pymongo.MongoClient(config.MONGO_HOST)
 collection = mongo_client.MCDB.tweets
@@ -17,7 +31,7 @@ cursor = collection.find({'created_at_timestamp': {'$exists': False}},
 
 total = cursor.count()
 if total == 0:
-    sys.stdout.write('There are no tweets to update \o/\n')
+    logging.info('There are no tweets to update \o/')
     sys.exit(0)
 
 i = 0
@@ -27,6 +41,6 @@ for tweet in cursor:
         {'created_at_timestamp': timestamp}})
     i += 1
     if (i % 1000) == 0:
-        sys.stdout.write('{:010d}/{:010d} tweets updated\n'.format(i, total))
+        logging.info('{:010d}/{:010d} tweets updated.'.format(i, total))
 
 cursor.close()
