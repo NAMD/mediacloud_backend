@@ -53,11 +53,15 @@ class Filteredcapture(StreamListener):
         return True
 
     def on_error(self, status):
-        logging.error("Invalid Tweet: %s" % status)
+        logging.error("Invalid response from twitter api: %s" % status)
 
 
 if __name__ == '__main__':
     listener = Filteredcapture()
+    logging.info('Connecting to twitter API...')
     stream = tweepy.Stream(auth, listener)
-    stream.filter(track=config.TRACK, languages=['pt'])
-
+    logging.info('... connected.')
+    try:
+        stream.filter(track=config.TRACK, languages=['pt'])
+    except Exception as e:
+        logging.exception('Error during stream capture: %s', e)
