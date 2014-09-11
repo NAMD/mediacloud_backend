@@ -13,7 +13,7 @@ import config
 # and this should be run only once per database.
 
 LOG_FILE = '/tmp/tweet_timestamp_migration.log'
-LOG_FORMAT = '%(asctime)s %(message)s'
+LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT, level=logging.INFO)
 stdout_handler = logging.StreamHandler(sys.stdout)
