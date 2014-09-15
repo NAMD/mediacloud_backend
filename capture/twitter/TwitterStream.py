@@ -48,7 +48,7 @@ class Filteredcapture(StreamListener):
     """
     def on_data(self, data):
         parsed_data = json.loads(data)
-        parsed_data['created_at_timestamp'] = dateutil.parser.parse(parsed_data['created_at']).strftime('%s')
+        parsed_data['created_at_datetime'] = dateutil.parser.parse(parsed_data['created_at'])
         coll.insert(parsed_data, w=1)
         return True
 
