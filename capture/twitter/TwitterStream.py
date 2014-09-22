@@ -24,6 +24,10 @@ except ConnectionFailure:
     client = MongoClient('localhost')
 mcdb = client.MCDB
 coll = mcdb.tweets
+
+# makes sure the tweets are indexed by date
+coll.ensure_index('created_at_datetime')
+
 # credentials
 access_token_key = config.access_token_key
 access_token_secret = config.access_token_secret
@@ -48,7 +52,7 @@ class Filteredcapture(StreamListener):
     """
     def on_data(self, data):
         parsed_data = json.loads(data)
-        parsed_data['created_at_timestamp'] = dateutil.parser.parse(parsed_data['created_at']).strftime('%s')
+        parsed_data['created_at_datetime'] = dateutil.parser.parse(parsed_data['created_at'])
         coll.insert(parsed_data, w=1)
         return True
 
