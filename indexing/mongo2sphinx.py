@@ -39,6 +39,7 @@ schema_head = """<sphinx:schema>
 attr_type_dict = {"published": "timestamp",
                   "links": "json",
                   "language": "string",
+                  "created_at_datetime": "timestamp",
 }
 
 
@@ -69,7 +70,7 @@ def serialize(doc, id, fields):
                 continue
             elif k == "link_content":
                 SubElement(document, k).text = decompress_content(v)
-            elif k == "published":
+            elif k == "published" or k == "created_at_datetime":
                 try:
                     SubElement(document, k).text = str(time.mktime(v.timetuple()))
                 except AttributeError:
