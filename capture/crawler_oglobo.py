@@ -8,6 +8,7 @@ import requests
 
 import settings
 from downloader import compress_content, detect_language
+from crawler_utils import download_article
 
 ###########################
 #  Setting up Logging
@@ -43,8 +44,6 @@ def find_articles():
     return news_urls
 
 def get_published_time(soup):
-    # Parsing date strings
-    # Parse date from article
     time_tag = soup.find('time')
     if time_tag is None:
         return None
@@ -54,38 +53,9 @@ def get_published_time(soup):
 
         return published_time
 
-def download_article(url):
-    article = {
-        'link': url,
-        'source': 'crawler_oglobo',
-    }
-    logger.info("Downloading article: %s", url)
-    try:
-        response = requests.get(url, timeout=30)
-    except ConnectionError:
-        logger.error("Failed to fetch %s", url)
-        return
-    except Timeout:
-        logger.error("Timed out while fetching %s", url)
-        return
-
-    encoding = response.encoding if response.encoding is not None else 'utf8'
-    dec_content = response.content.decode(encoding)
-    article['link_content'] = compress_content(dec_content)
-
-    article['compressed'] = True
-    article['language'] = detect_language(dec_content)
-
-
-    soup = BeautifulSoup(dec_content)
-    article['title'] = soup.find('title').text.strip()
-
-    article['published'] = get_published_time(soup)
-
-    return article
-
 for url in find_articles():
     exists = list(ARTICLES.find({"link": url}))
     if not exists:
-        article = download_article(url)
+        article = download_article(url, 'crawler_oglobo', get_published_time,
+                logger)
         ARTICLES.insert(article, w=1)
