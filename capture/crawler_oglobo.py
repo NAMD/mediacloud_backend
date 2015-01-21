@@ -31,6 +31,7 @@ logger.addHandler(fh)
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
 ARTICLES = MCDB.articles  # Article Collection
+ARTICLES.ensure_index("source")
 
 def find_articles():
     INDEX_URL = "http://oglobo.globo.com/ultimas-noticias/"
