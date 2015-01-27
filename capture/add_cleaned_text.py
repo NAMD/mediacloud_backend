@@ -12,7 +12,7 @@ import config
 # This is not defined in config.py because this log is specific to this tool,
 # and this should be run only once per database.
 
-LOG_FILE = '/tmp/migrate_tweet_date_to_datetime.log'
+LOG_FILE = '/tmp/goose_migration.log'
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 logging.basicConfig(filename=LOG_FILE, format=LOG_FORMAT, level=logging.INFO)
