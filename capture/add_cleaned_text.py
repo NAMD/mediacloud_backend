@@ -7,6 +7,7 @@ import zlib
 import pickle as CP
 
 import settings
+from downloader import goosefy
 
 
 # This is not defined in config.py because this log is specific to this tool,
@@ -38,15 +39,7 @@ for article in cursor:
     try:
         decompressed = zlib.decompress(article['link_content'])
         orig_html = CP.loads(decompressed)
-        if len(orig_html.strip()) == 0:
-            logging.info('orig_html empty %s', article['_id'])
-            cleaned_text = ''
-        else:
-            cleaned_text = goose.Goose({'enable_image_fetching': False, 'use_meta_language': False,
-                                    'target_language': 'pt'}).extract(raw_html= orig_html).cleaned_text
-        if len(cleaned_text) == 0:
-            if article.has_key('summary'):
-                cleaned_text = article['summary']
+        cleaned_text = goosefy(orig_html, article)
         collection.update({'_id': article['_id']}, {'$set':
             {'cleaned_text': cleaned_text}})
     except Exception as e:
