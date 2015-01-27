@@ -6,7 +6,7 @@ import pymongo
 import zlib
 import pickle as CP
 
-import config
+import settings
 
 
 # This is not defined in config.py because this log is specific to this tool,
@@ -21,7 +21,7 @@ stdout_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 logger = logging.getLogger()
 logger.addHandler(stdout_handler)
 
-mongo_client = pymongo.MongoClient(config.MONGO_HOST)
+mongo_client = pymongo.MongoClient(settings.MONGOHOST)
 collection = mongo_client.MCDB.articles
 
 cursor = collection.find({'cleaned_text': {'$exists': False}},
