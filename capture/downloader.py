@@ -75,6 +75,19 @@ config = {
 }
 
 
+def goosefy(content, article):
+    if len(content.strip()) == 0:
+        cleaned_text = ''
+    else:
+        cleaned_text = goose.Goose({'enable_image_fetching': False, 'use_meta_language': False,
+                                'target_language': 'pt'}).extract(raw_html=content).cleaned_text
+    if len(cleaned_text) == 0:
+        if article.has_key('summary'):
+            cleaned_text = article['summary']
+
+    return cleaned_text
+
+
 class RSSDownload(object):
     def __init__(self, feed_id, url):
         self.url = url
@@ -125,10 +138,7 @@ class RSSDownload(object):
                 entry['link_content'] = compress_content(dec_content)
                 entry['compressed'] = True
                 entry['language'] = detect_language(dec_content)
-                cleaned_text = goose.Goose().extract(raw_html=dec_content).cleaned_text
-                if len(cleaned_text) == 0:
-                    cleaned_text = entry['summary']
-                entry['cleaned_text'] = cleaned_text
+                entry['cleaned_text'] = goosefy(dec_content, entry)
                 # Parsing date strings
                 if 'published' in entry:
                     try:
