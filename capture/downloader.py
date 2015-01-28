@@ -76,9 +76,8 @@ config = {
 
 
 def goosefy(content, article):
-    if len(content.strip()) == 0:
-        cleaned_text = ''
-    else:
+    cleaned_text = ''
+    if len(content.strip()) > 0:
         cleaned_text = goose.Goose({'enable_image_fetching': False, 'use_meta_language': False,
                                 'target_language': 'pt'}).extract(raw_html=content).cleaned_text
     if len(cleaned_text) == 0:
