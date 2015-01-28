@@ -22,6 +22,7 @@ from logging.handlers import RotatingFileHandler
 
 import feedparser
 import pymongo
+import goose
 import requests
 from requests.exceptions import ConnectionError, MissingSchema, Timeout
 from bson.errors import InvalidDocument
@@ -123,6 +124,10 @@ class RSSDownload(object):
                 entry['link_content'] = compress_content(dec_content)
                 entry['compressed'] = True
                 entry['language'] = detect_language(dec_content)
+                cleaned_text = goose.Goose().extract(raw_html=dec_content).cleaned_text
+                if len(cleaned_text) == 0:
+                    cleaned_text = entry['summary']
+                entry['cleaned_text'] = cleaned_text
                 # Parsing date strings
                 if 'published' in entry:
                     try:
