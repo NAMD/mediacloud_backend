@@ -45,7 +45,7 @@ for article in cursor:
     except Exception as e:
         logger.exception('_id: %s [Exception] %s', article['_id'], e)
         collection.update({'_id': article['_id']}, {'$set':
-            {'cleaned_text': article['summary']}})
+            {'cleaned_text': article.get('summary', '')}})
     i += 1
     if (i % 1000) == 0:
         logging.info('{:010d}/{:010d} articles updated.'.format(i, total))
