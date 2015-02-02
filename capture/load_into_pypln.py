@@ -12,17 +12,40 @@ import sys
 import pymongo
 import datetime
 
+import logging
+from logging.handlers import RotatingFileHandler
+
 import nlp
 import settings
-import thread
+from threading import Thread
+from pypln.api import Document
 
 
+###########################
+#  Setting up Logging
+###########################
+logger = logging.getLogger("load_into_pypln")
+logger.setLevel(logging.DEBUG)
+# create console handler and set level to debug
+fh = RotatingFileHandler('/tmp/mediacloud.log', maxBytes=5e6, backupCount=3)
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+# logger.addHandler(ch)  # uncomment for console output of messages
+logger.addHandler(fh)
+
+
+## Media Cloud database setup
 client = pymongo.MongoClient(host=settings.MONGOHOST)
-articles = client.MCDB.articles
-pypln_temp = client.MCDB.pypln_temp
-articles_analysis = client.MCDB.articles_analysis
+articles = client.MCDB.articles # articles collection
+pypln_temp = client.MCDB.pypln_temp # pypln_temp temporary collection
+articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
+
+
+Done = False
 
 def load(skip, limit=0):
+    global Done
     corpus = nlp.get_corpus()
     articles_sent = 0
     filter_ = {'status': {'$exists': False}}
@@ -49,23 +72,26 @@ def load(skip, limit=0):
 
             sys.stdout.write('inserted document {} of {}, with id {} into PyPLN\n'.format(articles_sent, count, _id))
             articles_sent += 1
+    Done = True
 
 
 def search_pypln():
-    cursor = pypln_temp.find()
+    cursor = pypln_temp.find(timeout=False)
 
-    while cursor.count > 0:
+    while (not Done) and pypln_temp.count > 0:
         for article in cursor:
             my_doc = Document.from_url(article['pypln_url'], ('sendpypln','123'))
             _id = article['articles_id']
 
             if '_exception' in my_doc.properties:
-                LOG INFO
+                logger.warning("PyPLN found an error {}".format(article['pypln_url']))
                 articles.update({'_id': _id}, {'$set': {'status': 2}})
-            elif len(my_doc.properties) < 22:
+                continue
+
+            if len(my_doc.properties) < 22:
                 if 'time' in article:
                     if (datetime.datetime.now() - article['time']).seconds/60 > 5:
-                        LOG INFO
+                        logger.warning("PyPLN could not finish the analysis {}".format(article['pypln_url']))
                         articles.update({'_id': _id}, {'$set': {'status': 2}})
                     else:
                         continue
@@ -73,12 +99,16 @@ def search_pypln():
                     pypln_temp.update({'_id': article['_id']}, {'$set': {'time': datetime.datetime.now()}})
 
             else:
+                analysis = {'articles_id': _id}
                 for property in my_doc.properties:
-                    p = my_doc.get_property(property)
-                    articles_analysis.update({'articles_id': _id}, {'$set': {property: p}}, {'upsert': True})
-                articles.update({'_id': _id}, {'$set': {'status': 1}})
+                    analysis[property] = my_doc.get_property(property)
 
-        cursor = pypln_temp.find()
+                articles_analysis.insert(analysis)
+                articles.update({'_id': _id}, {'$set': {'status': 1}})
+                pypln_temp.remove({'_id': article['_id']})
+
+    cursor.close()
+
 
 
 
@@ -98,6 +128,7 @@ if __name__ == "__main__":
                         help="Adds skip=N to the mongo query")
     args = parser.parse_args()
 
+    t = Thread(target=search_pypln)
+    t.start()
     load(args.skip, args.limit)
-
-    thread.start_new_thread(search_pypln)
+    t.join()
