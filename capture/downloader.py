@@ -22,6 +22,7 @@ from logging.handlers import RotatingFileHandler
 
 import feedparser
 import pymongo
+import goose
 import requests
 from requests.exceptions import ConnectionError, MissingSchema, Timeout
 from bson.errors import InvalidDocument
@@ -64,6 +65,7 @@ FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
 FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
 ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
 ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
+ARTICLES.ensure_index("cleaned_text")
 
 
 
@@ -71,6 +73,18 @@ ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
 config = {
     'threads': 45,  # Number of threads used in the fetching pool
 }
+
+
+def goosefy(content, article):
+    cleaned_text = ''
+    if len(content.strip()) > 0:
+        cleaned_text = goose.Goose({'enable_image_fetching': False, 'use_meta_language': False,
+                                'target_language': 'pt'}).extract(raw_html=content).cleaned_text
+    if len(cleaned_text) == 0:
+        if article.has_key('summary'):
+            cleaned_text = article['summary']
+
+    return cleaned_text
 
 
 class RSSDownload(object):
@@ -123,6 +137,7 @@ class RSSDownload(object):
                 entry['link_content'] = compress_content(dec_content)
                 entry['compressed'] = True
                 entry['language'] = detect_language(dec_content)
+                entry['cleaned_text'] = goosefy(dec_content, entry)
                 # Parsing date strings
                 if 'published' in entry:
                     try:

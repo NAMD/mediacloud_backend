@@ -16,3 +16,4 @@ tweepy
 pypln.api
 geopy
 sphinxit
+goose-extractor
