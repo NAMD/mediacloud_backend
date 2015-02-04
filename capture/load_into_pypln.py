@@ -27,7 +27,6 @@ from pypln.api import Document
 logger = logging.getLogger("load_into_pypln")
 logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
-fh = RotatingFileHandler('/tmp/mediacloud.log', maxBytes=5e6, backupCount=3)
 # create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
@@ -94,6 +93,7 @@ def search_pypln():
                     if (datetime.datetime.now() - article['time']).seconds/60 > 5:
                         logger.warning("PyPLN could not finish the analysis {}".format(article['pypln_url']))
                         articles.update({'_id': _id}, {'$set': {'status': 2}})
+                        pypln_temp.remove({'_id': article['_id']})
                     else:
                         continue
                 else:
