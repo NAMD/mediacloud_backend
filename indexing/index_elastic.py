@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Index any collection into Elasticsearch
+Index any collection into Elasticsearch.
+this script sould be used to import
 """
 
 import elasticsearch
@@ -9,7 +10,7 @@ import argparse
 
 es = elasticsearch.Elasticsearch(hosts=['localhost'])
 
-es.indices.delete(index='mcdb', ignore=[400, 404])
+
 
 def index_collection(db, collection, fields, host='localhost', port=27017):
     locationdic = {'db': db, 'collection': collection}

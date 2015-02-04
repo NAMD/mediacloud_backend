@@ -31,6 +31,9 @@ import bson
 from dateutil.parser import parse
 
 import settings
+import elasticsearch
+
+es = elasticsearch.Elasticsearch(hosts=['localhost'])
 
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
@@ -175,7 +178,30 @@ class RSSDownload(object):
                 except DuplicateKeyError:
                     logger.error("Duplicate article found")
                     return
+                index_article_on_elastic(entry, _id)
                 # print "inserted"
+
+def index_article_on_elastic(doc, _id):
+    """
+    Index documents in elastic search
+    :param doc: document to be indexed
+    :param _id: mongodb id
+    :return:
+    """
+    elastic_doc = {
+            'index': 'mcdb',
+            'doc_type': 'articles',
+            'id': int('0x' + str(_id), 16)
+        }
+    indexed_fields = ['summary', 'title', 'cleaned_text', 'link', 'links', 'language', 'published']
+    body = {k: v for k, v in doc.items() if k in indexed_fields}
+
+    elastic_doc['body'] = doc
+    es.index(index=elastic_doc['index'],
+             doc_type=elastic_doc['doc_type'],
+             id=elastic_doc['id'],
+             body=body
+    )
 
 
 def compress_content(html):
