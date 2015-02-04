@@ -76,6 +76,7 @@ def load(skip, limit=0):
 
 
 def search_pypln():
+    global Done
     cursor = pypln_temp.find(timeout=False)
 
     while (not Done) and pypln_temp.count > 0:
