@@ -19,7 +19,6 @@ import cld
 import sys
 import os
 from logging.handlers import RotatingFileHandler
-
 import feedparser
 import pymongo
 import goose
@@ -33,7 +32,7 @@ from dateutil.parser import parse
 import settings
 import elasticsearch
 
-es = elasticsearch.Elasticsearch(hosts=['localhost'])
+es = elasticsearch.Elasticsearch(hosts=[settings.ELASTICHOST])
 
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
@@ -193,7 +192,7 @@ def index_article_on_elastic(doc, _id):
             'doc_type': 'articles',
             'id': int('0x' + str(_id), 16)
         }
-    indexed_fields = ['summary', 'title', 'cleaned_text', 'link', 'links', 'language', 'published']
+    indexed_fields = settings.ELASTIC_ARTICLE_FIELDS
     body = {k: v for k, v in doc.items() if k in indexed_fields}
 
     elastic_doc['body'] = doc

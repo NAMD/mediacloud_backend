@@ -17,3 +17,9 @@ MONGOHOST = "localhost"
 ##########
 PYPLNHOST = "http://fgv.pypln.org/"
 PYPLN_CREDENTIALS = ("mediacloud2", "senha do mediacloud")
+
+##########
+# Elasticsearch configuration
+##########
+ELASTICHOST = "localhost"
+ELASTIC_ARTICLE_FIELDS = ['summary', 'title', 'cleaned_text', 'link', 'links', 'language', 'published']
