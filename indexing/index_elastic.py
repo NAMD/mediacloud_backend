@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-
+"""
+Index any collection into Elasticsearch
+"""
 
 import elasticsearch
 from pymongo import MongoClient
