@@ -17,4 +17,4 @@ pypln.api
 geopy
 sphinxit
 goose-extractor
-sphinxsearch
+elasticsearch
