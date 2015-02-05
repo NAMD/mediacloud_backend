@@ -7,32 +7,34 @@ this script sould be used to import
 import elasticsearch
 from pymongo import MongoClient
 import argparse
+from elasticsearch.helpers import bulk
 
 es = elasticsearch.Elasticsearch(hosts=['localhost'])
 
 
 
 def index_collection(db, collection, fields, host='localhost', port=27017):
-    locationdic = {'db': db, 'collection': collection}
     conn = MongoClient(host, port)
     coll = conn[db][collection]
     cursor = coll.find({}, fields=fields, timeout=False)
-    total = coll.count()
 
-    for n, doc in enumerate(cursor):
-        elastic_doc = {
-            'index': db.lower(),
-            'doc_type': collection,
-            'id': int('0x' + str(doc['_id']), 16),
-        }
-        doc.pop('_id')
-        elastic_doc['body'] = doc
-        es.index(index=elastic_doc['index'],
-                 doc_type=elastic_doc['doc_type'],
-                 id=elastic_doc['id'],
-                 body=doc
-        )
-        #print "indexed {} articles of a total of {}".format(n, total)
+    def action_gen():
+        """
+        Generator to use for bulk inserts
+        """
+        for n, doc in enumerate(cursor):
+
+            op_dict = {
+                '_index': db.lower(),
+                '_type': collection,
+                '_id': int('0x' + str(doc['_id']), 16),
+            }
+            doc.pop('_id')
+            op_dict['_source'] = doc
+            yield op_dict
+
+        res = bulk(es, action_gen())
+        print res
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Perform a query on mongo db and index on Elasticsearch')
