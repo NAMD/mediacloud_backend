@@ -24,7 +24,9 @@ def index_collection(db, collection, fields, host='localhost', port=27017):
         Generator to use for bulk inserts
         """
         for n, doc in enumerate(cursor):
-
+            if doc == {}:
+                print "Empty document, skipping"
+                continue
             op_dict = {
                 '_index': db.lower(),
                 '_type': collection,
@@ -34,7 +36,7 @@ def index_collection(db, collection, fields, host='localhost', port=27017):
             op_dict['_source'] = doc
             yield op_dict
 
-    res = bulk(es, action_gen())
+    res = bulk(es, action_gen(), stats_only=True)
     print res
 
 if __name__ == "__main__":
