@@ -17,6 +17,7 @@ def index_collection(db, collection, fields, host='localhost', port=27017):
     conn = MongoClient(host, port)
     coll = conn[db][collection]
     cursor = coll.find({}, fields=fields, timeout=False)
+    print "Starting Bulk index of {} documents".format(cursor.count())
 
     def action_gen():
         """
@@ -33,8 +34,8 @@ def index_collection(db, collection, fields, host='localhost', port=27017):
             op_dict['_source'] = doc
             yield op_dict
 
-        res = bulk(es, action_gen())
-        print res
+    res = bulk(es, action_gen())
+    print res
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Perform a query on mongo db and index on Elasticsearch')
