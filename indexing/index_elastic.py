@@ -46,7 +46,7 @@ def index_collection(db, collection, fields, host='localhost', port=27017):
     #     res = es.index(index=db.lower(), doc_type=collection, body=doc, id=did)
     #     #print res
 
-    res = bulk(es, action_gen(), stats_only=True)
+    res = bulk(es, action_gen(), stats_only=True, chunk_size=1000)
     print res
 
 if __name__ == "__main__":
