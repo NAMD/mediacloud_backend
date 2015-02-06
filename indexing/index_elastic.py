@@ -7,13 +7,14 @@ this script sould be used to import
 import elasticsearch
 from pymongo import MongoClient
 import argparse
-from elasticsearch.helpers import bulk
+from elasticsearch.helpers import bulk, streaming_bulk
 
 es = elasticsearch.Elasticsearch(hosts=['localhost'])
 
 
 
 def index_collection(db, collection, fields, host='localhost', port=27017):
+    es.indices.create(index=db.lower(), ignore=400)
     conn = MongoClient(host, port)
     coll = conn[db][collection]
     cursor = coll.find({}, fields=fields, timeout=False)
@@ -35,6 +36,10 @@ def index_collection(db, collection, fields, host='localhost', port=27017):
             doc.pop('_id')
             op_dict['_source'] = doc
             yield op_dict
+    # for doc in cursor:
+    #     did = int('0x' + str(doc.pop('_id')), 16)
+    #     res = es.index(index=db.lower(), doc_type=collection, body=doc, id=did)
+    #     #print res
 
     res = bulk(es, action_gen(), stats_only=True)
     print res
