@@ -22,30 +22,31 @@ def index_collection(db, collection, fields, host='localhost', port=27017):
     cursor = coll.find({}, fields=fields, timeout=False)
     print "Starting Bulk index of {} documents".format(cursor.count())
 
-    # def action_gen():
-    # """
-    # Generator to use for bulk inserts
-    #     """
-    #     for n, doc in enumerate(cursor):
-    #         #print fields
-    #         did = doc.pop('_id')
-    #         if doc == {}:
-    #             print "Empty document, skipping"
-    #             continue
-    #         op_dict = {
-    #             '_index': db.lower(),
-    #             '_type': collection,
-    #             '_id': int('0x' + str(did), 16),
-    #             '_source': doc
-    #         }
-    #         #op_dict['doc'] = doc
-    #         yield op_dict
-    for doc in cursor:
-        did = int('0x' + str(doc.pop('_id')), 16)
-        res = es.index(index=db.lower(), doc_type=collection, body=doc, id=did)
-        #print res
+    def action_gen():
+        """
+        Generator to use for bulk inserts
+        """
+        for n, doc in enumerate(cursor):
+            # print fields
+            did = doc.pop('_id')
+            if doc == {}:
+                print "Empty document, skipping"
+                continue
+            op_dict = {
+                '_index': db.lower(),
+                '_type': collection,
+                '_id': int('0x' + str(did), 16),
+                '_source': doc
+            }
+            #op_dict['doc'] = doc
+            yield op_dict
 
-    # res = bulk(es, action_gen(), stats_only=True)
+    # for doc in cursor:
+    # did = int('0x' + str(doc.pop('_id')), 16)
+    #     res = es.index(index=db.lower(), doc_type=collection, body=doc, id=did)
+    #     #print res
+
+    res = bulk(es, action_gen(), stats_only=True)
     print res
 
 if __name__ == "__main__":
