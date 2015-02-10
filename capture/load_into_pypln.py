@@ -76,7 +76,7 @@ def load(skip, limit=0):
 
 def search_pypln():
     global Done
-    cursor = pypln_temp.find(timeout=False)
+    cursor = pypln_temp.find()
 
     while (not Done) and pypln_temp.count > 0:
         for article in cursor:
@@ -109,7 +109,7 @@ def search_pypln():
                 articles_analysis.insert(analysis)
                 articles.update({'_id': _id}, {'$set': {'status': 1}})
                 pypln_temp.remove({'_id': _id_temp})
-
+        cursor = pypln_temp.find()
     cursor.close()
 
 
