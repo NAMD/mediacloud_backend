@@ -82,10 +82,12 @@ def search_pypln():
         for article in cursor:
             my_doc = Document.from_url(article['pypln_url'], ('sendpypln','123'))
             _id = article['articles_id']
+            _id_temp = article['_id']
 
             if '_exception' in my_doc.properties:
                 logger.warning("PyPLN found an error {}".format(article['pypln_url']))
                 articles.update({'_id': _id}, {'$set': {'status': 2}})
+                pypln_temp.remove({'_id': _id_temp})
                 continue
 
             if len(my_doc.properties) < 22:
@@ -93,11 +95,11 @@ def search_pypln():
                     if (datetime.datetime.now() - article['time']).seconds/60 > 5:
                         logger.warning("PyPLN could not finish the analysis {}".format(article['pypln_url']))
                         articles.update({'_id': _id}, {'$set': {'status': 2}})
-                        pypln_temp.remove({'_id': article['_id']})
+                        pypln_temp.remove({'_id': _id_temp})
                     else:
                         continue
                 else:
-                    pypln_temp.update({'_id': article['_id']}, {'$set': {'time': datetime.datetime.now()}})
+                    pypln_temp.update({'_id': _id_temp}, {'$set': {'time': datetime.datetime.now()}})
 
             else:
                 analysis = {'articles_id': _id}
@@ -106,7 +108,7 @@ def search_pypln():
 
                 articles_analysis.insert(analysis)
                 articles.update({'_id': _id}, {'$set': {'status': 1}})
-                pypln_temp.remove({'_id': article['_id']})
+                pypln_temp.remove({'_id': _id_temp})
 
     cursor.close()
 
