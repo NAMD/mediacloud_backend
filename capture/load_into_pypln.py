@@ -58,7 +58,7 @@ def load(skip, limit=0):
         count = articles.count()
     else:
         count = limit
-    cursor = articles.find(filter_, skip=articles_sent, limit=100, **find_kwargs)
+    cursor = articles.find(filter_, limit=100, **find_kwargs)
     while articles_sent < count:
         for article in cursor:
             pypln_document = nlp.send_to_pypln(article, corpus)
@@ -71,7 +71,7 @@ def load(skip, limit=0):
 
             sys.stdout.write('inserted document {} of {}, with id {} into PyPLN\n'.format(articles_sent, count, _id))
             articles_sent += 1
-        cursor = articles.find(filter_, skip=articles_sent, limit=100, **find_kwargs)
+        cursor = articles.find(filter_, limit=100, **find_kwargs)
     Done = True
 
 
