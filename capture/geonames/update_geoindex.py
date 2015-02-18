@@ -1,6 +1,7 @@
 #!/usr/bin/env/python3
 """
 This script downloads the latest names table and updates the geoindex elastic search index
+Should be run on CRON once a day to get updates
 """
 
 import requests
