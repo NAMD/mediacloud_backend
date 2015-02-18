@@ -7,7 +7,7 @@ this script sould be used to import
 import elasticsearch
 from pymongo import MongoClient
 import argparse
-from elasticsearch.helpers import bulk, streaming_bulk
+from elasticsearch.helpers import bulk
 
 es = elasticsearch.Elasticsearch(hosts=['localhost'])
 
