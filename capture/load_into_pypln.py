@@ -38,6 +38,7 @@ articles = client.MCDB.articles # articles collection
 pypln_temp = client.MCDB.pypln_temp # pypln_temp temporary collection
 articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
+articles.ensure_index('status')
 
 def load(skip, limit=0):
 
