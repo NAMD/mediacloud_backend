@@ -70,7 +70,8 @@ def load(skip, limit=0):
     while articles_sent < count:
         for article in cursor:
             load_document(article, corpus)
-            sys.stdout.write('inserted document {} of {}, with id {} into PyPLN\n'.format(articles_sent, count, _id))
+            sys.stdout.write('inserted document {} of {}, with id {} into PyPLN\n'.format(articles_sent, count,
+                                                                                          article['_id']))
             articles_sent += 1
         cursor = articles.find(filter_, limit=100, **find_kwargs)
 
