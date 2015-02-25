@@ -40,6 +40,17 @@ articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
 articles.ensure_index('status')
 
+
+def load_document(article, corpus):
+    pypln_document = nlp.send_to_pypln(article, corpus)
+    _id = article['_id']
+
+    pypln_temp.insert({'pypln_url': pypln_document.url, 'articles_id': _id})
+
+    articles.update({'_id': _id},
+                    {'$set': {"status": 0}})
+
+
 def load(skip, limit=0):
 
     corpus = nlp.get_corpus()
@@ -58,14 +69,7 @@ def load(skip, limit=0):
     cursor = articles.find(filter_, limit=100, **find_kwargs)
     while articles_sent < count:
         for article in cursor:
-            pypln_document = nlp.send_to_pypln(article, corpus)
-            _id = article['_id']
-
-            pypln_temp.insert({'pypln_url': pypln_document.url, 'articles_id': _id})
-
-            articles.update({'_id': _id},
-                            {'$set': {"status": 0}})
-
+            load_document(article, corpus)
             sys.stdout.write('inserted document {} of {}, with id {} into PyPLN\n'.format(articles_sent, count, _id))
             articles_sent += 1
         cursor = articles.find(filter_, limit=100, **find_kwargs)

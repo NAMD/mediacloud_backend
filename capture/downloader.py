@@ -32,8 +32,10 @@ from dateutil.parser import parse
 import settings
 import elasticsearch
 
-es = elasticsearch.Elasticsearch(hosts=[settings.ELASTICHOST])
+import nlp
+import load_into_pypln
 
+es = elasticsearch.Elasticsearch(hosts=[settings.ELASTICHOST])
 
 sys.path.append('/'.join(os.getcwd().split("/")[:-1]))
 
@@ -110,6 +112,7 @@ class RSSDownload(object):
 
     def _save_articles(self, entries):
         logger.info("Downloading %s articles from %s", len(entries), self.url)
+        corpus = nlp.get_corpus()
         for entry in entries:
             if "%set" in entry:  # hallmark of empty article
                 logger.error("Empty article from %s", self.url)
@@ -166,6 +169,7 @@ class RSSDownload(object):
                 entry.pop('published_parsed')
             except KeyError:
                 pass
+            load_into_pypln.load_document(entry, corpus)
             exists = list(ARTICLES.find({"link": entry.link}))
             # print exists
             if not exists:
