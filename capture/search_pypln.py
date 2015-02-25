@@ -36,7 +36,7 @@ def main():
 
     while pypln_temp.count() > 0:
         for article in cursor:
-            my_doc = Document.from_url(article['pypln_url'], ('sendpypln','123'))
+            my_doc = Document.from_url(article['pypln_url'], settings.PYPLN_CREDENTIALS)
             _id = article['articles_id']
             _id_temp = article['_id']
 
