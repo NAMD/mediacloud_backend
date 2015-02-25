@@ -34,7 +34,7 @@ articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 def main():
     cursor = pypln_temp.find()
 
-    while pypln_temp.count > 0:
+    while pypln_temp.count() > 0:
         for article in cursor:
             my_doc = Document.from_url(article['pypln_url'], ('sendpypln','123'))
             _id = article['articles_id']
