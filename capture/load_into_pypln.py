@@ -42,11 +42,17 @@ articles.ensure_index('status')
 
 
 def load_document(article, corpus):
-    pypln_document = nlp.send_to_pypln(article, corpus)
     _id = article['_id']
+    logger.debug('Sending article with id {}'.format(_id))
+    pypln_document = nlp.send_to_pypln(article, corpus)
 
+    logger.debug('Inserting article with id {} into '
+            'temporary collection'.format(_id))
     pypln_temp.insert({'pypln_url': pypln_document.url, 'articles_id': _id})
 
+
+    logger.debug('Updating status for article with '
+            'id {}'.format(_id))
     articles.update({'_id': _id},
                     {'$set': {"status": 0}})
 
@@ -67,11 +73,13 @@ def load(skip, limit=0):
     else:
         count = limit
     cursor = articles.find(filter_, limit=100, **find_kwargs)
+    logger.debug('{} articles to be sent'.format(count))
     while articles_sent < count:
         for article in cursor:
             load_document(article, corpus)
-            sys.stdout.write('inserted document {} of {}, with id {} into PyPLN\n'.format(articles_sent, count,
-                                                                                          article['_id']))
+            logger.info('inserted document {} of {}, '
+                        'with id {} into PyPLN'.format(articles_sent,
+                            count, article['_id']))
             articles_sent += 1
         cursor = articles.find(filter_, limit=100, **find_kwargs)
 
