@@ -44,7 +44,12 @@ articles.ensure_index('status')
 def load_document(article, corpus):
     _id = article['_id']
     logger.debug('Sending article with id {}'.format(_id))
-    pypln_document = nlp.send_to_pypln(article, corpus)
+    try:
+        pypln_document = nlp.send_to_pypln(article, corpus)
+    except RuntimeError as exc:
+        logger.warn('Article with id {} got an error '
+                'when uploading'.format(_id), exc_info=exc)
+        return False
 
     logger.debug('Inserting article with id {} into '
             'temporary collection'.format(_id))
@@ -56,6 +61,7 @@ def load_document(article, corpus):
     articles.update({'_id': _id},
                     {'$set': {"status": 0}})
 
+    return True
 
 def load(skip, limit=0):
 
@@ -76,8 +82,9 @@ def load(skip, limit=0):
     logger.debug('{} articles to be sent'.format(count))
     while articles_sent < count:
         for article in cursor:
-            load_document(article, corpus)
-            logger.info('inserted document {} of {}, '
+            success = load_document(article, corpus)
+            if success:
+                logger.info('inserted document {} of {}, '
                         'with id {} into PyPLN'.format(articles_sent,
                             count, article['_id']))
             articles_sent += 1
