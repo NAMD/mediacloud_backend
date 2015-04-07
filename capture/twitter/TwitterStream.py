@@ -52,8 +52,11 @@ class Filteredcapture(StreamListener):
     """
     def on_data(self, data):
         parsed_data = json.loads(data)
-        parsed_data['created_at_datetime'] = dateutil.parser.parse(parsed_data['created_at'])
-        coll.insert(parsed_data, w=1)
+        try:
+            parsed_data['created_at_datetime'] = dateutil.parser.parse(parsed_data['created_at'])
+            coll.insert(parsed_data, w=1)
+        except KeyError as exc:
+            logging.warn("Tweet without 'created_at': %s", parsed_data, exc_info=exc)
         return True
 
     def on_error(self, status):
