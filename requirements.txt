@@ -12,7 +12,9 @@ python-dateutil
 requests
 nose
 mongo-connector
-tweepy
+# Version 3.1 of tweepy does not send the URL as a bytestring to pyopenssl, and
+# this breaks the stream capture. For now, we'll use the 2.3.0 version.
+tweepy==2.3.0
 pypln.api
 geopy
 sphinxit
