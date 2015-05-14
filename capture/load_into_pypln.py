@@ -13,6 +13,7 @@ import pymongo
 
 import logging
 from logging.handlers import RotatingFileHandler
+from multiprocessing import Pool
 
 import nlp
 import settings
@@ -61,6 +62,9 @@ def load_document(article, corpus):
     articles.update({'_id': _id},
                     {'$set': {"status": 0}})
 
+    logger.info('inserted document with id {} into PyPLN'.format(
+        article['_id']))
+
     return True
 
 def load(skip, limit=0):
@@ -81,13 +85,12 @@ def load(skip, limit=0):
     cursor = articles.find(filter_, limit=100, **find_kwargs)
     logger.debug('{} articles to be sent'.format(count))
     while articles_sent < count:
-        for article in cursor:
-            success = load_document(article, corpus)
-            if success:
-                logger.info('inserted document {} of {}, '
-                        'with id {} into PyPLN'.format(articles_sent,
-                            count, article['_id']))
-            articles_sent += 1
+        P = Pool()
+        P.map_async(load_document, ((article, corpus) for article in cursor))
+        P.close()
+        P.join()
+        articles_sent += 100
+        logger.debug('{}/{} documents sent.'.format(articles_sent, count))
         cursor = articles.find(filter_, limit=100, **find_kwargs)
 
 
