@@ -84,14 +84,14 @@ def load(skip, limit=0):
         count = limit
     cursor = articles.find(filter_, limit=100, **find_kwargs)
     logger.debug('{} articles to be sent'.format(count))
+    P = Pool()
     while articles_sent < count:
-        P = Pool()
         P.map_async(load_document, ((article, corpus) for article in cursor))
-        P.close()
-        P.join()
         articles_sent += 100
         logger.debug('{}/{} documents sent.'.format(articles_sent, count))
         cursor = articles.find(filter_, limit=100, **find_kwargs)
+    P.close()
+    P.join()
 
 
 if __name__ == "__main__":
