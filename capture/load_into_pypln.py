@@ -8,6 +8,7 @@ license: GPL V3 or Later
 __docformat__ = 'restructuredtext en'
 
 import sys
+import time
 
 import pymongo
 
@@ -46,12 +47,15 @@ def load_document(data):
     article, corpus = data
     _id = article['_id']
     logger.debug('Sending article with id {}'.format(_id))
+    start_time = time.time()
     try:
         pypln_document = nlp.send_to_pypln(article, corpus)
     except RuntimeError as exc:
         logger.warn('Article with id {} got an error '
                 'when uploading'.format(_id), exc_info=exc)
         return False
+    end_time = time.time()
+    total_time = end_time - start_time
 
     logger.debug('Inserting article with id {} into '
             'temporary collection'.format(_id))
@@ -63,8 +67,8 @@ def load_document(data):
     articles.update({'_id': _id},
                     {'$set': {"status": 0}})
 
-    logger.info('inserted document with id {} into PyPLN'.format(
-        article['_id']))
+    logger.info('inserted document with id {} into PyPLN. Took {} seconds.'.format(
+        article['_id'], total_time))
 
     return True
 
