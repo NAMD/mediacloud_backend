@@ -11,7 +11,7 @@ __docformat__ = 'restructuredtext en'
 import sys
 
 import pymongo
-
+from multiprocessing import Pool
 import nlp
 import settings
 
@@ -33,12 +33,18 @@ def load(corpus_name, skip, limit):
         find_kwargs.update({'limit': limit})
 
     cursor = articles.find(filter_, **find_kwargs)
-    for article in cursor:
-        pypln_document = nlp.send_to_pypln(article, corpus)
-        _id = article['_id']
-        articles.update({'_id': _id},
-                        {'$set': {"pypln_url": pypln_document.url}})
-        sys.stdout.write('inserted document with id {} into PyPLN\n'.format(_id))
+    P = Pool()
+    P.map_async(send_and_update, ((article, corpus) for article in cursor))
+    P.close()
+    P.join()
+
+
+def send_and_update(article, corpus):
+    pypln_document = nlp.send_to_pypln(article, corpus)
+    _id = article['_id']
+    articles.update({'_id': _id},
+                    {'$set': {"pypln_url": pypln_document.url}})
+    sys.stdout.write('inserted document with id {} into PyPLN\n'.format(_id))
 
 
 if __name__=="__main__":
