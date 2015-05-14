@@ -42,7 +42,8 @@ articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 articles.ensure_index('status')
 
 
-def load_document(article, corpus):
+def load_document(data):
+    article, corpus = data
     _id = article['_id']
     logger.debug('Sending article with id {}'.format(_id))
     try:
@@ -86,7 +87,7 @@ def load(skip, limit=0):
     logger.debug('{} articles to be sent'.format(count))
     P = Pool()
     while articles_sent < count:
-        P.map_async(load_document, ((article, corpus) for article in cursor))
+        P.map(load_document, ((article, corpus) for article in cursor))
         articles_sent += 100
         logger.debug('{}/{} documents sent.'.format(articles_sent, count))
         cursor = articles.find(filter_, limit=100, **find_kwargs)
