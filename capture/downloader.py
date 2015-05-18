@@ -267,7 +267,10 @@ def parallel_fetch():
         for feed in feed_cursor:
             if "updated" in feed:
                 try:
-                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": parse(feed["updated"])}})
+                    date = feed["updated"]
+                    if not isinstance(date, datetime.datetime):
+                        date = parse(date)
+                    FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": date}})
                 except ValueError:
                     FEEDS.update({"_id": feed["_id"]}, {"$set": {"updated": datetime.datetime.now()}})
                 except Exception as e:
