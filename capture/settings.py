@@ -16,7 +16,8 @@ MONGOHOST = "localhost"
 # NLP Configuration
 ##########
 PYPLNHOST = "http://fgv.pypln.org/"
-PYPLN_CREDENTIALS = ("mediacloud2", "senha do mediacloud")
+# Change this for the real credentials
+PYPLN_CREDENTIALS = ("<PYPLN_USERNAME>", "<PYPLN_PASSWORD>")
 
 ##########
 # Elasticsearch configuration
