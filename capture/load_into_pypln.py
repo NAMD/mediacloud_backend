@@ -87,14 +87,14 @@ def load(skip, limit=0):
         count = articles.count()
     else:
         count = limit
-    cursor = articles.find(filter_, limit=100, **find_kwargs)
+    cursor = articles.find(filter_, limit=10000, **find_kwargs)
     logger.debug('{} articles to be sent'.format(count))
     P = Pool()
     while articles_sent < count:
         P.map(load_document, ((article, corpus) for article in cursor))
-        articles_sent += 100
+        articles_sent += 10000
         logger.debug('{}/{} documents sent.'.format(articles_sent, count))
-        cursor = articles.find(filter_, limit=100, **find_kwargs)
+        cursor = articles.find(filter_, limit=10000, **find_kwargs)
     P.close()
     P.join()
 
