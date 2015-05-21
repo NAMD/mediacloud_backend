@@ -32,8 +32,8 @@ from dateutil.parser import parse
 import settings
 import elasticsearch
 
-#import nlp
-#import load_into_pypln
+# import nlp
+import load_into_pypln
 
 es = elasticsearch.Elasticsearch(hosts=[settings.ELASTICHOST])
 
@@ -169,7 +169,7 @@ class RSSDownload(object):
                 entry.pop('published_parsed')
             except KeyError:
                 pass
-            #load_into_pypln.load_document(entry, corpus)
+            load_into_pypln.load_document(entry, corpus)
             exists = list(ARTICLES.find({"link": entry.link}))
             # print exists
             if not exists:
