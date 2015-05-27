@@ -37,11 +37,12 @@ def main():
     while pypln_temp.count() > 0:
         for article in cursor:
             try:
-                my_doc = Document.from_url(article['pypln_url'], settings.PYPLN_CREDENTIALS)
+                url = article['pypln_url']
+                my_doc = Document.from_url(url, settings.PYPLN_CREDENTIALS)
                 _id = article['articles_id']
                 _id_temp = article['_id']
             except RuntimeError as e:
-                logger.error("The document could not be found on the PyPLN collection: {}".format(e))
+                logger.error("The document {} could not be found on the PyPLN collection: {}".format(url, e))
                 continue
 
             if '_exception' in my_doc.properties:
