@@ -36,9 +36,13 @@ def main():
 
     while pypln_temp.count() > 0:
         for article in cursor:
-            my_doc = Document.from_url(article['pypln_url'], settings.PYPLN_CREDENTIALS)
-            _id = article['articles_id']
-            _id_temp = article['_id']
+            try:
+                my_doc = Document.from_url(article['pypln_url'], settings.PYPLN_CREDENTIALS)
+                _id = article['articles_id']
+                _id_temp = article['_id']
+            except RuntimeError as e:
+                logger.error("The document could not be found on the PyPLN collection.")
+                continue
 
             if '_exception' in my_doc.properties:
                 logger.warning("PyPLN found an error {}".format(article['pypln_url']))
@@ -46,7 +50,7 @@ def main():
                 pypln_temp.remove({'_id': _id_temp})
                 continue
 
-            if len(my_doc.properties) < 22:
+            if len(my_doc.properties) < 29:
                 if 'time' in article:
                     if (datetime.datetime.now() - article['time']).seconds/60 > 5:
                         logger.warning("PyPLN could not finish the analysis {}".format(article['pypln_url']))
