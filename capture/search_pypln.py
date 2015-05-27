@@ -41,7 +41,7 @@ def main():
                 _id = article['articles_id']
                 _id_temp = article['_id']
             except RuntimeError as e:
-                logger.error("The document could not be found on the PyPLN collection.")
+                logger.error("The document could not be found on the PyPLN collection: {}".format(e))
                 continue
 
             if '_exception' in my_doc.properties:
