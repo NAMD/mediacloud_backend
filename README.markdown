@@ -211,3 +211,7 @@ doesn't re-insert them.  We recommend that this is run as a cron job every so
 often.
 
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/NAMD/mediacloud_backend/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
