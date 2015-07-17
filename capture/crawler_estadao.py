@@ -96,6 +96,81 @@ def get_published_time(soup):
 		return published_time
 
 
+def clean_content(response_content):
+	"""
+
+	"""
+	
+	soup = BeautifulSoup(response_content)
+				
+	for tag in soup.find_all("header"):
+		tag.decompose()
+	for tag in soup.find_all("div", {"class":"wp-caption"}):
+		tag.decompose()
+	for tag in soup.find_all("div", {"class":"tags"}):
+		tag.decompose()
+	for tag in soup.find_all('code'):
+		tag.decompose()
+	for tag in soup.find_all('iframe'):
+		tag.decompose()
+	for tag in soup.find_all('div', {'class':'relacionadastexto'}):
+		tag.decompose()
+	for tag in soup.find_all('figcaption'):
+		tag.decompose()
+	for tag in soup.find_all('script'):
+		tag.decompose()
+	return soup.html
+
+def extract_title(soup):
+	"""
+
+	"""
+	
+	try:
+		title = soup.findAll('h1', {'class':'titulo'})[0].text
+	except:
+		try:
+			title = soup.findAll('h2', {'class':'subtitulo'})[0].text
+		except:
+			logger.error('wrong title tag or attribute')
+
+	return title
+
+def extract_content(url, response_content):
+	""" Extract relevant information about news page
+
+	:param url: news page's url
+	:type url: string
+	:return: compressed content, title, published time and body content of news page 
+	:rtype: dict()
+
+	"""
+	
+	cleaned_content = clean_content(response_content)
+	
+	if url.find("estadao.com.br/noticias/") is not -1:
+		soupy = Soupy(cleaned_content).find("div", {"itemprop":"articleBody"})
+		try:
+			content = soupy.children.each(Q.text.strip()).filter(len).val()
+		except:
+			try:
+				soupy = Soupy(cleaned_content).find("article")
+				content = soupy.children.each(Q.text.strip()).filter(len).val()
+			except:
+				logger.error("wrong tags or attributes")
+				return
+
+	elif url.find("estadao.com.br/blogs/") is not -1:
+		try:
+			soupy = Soupy(cleaned_content).find("article")
+			content = soupy.children.each(Q.text.strip()).filter(len).val()
+		except:
+			logger.error("wrong tags or attributes")
+			return
+
+	article = "".join(content) 
+	return article
+	
 def download_article(url):
 	""" Download the html content of a news page
 
@@ -122,36 +197,19 @@ def download_article(url):
 		return
 	
 	encoding = response.encoding if response.encoding is not None else 'utf8'
-	return response.content.decode(encoding)
-	
-	
-
-def extract_content(url):
-	""" Extract relevant information about news page
-
-	:param url: news page's url
-	:type url: string
-	:return: compressed content, title, published time and body content of news page 
-	:rtype: dict()
-
-	"""
-	
-	response_content = download_article(url)
+	response_content = response.content.decode(encoding)
 	soup = BeautifulSoup(response_content)
+		
 	article = {}
-	
-	if url.find("estadao.com.br/noticias/"):
-		soupy = Soupy(response_content).find("div", {"itemprop":"articleBody"})
-		article['link_content'] = compress_content(response_content)
-		article['compressed'] = True
-		article['title'] = soup.findAll('h1', {'class':'titulo'})[0].text
-		article['published'] = get_published_time(soup)
-		article['body_content'] = soupy.children.each(Q.text.strip()).filter(len).val()
-	
+	article['link_content'] = compress_content(response_content)
+	article['compressed'] = True
+	article['title'] = extract_title(soup)
+	article['body_content'] = extract_content(url, response_content)
+
 	return article
 
-if __name__ == "__main__":
-	url = "http://sao-paulo.estadao.com.br/noticias/geral,sabesp-diz-que-eventual-repasse-para-prefeituras-sera-discutido-com-agencia,1726735"
 
-	article = extract_content(url)
-	print(article['body_content'])
+for i in range(1, 10):
+	for url in find_articles(u'politica',i):
+		article = download_article(url)
+		print(article['body_content'])
