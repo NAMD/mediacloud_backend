@@ -1,3 +1,4 @@
+import sys
 import pymongo
 import logging
 import datetime
@@ -67,38 +68,9 @@ def find_articles(category, page=1):
 	
 	return news_urls
 
-def get_published_time(soup):
-	""" Get the news published datetime 	
-
-	:param soup: object with news html page
-	:type soup: BeautifulSoup object
-	:return: news published datetime
-	:rtype: string
-
-	"""
-
-	MONTHS = {	u"Janeiro": u"Jan", u"Fevereiro": u"Fev", u"Mar\xe7o": u"Mar", u"Abril": u"Apr",
-				u"Maio": u"May", u"Junho": u"Jun", u"Julho": u"Jul", u"Agosto": u"Aug",
-				u"Setembro": u"Sep", u"Outubro": u"Oct", u"Novebro": u"Nov", u"Dezembro": u"Dec"
-			 }
-
-	time = soup.findAll("p", {"class":"data"})
-	time = time[0].text.strip().split()
-	del time[3]
-	time[1] = MONTHS[time[1]]
-	time[3] = time[3][0:2]
-	time = '-'.join(time)
-	if time is None:
-		return None
-	else:
-		published_time = datetime.datetime.strptime(time, '%d-%b-%Y-%H-%M')
-
-		return published_time
-
-
 def clean_content(response_content):
-	"""
-
+	""" For getting only the news' content is necessary to remove dirty elements like script,
+		iframe, figcaption tags and related news reference in content's body.
 	"""
 	
 	soup = BeautifulSoup(response_content)
@@ -121,8 +93,57 @@ def clean_content(response_content):
 		tag.decompose()
 	return soup.html
 
-def extract_title(soup):
+def extract_published_time(url, soup):
+	""" Get the news published datetime 	
+
+	:param soup: object with news html page
+	:type soup: BeautifulSoup object
+	:return: news published datetime
+	:rtype: string
+
 	"""
+
+	MONTHS = {	u"janeiro": u"Jan", u"fevereiro": u"Fev", u"mar\xe7o": u"Mar", u"abril": u"Apr",
+				u"maio": u"May", u"junho": u"Jun", u"julho": u"Jul", u"agosto": u"Aug",
+				u"setembro": u"Sep", u"outubro": u"Oct", u"novembro": u"Nov", u"dezembro": u"Dec"
+			 }
+
+	try:
+		time = soup.findAll("p", {"class":"data"})[0].text
+	except:
+		try:
+			time = soup.findAll("span", {"class":"data"})[0].text
+		except:
+			logger.error('wrong data tags')
+			return None
+	
+	try:
+		time = time.strip().split()
+		time[1] = time[1].lower()
+		time[1] = MONTHS[time[1]]
+		
+		if url.find("estadao.com.br/noticias/") is not -1:
+			time = time[0:3] + time[4:6]
+			time[3] = time[3][0:2]
+			
+		elif url.find("estadao.com.br/blogs/") is not -1:
+			time[3] = time[4][0:2]
+			time[4] = time[4][3:5]
+	except:
+		logger.error('wrong data extraction')
+		return None
+	
+	time = '-'.join(time)
+	
+	try:
+		published_time = datetime.datetime.strptime(time, '%d-%b-%Y-%H-%M')
+		return published_time
+	except:
+		logger.error('wrong published time format')
+		return
+
+def extract_title(soup):
+	""" Extract the news title.
 
 	"""
 	
@@ -133,6 +154,7 @@ def extract_title(soup):
 			title = soup.findAll('h2', {'class':'subtitulo'})[0].text
 		except:
 			logger.error('wrong title tag or attribute')
+			return
 
 	return title
 
@@ -140,7 +162,9 @@ def extract_content(url, response_content):
 	""" Extract relevant information about news page
 
 	:param url: news page's url
+	:param response_content:
 	:type url: string
+	:type response_content:
 	:return: compressed content, title, published time and body content of news page 
 	:rtype: dict()
 
@@ -157,7 +181,7 @@ def extract_content(url, response_content):
 				soupy = Soupy(cleaned_content).find("article")
 				content = soupy.children.each(Q.text.strip()).filter(len).val()
 			except:
-				logger.error("wrong tags or attributes")
+				logger.error("wrong content tags or attributes")
 				return
 
 	elif url.find("estadao.com.br/blogs/") is not -1:
@@ -168,7 +192,7 @@ def extract_content(url, response_content):
 			logger.error("wrong tags or attributes")
 			return
 
-	article = "".join(content) 
+	article = " ".join(content) 
 	return article
 	
 def download_article(url):
@@ -205,11 +229,19 @@ def download_article(url):
 	article['compressed'] = True
 	article['title'] = extract_title(soup)
 	article['body_content'] = extract_content(url, response_content)
+	article['published_time'] = extract_published_time(url, soup)
 
 	return article
 
+# if __name__ == '__main__':
+# 	for url in find_articles(sys.argv[1]):
+# 	    exists = list(ARTICLES.find({"link": url}))
+# 	    if not exists:
+# 	        article = download_article(url)
+# 	        ARTICLES.insert(article, w=1)
 
-for i in range(1, 10):
-	for url in find_articles(u'politica',i):
-		article = download_article(url)
-		print(article['body_content'])
+#example
+# for i in range(0,10):
+# 	for url in find_articles(u'politica', page = i):
+# 		article = download_article(url)
+# 		print(article['published_time'])
