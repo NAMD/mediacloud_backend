@@ -233,12 +233,12 @@ def download_article(url):
 
 	return article
 
-# if __name__ == '__main__':
-# 	for url in find_articles(sys.argv[1]):
-# 	    exists = list(ARTICLES.find({"link": url}))
-# 	    if not exists:
-# 	        article = download_article(url)
-# 	        ARTICLES.insert(article, w=1)
+if __name__ == '__main__':
+	for url in find_articles(sys.argv[1]):
+	    exists = list(ARTICLES.find({"link": url}))
+	    if not exists:
+	        article = download_article(url)
+	        ARTICLES.insert(article, w=1)
 
 #example
 # for i in range(0,10):
