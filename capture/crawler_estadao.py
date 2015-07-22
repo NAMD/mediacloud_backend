@@ -5,6 +5,7 @@ import datetime
 import requests
 import settings
 
+from goose import Goose
 from soupy import Soupy, Q
 from bs4 import BeautifulSoup
 from logging.handlers import RotatingFileHandler
@@ -105,18 +106,18 @@ def extract_published_time(url, soup):
 				u"maio": u"May", u"junho": u"Jun", u"julho": u"Jul", u"agosto": u"Aug",
 				u"setembro": u"Sep", u"outubro": u"Oct", u"novembro": u"Nov", u"dezembro": u"Dec"
 			 }
+	try:
+		date = soup.findAll("p", {"class":"data"})[0]
+	except IndexError:
+		try:
+			date = soup.findAll("span", {"class":"data"})[0]
+		except IndexError:
+			logger.error('wrong date tags')
+			return None
+
 
 	try:
-		date = soup.findAll("p", {"class":"data"})[0].text
-	except:
-		try:
-			date = soup.findAll("span", {"class":"data"})[0].text
-		except:
-			logger.error('wrong data tags')
-			return None
-	
-	try:
-		date = date.strip().split()
+		date = date.text.strip().split()
 		date[1] = date[1].lower()
 		date[1] = MONTHS[date[1]]
 		
@@ -127,7 +128,7 @@ def extract_published_time(url, soup):
 		elif "estadao.com.br/blogs/" in url:
 			date[3] = date[4][0:2]
 			date[4] = date[4][3:5]
-	except:
+	except ValueError:
 		logger.error('wrong data extraction')
 		return None
 	
@@ -135,63 +136,36 @@ def extract_published_time(url, soup):
 	
 	try:
 		published_time = datetime.datetime.strptime(date, '%d-%b-%Y-%H-%M')
-		return published_time
-	except:
+		return published_time 
+	except ValueError:
 		logger.error('wrong published time format')
 		return
 
-def extract_title(soup):
+def extract_title(article):
 	""" Extract the news title.
 
 	"""
 	
 	try:
-		title = soup.findAll('h1', {'class':'titulo'})[0].text
+		title = article.title
 	except:
-		try:
-			title = soup.findAll('h2', {'class':'subtitulo'})[0].text
-		except:
-			logger.error('wrong title tag or attribute')
-			return
+		logger.error('error in extract article title')
+		return
 
 	return title
 
-def extract_content(url, response_content):
+def extract_content(article):
 	""" Extract relevant information about news page
-
-	:param url: news page's url
-	:param response_content:
-	:type url: string
-	:type response_content:
-	:return: compressed content, title, published time and body content of news page 
-	:rtype: dict()
 
 	"""
 	
-	cleaned_content = clean_content(response_content)
-	
-	if "estadao.com.br/noticias/" in url:
-		soupy = Soupy(cleaned_content).find("div", {"itemprop":"articleBody"})
-		try:
-			content = soupy.children.each(Q.text.strip()).filter(len).val()
-		except:
-			try:
-				soupy = Soupy(cleaned_content).find("article")
-				content = soupy.children.each(Q.text.strip()).filter(len).val()
-			except:
-				logger.error("wrong content tags or attributes")
-				return
+	try:
+		body_content = article.cleaned_text
+	except:
+		logger.error("error in extract article content")
+		return
 
-	elif "estadao.com.br/blogs/" in url:
-		try:
-			soupy = Soupy(cleaned_content).find("article")
-			content = soupy.children.each(Q.text.strip()).filter(len).val()
-		except:
-			logger.error("wrong tags or attributes")
-			return
-
-	article = " ".join(content) 
-	return article
+	return body_content
 	
 def download_article(url):
 	""" Download the html content of a news page
@@ -222,12 +196,15 @@ def download_article(url):
 	encoding = response.encoding if response.encoding is not None else 'utf8'
 	response_content = response.content.decode(encoding)
 	soup = BeautifulSoup(response_content)
+
+	g = Goose({'use_meta_language': False, 'target_language':'pt'})
+	news = g.extract(url=url)
 		
 	article = {}
 	article['link_content'] = compress_content(response_content)
 	article['compressed'] = True
-	article['title'] = extract_title(soup)
-	article['body_content'] = extract_content(url, response_content)
+	article['title'] = extract_title(news)
+	article['body_content'] = extract_content(news)
 	article['published_time'] = extract_published_time(url, soup)
 
 	return article
@@ -239,8 +216,8 @@ if __name__ == '__main__':
 	        article = download_article(url)
 	        ARTICLES.insert(article, w=1)
 
-#example
+# example
 # for i in range(0,10):
-# 	for url in find_articles(u'politica', page = i):
+# 	for url in find_articles(u'esportes', page = i):
 # 		article = download_article(url)
-# 		print(article['published_time'])
+# 		print(article['title'])
