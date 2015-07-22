@@ -109,31 +109,31 @@ def extract_published_time(url, soup):
 			 }
 
 	try:
-		time = soup.findAll("p", {"class":"data"})[0].text
+		date = soup.findAll("p", {"class":"data"})[0].text
 	except:
 		try:
-			time = soup.findAll("span", {"class":"data"})[0].text
+			date = soup.findAll("span", {"class":"data"})[0].text
 		except:
 			logger.error('wrong data tags')
 			return None
 	
 	try:
-		time = time.strip().split()
-		time[1] = time[1].lower()
-		time[1] = MONTHS[time[1]]
+		date = date.strip().split()
+		date[1] = date[1].lower()
+		date[1] = MONTHS[date[1]]
 		
 		if url.find("estadao.com.br/noticias/") is not -1:
-			time = time[0:3] + time[4:6]
-			time[3] = time[3][0:2]
+			date = date[0:3] + date[4:6]
+			date[3] = date[3][0:2]
 			
 		elif url.find("estadao.com.br/blogs/") is not -1:
-			time[3] = time[4][0:2]
-			time[4] = time[4][3:5]
+			date[3] = date[4][0:2]
+			date[4] = date[4][3:5]
 	except:
 		logger.error('wrong data extraction')
 		return None
 	
-	time = '-'.join(time)
+	date = '-'.join(date)
 	
 	try:
 		published_time = datetime.datetime.strptime(time, '%d-%b-%Y-%H-%M')
