@@ -208,14 +208,15 @@ def download_article(url):
 		'source': 'crawler_estadao'
 	}
 
-	logger.info("Downloading article: %s", url)
+	logger.info("Downloading article: {0}".format(url))
+
 	try:
 		response = requests.get(url, timeout=30)
 	except ConnectionError:
-		logger.error("Failed to fetch: %s", url)
+		logger.error("Failed to fetch:{0}".format(url))
 		return
 	except Timeout:
-		logger.error("Timed out while fetching %s", url)
+		logger.error("Timed out while fetching {0}".format(url))
 		return
 	
 	encoding = response.encoding if response.encoding is not None else 'utf8'
