@@ -57,9 +57,7 @@ def find_articles(category, page=1):
 	if category not in CATEGORIES:
 		raise ValueError("Category value not accepted.")
 
-	params = (category, page)
-
-	INDEX_URL = "http://{0}.estadao.com.br/ultimas/{1}".format(*params)
+	INDEX_URL = "http://{0}.estadao.com.br/ultimas/{1}".format(category, page)
 
 	index = requests.get(INDEX_URL).content
 	soup = BeautifulSoup(index)
@@ -136,7 +134,7 @@ def extract_published_time(url, soup):
 	date = '-'.join(date)
 	
 	try:
-		published_time = datetime.datetime.strptime(time, '%d-%b-%Y-%H-%M')
+		published_time = datetime.datetime.strptime(date, '%d-%b-%Y-%H-%M')
 		return published_time
 	except:
 		logger.error('wrong published time format')
