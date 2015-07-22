@@ -120,11 +120,11 @@ def extract_published_time(url, soup):
 		date[1] = date[1].lower()
 		date[1] = MONTHS[date[1]]
 		
-		if url.find("estadao.com.br/noticias/") is not -1:
+		if "estadao.com.br/noticias/" in url:
 			date = date[0:3] + date[4:6]
 			date[3] = date[3][0:2]
 			
-		elif url.find("estadao.com.br/blogs/") is not -1:
+		elif "estadao.com.br/blogs/" in url:
 			date[3] = date[4][0:2]
 			date[4] = date[4][3:5]
 	except:
@@ -170,7 +170,7 @@ def extract_content(url, response_content):
 	
 	cleaned_content = clean_content(response_content)
 	
-	if url.find("estadao.com.br/noticias/") is not -1:
+	if "estadao.com.br/noticias/" in url:
 		soupy = Soupy(cleaned_content).find("div", {"itemprop":"articleBody"})
 		try:
 			content = soupy.children.each(Q.text.strip()).filter(len).val()
@@ -182,7 +182,7 @@ def extract_content(url, response_content):
 				logger.error("wrong content tags or attributes")
 				return
 
-	elif url.find("estadao.com.br/blogs/") is not -1:
+	elif "estadao.com.br/blogs/" in url:
 		try:
 			soupy = Soupy(cleaned_content).find("article")
 			content = soupy.children.each(Q.text.strip()).filter(len).val()
