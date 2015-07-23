@@ -18,7 +18,7 @@ from logging.handlers import RotatingFileHandler
 logger = logging.getLogger("Estadao")
 logger.setLevel(logging.DEBUG)
 
-# create console handler and set level to debug
+# create stream handler and set level to debug
 stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.DEBUG)
 file_handler = RotatingFileHandler('/tmp/mediacloud_estadao.log',
@@ -29,13 +29,13 @@ file_handler = RotatingFileHandler('/tmp/mediacloud_estadao.log',
 formatter = logging.Formatter('%(asctime)s - %(name)s - \
                                %(levelname)s - %(message)s')
 
-# add formatter to ch
+# add formatter to stream_handler
 stream_handler.setFormatter(formatter)
 file_handler.setFormatter(formatter)
 
-# add ch to logger
-logger.addHandler(ch)  # uncomment for console output of messages
-logger.addHandler(fh)
+# add stream_handler to logger
+logger.addHandler(stream_handler)  # uncomment for console output of messages
+logger.addHandler(file_handler)
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 mcdb = client.MCDB
@@ -152,8 +152,10 @@ def extract_title(article):
 
     try:
         title = article.title
-    except:
-        logger.error('error in extract article title')
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news title. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
         return None
     else:
         title
@@ -164,8 +166,10 @@ def extract_content(article):
 
     try:
         body_content = article.cleaned_text
-    except:
-        logger.error("error in extract article content")
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news content. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
         return None
     else:
     	return body_content
