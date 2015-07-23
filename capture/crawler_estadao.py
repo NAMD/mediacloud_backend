@@ -135,16 +135,14 @@ def extract_published_time(url, soup):
         logger.error('wrong data extraction')
         return None
 
-    else:
-        date = '-'.join(date)
+    date = '-'.join(date)
 
     try:
         published_time = datetime.datetime.strptime(date, '%d-%b-%Y-%H-%M')
     except ValueError:
         logger.error('wrong published time format')
         return None
-    else:
-        return published_time
+    return published_time
 
 def extract_title(article):
     """ Extract the news title.
@@ -157,8 +155,7 @@ def extract_title(article):
         message = template.format(type(ex).__name__, ex.args)
         logger.exception(message)
         return None
-    else:
-        title
+    return title
 
 def extract_content(article):
     """ Extract relevant information about news page
@@ -171,8 +168,7 @@ def extract_content(article):
         message = template.format(type(ex).__name__, ex.args)
         logger.exception(message)
         return None
-    else:
-    	return body_content
+    return body_content
 
 def download_article(url):
     """ Download the html content of a news page
@@ -194,21 +190,21 @@ def download_article(url):
     except Timeout:
         logger.error("Timed out while fetching {0}".format(url))
         return None
-    else:
-        encoding = response.encoding if response.encoding is not None else 'utf8'
-        response_content = response.content.decode(encoding)
-        soup = BeautifulSoup(response_content)
 
-        extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
-        news = extractor.extract(url=url)
+    encoding = response.encoding if response.encoding is not None else 'utf8'
+    response_content = response.content.decode(encoding)
+    soup = BeautifulSoup(response_content)
 
-        article['link_content'] = compress_content(response_content)
-        article['compressed'] = True
-        article['title'] = extract_title(news)
-        article['body_content'] = extract_content(news)
-        article['published_time'] = extract_published_time(url, soup)
+    extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
+    news = extractor.extract(url=url)
 
-        return article
+    article['link_content'] = compress_content(response_content)
+    article['compressed'] = True
+    article['title'] = extract_title(news)
+    article['body_content'] = extract_content(news)
+    article['published_time'] = extract_published_time(url, soup)
+
+    return article
 
 if __name__ == '__main__':
     for url in find_articles(sys.argv[1]):
@@ -216,3 +212,4 @@ if __name__ == '__main__':
         if not exists:
             article = download_article(url)
             ARTICLES.insert(article, w=1)
+
