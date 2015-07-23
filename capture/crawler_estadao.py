@@ -70,32 +70,6 @@ def find_articles(category, page=1):
     news_urls = [url.contents[1]['href'] for url in news_index]
     return news_urls
 
-def clean_content(response_content):
-    """ For getting only the news' content is necessary to remove dirty
-        elements like script, iframe, figcaption tags and related news
-        reference in content's body.
-    """
-
-    soup = BeautifulSoup(response_content)
-
-    for tag in soup.find_all("header"):
-        tag.decompose()
-    for tag in soup.find_all("div", {"class":"wp-caption"}):
-        tag.decompose()
-    for tag in soup.find_all("div", {"class":"tags"}):
-        tag.decompose()
-    for tag in soup.find_all('code'):
-        tag.decompose()
-    for tag in soup.find_all('iframe'):
-        tag.decompose()
-    for tag in soup.find_all('div', {'class':'relacionadastexto'}):
-        tag.decompose()
-    for tag in soup.find_all('figcaption'):
-        tag.decompose()
-    for tag in soup.find_all('script'):
-        tag.decompose()
-    return soup.html
-
 def extract_published_time(url, soup):
     """ Get the news published datetime
 
