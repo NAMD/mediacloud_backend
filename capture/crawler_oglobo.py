@@ -50,7 +50,12 @@ def get_published_time(soup):
         return None
     else:
         published_time_str = time_tag.attrs['datetime']
-        published_time = datetime.datetime.strptime(published_time_str, '%Y-%m-%dT%H:%M')
+        try:
+            published_time = datetime.datetime.strptime(published_time_str,
+             '%Y-%m-%dT%H:%M')
+        except ValueError:
+            published_time = datetime.datetime.strptime(published_time_str,
+             '%Y-%m-%d')
 
         return published_time
 
