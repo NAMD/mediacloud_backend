@@ -1,41 +1,22 @@
 # -*- coding: utf-8 -*-
-from logging.handlers import RotatingFileHandler
 from goose import Goose
 import pymongo
 from bs4 import BeautifulSoup
 import requests
 import re
 import pandas as pd
-import logging
 import datetime
 import zlib
 import cPickle as CP
 import cld
 import sys
 from requests.exceptions import ConnectionError, MissingSchema, Timeout
-from bson.errors import InvalidDocument
-from pymongo.errors import DuplicateKeyError
 import bson
-from dateutil.parser import parse
 import settings
+import logging_mc
 
+logger = logging_mc.get_logger( 'valor' )
 
-###########################
-#  Setting up Logging
-###########################
-logger = logging.getLogger("Valor")
-logger.setLevel(logging.DEBUG)
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-fh = RotatingFileHandler('/tmp/mediacloud_Valor.log', maxBytes=5e6, backupCount=3)
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# add formatter to ch
-ch.setFormatter(formatter)
-fh.setFormatter(formatter)
-# add ch to logger
-#logger.addHandler(ch)  # uncomment for console output of messages
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 MCDB = client.MCDB
