@@ -9,6 +9,9 @@ import requests
 import settings
 from downloader import compress_content, detect_language
 
+from dateutil.parser import parse
+
+
 ###########################
 #  Setting up Logging
 ###########################
@@ -51,11 +54,11 @@ def get_published_time(soup):
     else:
         published_time_str = time_tag.attrs['datetime']
         try:
-            published_time = datetime.datetime.strptime(published_time_str,
-             '%Y-%m-%dT%H:%M')
-        except ValueError:
-            published_time = datetime.datetime.strptime(published_time_str,
-             '%Y-%m-%d')
+            published_time = parse(published_time_str, default=datetime.date.today())
+        except Exception as ex:
+            logger.exception("Failed to parse published_time field with error: {0}".format(ex))
+            return None
+
 
         return published_time
 
@@ -89,8 +92,9 @@ def download_article(url):
 
     return article
 
-for url in find_articles():
-    exists = list(ARTICLES.find({"link": url}))
-    if not exists:
-        article = download_article(url)
-        ARTICLES.insert(article, w=1)
+if __name__ == '__main__':
+    for url in find_articles():
+        exists = list(ARTICLES.find({"link": url}))
+        if not exists:
+            article = download_article(url)
+            ARTICLES.insert(article, w=1)
