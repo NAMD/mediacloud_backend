@@ -116,6 +116,8 @@ def extract_published_time(url, soup):
     except ValueError:
         logger.error('wrong published time format')
         return None
+    if published_time is None:
+        logger.error("The published time is None")
     return published_time
 
 def extract_title(article):
@@ -129,6 +131,8 @@ def extract_title(article):
         message = template.format(type(ex).__name__, ex.args)
         logger.exception(message)
         return None
+    if title is None:
+        logger.error("The news title is None")
     return title
 
 def extract_content(article):
@@ -142,6 +146,8 @@ def extract_content(article):
         message = template.format(type(ex).__name__, ex.args)
         logger.exception(message)
         return None
+    if body_content is None:
+        logger.error("The news content is None")
     return body_content
 
 def download_article(url):
@@ -181,9 +187,11 @@ def download_article(url):
     return article
 
 if __name__ == '__main__':
-    for url in find_articles(sys.argv[1]):
+    for url in find_articles(sys.argv[1], sys.argv[2]):
         exists = list(ARTICLES.find({"link": url}))
         if not exists:
             article = download_article(url)
+            if article['body_content'] is None:
+                continue
             ARTICLES.insert(article, w=1)
 
