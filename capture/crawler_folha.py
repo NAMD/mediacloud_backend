@@ -8,6 +8,7 @@ import requests
 
 from goose import Goose
 from bs4 import BeautifulSoup
+from downloader import compress_content
 from logging.handlers import RotatingFileHandler
 
 
@@ -37,10 +38,10 @@ file_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)  # uncomment for console output of messages
 logger.addHandler(file_handler)
 
-# client = pymongo.MongoClient(settings.MONGOHOST, 27017)
-# mcdb = client.MCDB
-# ARTICLES = mcdb.articles  # Article Collection
-# ARTICLES.ensure_index("source")
+client = pymongo.MongoClient(settings.MONGOHOST, 27017)
+mcdb = client.MCDB
+ARTICLES = mcdb.articles  # Article Collection
+ARTICLES.ensure_index("source")
 
 
 def find_articles(page=None):
@@ -84,8 +85,16 @@ def extract_category(url):
     except AttributeError:
         logger.error("Some problem has occured in extraction of articles' category")
         return None
-
     return category
+
+def extract_content(article):
+    content_body = article.cleaned_text
+
+    if "post completo no blog" not in content_body:
+        return content_body
+    else:
+        logger.error("The article is into blog's link")
+        return None
 
 def download_article(url):
     """ Download the html content of a news page
@@ -108,18 +117,21 @@ def download_article(url):
         logger.error("Timed out while fetching {0}".format(url))
         return None
 
-    encoding = response.encoding if response.encoding is not None else 'utf8'
-    response_content = response.content.decode(encoding)
-
     extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
     news = extractor.extract(url=url)
+
     article['title'] = extract_title(news)
     article['category'] = extract_category(url)
+    article['body_content'] = extract_content(news)
 
     return article
 
 
 if __name__ == '__main__':
-    for url in find_articles(2):
-        article = download_article(url)
-        print(article['category'])
+    for url in find_articles():
+        exists = list(ARTICLES.find({"link": url}))
+        if not exists:
+            article = download_article(url)
+            if article['body_content'] is None:
+                continue
+            ARTICLES.insert(article, w=1)
