@@ -1,3 +1,4 @@
+import re
 import sys
 import pymongo
 import logging
@@ -43,15 +44,16 @@ logger.addHandler(file_handler)
 
 
 def find_articles(page=None):
+    """
+    """
 
     base_url = "http://www1.folha.uol.com.br/ultimas-noticias/"
     if page is None:
-        INDEX_URL = base_url + "index.shtml"
+        index_url = base_url + "index.shtml"
     else:
-        INDEX_URL = base_url + "noticias-{0}.shtml".format(page)
+        index_url = base_url + "noticias-{0}.shtml".format(page)
 
-    print(INDEX_URL)
-    index = requests.get(INDEX_URL).content
+    index = requests.get(index_url).content
     soup = BeautifulSoup(index)
     news_index = soup.find(**{'class': 'news-index'}).find('ol')
     news_urls = [url.attrs['href'] for url in news_index.find_all('a')]
@@ -72,4 +74,52 @@ def extract_title(article):
         logger.error("The news title is None")
     return title
 
+def extract_category(url):
+    """
+    """
 
+    try:
+        base_url = re.search('http://(.+?)/', url).group(1)
+        category = re.search(base_url + '/(.+?)/', url).group(1)
+    except AttributeError:
+        logger.error("Some problem has occured in extraction of articles' category")
+        return None
+
+    return category
+
+def download_article(url):
+    """ Download the html content of a news page
+
+    :param url: news page's url
+    :type url: string
+    :return: news page's content
+    :rtype: requests.models.Response
+    """
+
+    article = { 'link': url, 'source': 'crawler_folha_sao_paulo' }
+    logger.info("Downloading article: {0}".format(url))
+
+    try:
+        response = requests.get(url, timeout=30)
+    except ConnectionError:
+        logger.error("Failed to fetch:{0}".format(url))
+        return None
+    except Timeout:
+        logger.error("Timed out while fetching {0}".format(url))
+        return None
+
+    encoding = response.encoding if response.encoding is not None else 'utf8'
+    response_content = response.content.decode(encoding)
+
+    extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
+    news = extractor.extract(url=url)
+    article['title'] = extract_title(news)
+    article['category'] = extract_category(url)
+
+    return article
+
+
+if __name__ == '__main__':
+    for url in find_articles(2):
+        article = download_article(url)
+        print(article['category'])
