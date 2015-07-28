@@ -57,4 +57,19 @@ def find_articles(page=None):
     news_urls = [url.attrs['href'] for url in news_index.find_all('a')]
     return news_urls
 
+def extract_title(article):
+    """ Extract the news title.
+    """
+
+    try:
+        title = article.title
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news title. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
+        return None
+    if title is None:
+        logger.error("The news title is None")
+    return title
+
 
