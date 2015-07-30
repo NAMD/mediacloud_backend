@@ -8,7 +8,7 @@ import requests
 
 from goose import Goose
 from bs4 import BeautifulSoup
-from downloader import compress_content
+from downloader import compress_content, detect_language
 from logging.handlers import RotatingFileHandler
 
 
@@ -111,18 +111,16 @@ def download_article(url):
 
     try:
         response = requests.get(url, timeout=30)
-    except ConnectionError:
-        logger.error("Failed to fetch:{0}".format(url))
-        return None
-    except Timeout:
-        logger.error("Timed out while fetching {0}".format(url))
+    except Exception as ex:
+        logger.exception("Failed to fetch {0}".format(url))
         return None
 
     extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
     news = extractor.extract(url=url)
 
-    article['link_content'] = compress_content(response_content)
+    article['link_content'] = compress_content(response.text)
     article['compressed'] = True
+    article['language'] = detect_language(response.text)
     article['title'] = extract_title(news)
     article['category'] = extract_category(url)
     article['body_content'] = extract_content(news)
@@ -138,3 +136,4 @@ if __name__ == '__main__':
             if article['body_content'] is None:
                 continue
             ARTICLES.insert(article, w=1)
+
