@@ -78,12 +78,13 @@ def extract_title(article):
 def extract_category(url):
     """
     """
-
     try:
-        base_url = re.search('http://(.+?)/', url).group(1)
+        #returns 'http: or 'https:'
+        app_protocol = re.search('(.+?)/', url).group(1)
+        base_url = re.search(app_protocol + '//(.+?)/', url).group(1)
         category = re.search(base_url + '/(.+?)/', url).group(1)
     except AttributeError:
-        logger.error("Some problem has occured in extraction of articles' category")
+        logger.error("Some problem has occured during extraction of article's category")
         return None
     return category
 
@@ -120,6 +121,8 @@ def download_article(url):
     extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
     news = extractor.extract(url=url)
 
+    article['link_content'] = compress_content(response_content)
+    article['compressed'] = True
     article['title'] = extract_title(news)
     article['category'] = extract_category(url)
     article['body_content'] = extract_content(news)
