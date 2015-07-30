@@ -170,7 +170,7 @@ def download_article(url):
 
     extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
     news = extractor.extract(url=url)
-    soup = BeautifulSoup(response_content)
+    soup = BeautifulSoup(response.text)
 
     article['link_content'] = compress_content(response.text)
     article['compressed'] = True
