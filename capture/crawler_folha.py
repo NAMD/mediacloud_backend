@@ -87,14 +87,44 @@ def extract_category(url):
         return None
     return category
 
-def extract_content(article):
-    content_body = article.cleaned_text
+def extract_content(article, article_soup=None):
+    """
+    """
 
-    if "post completo no blog" not in content_body:
-        return content_body
-    else:
-        logger.error("The article is into blog's link")
+    try:
+       body_content = article.cleaned_text
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news content. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
         return None
+
+    if "post completo no blog" not in body_content:
+        return body_content
+
+    try:
+        content = article_soup.find("article", {"id":"news"})
+        urls = content.find_all("a")
+    except Exception as ex:
+        logger.exception('An exception ot type {0} occurred during extraction of links in news content.'
+            .format(ex))
+
+    blog_url = [url['href'] for url in urls if url.text == u'blog']
+
+    if blog_url is None:
+        logger.error("There's no blog link in article's content. Check out error")
+        return None
+
+    if len(blog_url) is not 1:
+        logger.error("There are multiples links whose name is 'blog'. Check out the right one to extract its content.")
+        return None
+
+    extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
+    blog_goose = extractor.extract(url=blog_url[0])
+    blog_content = extract_content(blog_goose)
+
+    return blog_url, blog_content
+
 
 def download_article(url):
     """ Download the html content of a news page
@@ -116,13 +146,21 @@ def download_article(url):
 
     extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
     news = extractor.extract(url=url)
+    soup = BeautifulSoup(response.content)
 
     article['link_content'] = compress_content(response.text)
     article['compressed'] = True
     article['language'] = detect_language(response.text)
     article['title'] = extract_title(news)
     article['category'] = extract_category(url)
-    article['body_content'] = extract_content(news)
+
+    content =  extract_content(news, soup)
+
+    if len(content) is 2:
+        article['link'], article['body_content'] = content
+        print("Link changed: {0}".format(article['link']))
+    else:
+        article['body_content'] = content
 
     return article
 
@@ -135,4 +173,5 @@ if __name__ == '__main__':
             if article['body_content'] is None:
                 continue
             ARTICLES.insert(article, w=1)
+
 
