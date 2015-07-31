@@ -6,6 +6,7 @@ import pymongo
 from bs4 import BeautifulSoup
 import requests
 
+from goose import Goose
 import settings
 from downloader import compress_content, detect_language
 
@@ -54,41 +55,64 @@ def get_published_time(soup):
     else:
         published_time_str = time_tag.attrs['datetime']
         try:
-            published_time = parse(published_time_str, default=datetime.date.today())
+            published_time = parse(published_time_str, default=datetime.datetime.today())
         except Exception as ex:
-            logger.exception("Failed to parse published_time field with error: {0}".format(ex))
+            logger.warning("Failed to parse published_time field with error: {0}".format(ex))
             return None
-
-
         return published_time
+
+def extract_title(article):
+    """ Extract the news title.
+    """
+
+    try:
+        title = article.title
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news title. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
+        return None
+    if title is None:
+        logger.error("The news title is None")
+    return title
+
+def extract_content(article):
+    """ Extract relevant information about news page
+    """
+
+    try:
+        body_content = article.cleaned_text
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news content. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
+        return None
+    if body_content is None:
+        logger.error("The news content is None")
+    return body_content
 
 def download_article(url):
     article = {
         'link': url,
         'source': 'crawler_oglobo',
     }
-    logger.info("Downloading article: %s", url)
+    logger.info("Downloading article: {}".format(url))
     try:
         response = requests.get(url, timeout=30)
-    except ConnectionError:
-        logger.error("Failed to fetch %s", url)
-        return
-    except Timeout:
-        logger.error("Timed out while fetching %s", url)
-        return
+    except Exception as ex:
+        logger.exception("Failed to fetch {0}".format(url))
+        return None
 
-    encoding = response.encoding if response.encoding is not None else 'utf8'
-    dec_content = response.content.decode(encoding)
-    article['link_content'] = compress_content(dec_content)
+    extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
+    news = extractor.extract(url=url)
+    soup = BeautifulSoup(response.text)
 
+    article['link_content'] = compress_content(response.text)
     article['compressed'] = True
-    article['language'] = detect_language(dec_content)
-
-
-    soup = BeautifulSoup(dec_content)
-    article['title'] = soup.find('title').text.strip()
-
-    article['published'] = get_published_time(soup)
+    article['language'] = detect_language(response.text)
+    article['title'] = extract_title(news)
+    article['published_time'] = get_published_time(soup)
+    article['body_content'] = extract_content(news)
 
     return article
 
@@ -97,4 +121,8 @@ if __name__ == '__main__':
         exists = list(ARTICLES.find({"link": url}))
         if not exists:
             article = download_article(url)
+            if article['body_content'] is None:
+                continue
+            if article['published_time'] is None:
+                continue
             ARTICLES.insert(article, w=1)
