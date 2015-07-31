@@ -19,17 +19,21 @@ from dateutil.parser import parse
 logger = logging.getLogger("OGlobo")
 logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-fh = RotatingFileHandler('/tmp/mediacloud_oglobo.log', maxBytes=5e6, backupCount=3)
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+file_handler = RotatingFileHandler('/tmp/mediacloud_oglobo.log',
+                                    maxBytes=5e6,
+                                    backupCount=3)
 # create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# add formatter to ch
-ch.setFormatter(formatter)
-fh.setFormatter(formatter)
-# add ch to logger
-#logger.addHandler(ch)  # uncomment for console output of messages
-logger.addHandler(fh)
+
+# add formatter to stream_handler
+stream_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
+
+# add stream_handler to logger
+logger.addHandler(stream_handler)  # uncomment for console output of messages
+logger.addHandler(file_handler)
 
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
@@ -92,11 +96,9 @@ def extract_content(article):
     return body_content
 
 def download_article(url):
-    article = {
-        'link': url,
-        'source': 'crawler_oglobo',
-    }
-    logger.info("Downloading article: {}".format(url))
+    article = { 'link': url, 'source': 'crawler_oglobo'}
+    logger.info("Downloading article: {0}".format(url))
+
     try:
         response = requests.get(url, timeout=30)
     except Exception as ex:

@@ -27,8 +27,7 @@ file_handler = RotatingFileHandler('/tmp/mediacloud_folha_sao_paulo.log',
                           backupCount=3)
 
 # create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - \
-                               %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # add formatter to stream_handler
 stream_handler.setFormatter(formatter)
