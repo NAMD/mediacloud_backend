@@ -158,7 +158,6 @@ def download_article(url):
 
     if len(content) is 2:
         article['link'], article['body_content'] = content
-        print("Link changed: {0}".format(article['link']))
     else:
         article['body_content'] = content
 

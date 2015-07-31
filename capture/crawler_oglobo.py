@@ -102,7 +102,7 @@ def download_article(url):
     try:
         response = requests.get(url, timeout=30)
     except Exception as ex:
-        logger.exception("Failed to fetch {0}".format(url))
+        logger.exception("Failed to fetch {0}. Exception: {1}".format(url, ex))
         return None
 
     extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
