@@ -50,19 +50,21 @@ def find_articles():
     news_urls = set([n.attrs['href'] for n in news_index.find_all('a')])
     return news_urls
 
-def get_published_time(soup):
+def extract_published_time(soup):
     # Parsing date strings
     # Parse date from article
     time_tag = soup.find('time')
     if time_tag is None:
-        return None
+        return datetime.datetime.today()
     else:
         published_time_str = time_tag.attrs['datetime']
         try:
-            published_time = parse(published_time_str, default=datetime.datetime.today())
+            published_time = parse(published_time_str)
+            if published_time is None:
+                published_time = datetime.datetime.today()
         except Exception as ex:
             logger.warning("Failed to parse published_time field with error: {0}".format(ex))
-            return None
+            return datetime.datetime.today()
         return published_time
 
 def extract_title(article):
@@ -113,7 +115,7 @@ def download_article(url):
     article['compressed'] = True
     article['language'] = detect_language(response.text)
     article['title'] = extract_title(news)
-    article['published_time'] = get_published_time(soup)
+    article['published_time'] = extract_published_time(soup)
     article['body_content'] = extract_content(news)
 
     return article

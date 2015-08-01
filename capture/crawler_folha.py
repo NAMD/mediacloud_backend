@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 from downloader import compress_content, detect_language
 from logging.handlers import RotatingFileHandler
 
+from dateutil.parser import parse
+
 
 ###########################
 #  Setting up Logging
@@ -125,6 +127,23 @@ def extract_content(article, article_soup=None):
 
     return blog_url, blog_content
 
+def extract_published_time(soup):
+    """
+    """
+
+    time_tag = soup.find("time")
+    if time_tag is None:
+        return datetime.datetime.today()
+    else:
+        published_time_str = time_tag.attrs['datetime']
+        try:
+            published_time = parse(published_time_str)
+            if published_time is None:
+                published_time = datetime.datetime.today()
+        except Exception as ex:
+            logger.warning("Failed to parse published_time field with error: {0}".format(ex))
+            return datetime.datetime.today()
+        return published_time
 
 def download_article(url):
     """ Download the html content of a news page
@@ -153,6 +172,7 @@ def download_article(url):
     article['language'] = detect_language(response.text)
     article['title'] = extract_title(news)
     article['category'] = extract_category(url)
+    article['published_time'] = extract_published_time(soup)
 
     content =  extract_content(news, soup)
 
@@ -172,5 +192,6 @@ if __name__ == '__main__':
             if article['body_content'] is None:
                 continue
             ARTICLES.insert(article, w=1)
+            print(article['published_time'])
 
 

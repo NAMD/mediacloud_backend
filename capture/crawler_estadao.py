@@ -90,7 +90,7 @@ def extract_published_time(url, soup):
             date = soup.findAll("span", {"class":"data"})[0]
         except IndexError:
             logger.error('wrong date tags')
-            return None
+            return datetime.datetime.today()
 
     try:
         date = date.text.strip().split()
@@ -106,17 +106,20 @@ def extract_published_time(url, soup):
             date[4] = date[4][3:5]
     except ValueError:
         logger.error('wrong data extraction')
-        return None
+        return datetime.datetime.today()
 
     date = '-'.join(date)
 
     try:
         published_time = datetime.datetime.strptime(date, '%d-%b-%Y-%H-%M')
     except ValueError:
-        logger.error('wrong published time format')
-        return None
+        logger.error('wrong published time format. ')
+        return datetime.datetime.today()
+
     if published_time is None:
         logger.error("The published time is None")
+        return datetime.datetime.today()
+
     return published_time
 
 def extract_title(article):
