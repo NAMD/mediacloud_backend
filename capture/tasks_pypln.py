@@ -14,18 +14,18 @@ articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 app = Celery('tasks', backend="mongodb")
 
 @app.task(bind=True)
-def fetch_property(self, _id, property_name):
+def fetch_property(self, _id):
     article = pypln_temp.find_one({"_id": _id})
 
     pypln_document = pypln.api.Document.from_url(article["pypln_url"],
                                                  settings.PYPLN_CREDENTIALS)
 
-    try:
-        value = pypln_document.get_property(property_name)
-    except RuntimeError as exc:
-        raise self.retry(exc=exc)
+    properties = {}
+    for property_name in pypln_document.properties:
+        try:
+            properties[property_name] = pypln_document.get_property(property_name)
+        except RuntimeError as exc:
+            raise self.retry(exc=exc)
 
     articles_analysis.update({"articles_id": article["articles_id"]},
-                             {"$set": {property_name: value}})
-
-    return value
+                             {"$set": {'properties': properties}})
