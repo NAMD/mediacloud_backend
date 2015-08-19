@@ -11,7 +11,7 @@ pypln_temp = client.MCDB.pypln_temp # pypln_temp temporary collection
 articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
 
-app = Celery('tasks', backend="mongodb")
+app = Celery('tasks', backend='redis://localhost')
 
 @app.task(bind=True)
 def fetch_property(self, _id):
