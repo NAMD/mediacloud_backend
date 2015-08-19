@@ -18,12 +18,7 @@ def get_pypln_properties(doc_id):
     articles_analysis.insert({'articles_id': article['articles_id']})
 
     results = fetch_property.delay(doc_id)
-
-    if results.successful() is True:
-        articles.update({'_id': article['articles_id']}, {'$set': {'status': 1}})
-    else:
-        articles.update({'_id': article['articles_id']}, {'$set': {'status': 2}})
-
+    
     pypln_temp.remove({'_id': doc_id})
 
 
