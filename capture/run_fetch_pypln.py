@@ -14,7 +14,7 @@ articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
 
 def get_pypln_properties(doc_id):
-    article = pypln_temp.find({'_id': doc_id})
+    article = pypln_temp.find_one({'_id': doc_id})
     articles_analysis.insert({'articles_id': article['articles_id']})
 
     results = fetch_property.delay(doc_id)
