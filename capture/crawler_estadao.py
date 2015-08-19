@@ -7,7 +7,7 @@ import requests
 
 from goose import Goose
 from bs4 import BeautifulSoup
-from downloader import compress_content
+from downloader import compress_content, detect_language
 from logging.handlers import RotatingFileHandler
 
 
@@ -26,8 +26,7 @@ file_handler = RotatingFileHandler('/tmp/mediacloud_estadao.log',
                           backupCount=3)
 
 # create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - \
-                               %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # add formatter to stream_handler
 stream_handler.setFormatter(formatter)
@@ -91,7 +90,7 @@ def extract_published_time(url, soup):
             date = soup.findAll("span", {"class":"data"})[0]
         except IndexError:
             logger.error('wrong date tags')
-            return None
+            return datetime.datetime.today()
 
     try:
         date = date.text.strip().split()
@@ -107,15 +106,20 @@ def extract_published_time(url, soup):
             date[4] = date[4][3:5]
     except ValueError:
         logger.error('wrong data extraction')
-        return None
+        return datetime.datetime.today()
 
     date = '-'.join(date)
 
     try:
         published_time = datetime.datetime.strptime(date, '%d-%b-%Y-%H-%M')
     except ValueError:
-        logger.error('wrong published time format')
-        return None
+        logger.error('wrong published time format. ')
+        return datetime.datetime.today()
+
+    if published_time is None:
+        logger.error("The published time is None")
+        return datetime.datetime.today()
+
     return published_time
 
 def extract_title(article):
@@ -129,6 +133,8 @@ def extract_title(article):
         message = template.format(type(ex).__name__, ex.args)
         logger.exception(message)
         return None
+    if title is None:
+        logger.error("The news title is None")
     return title
 
 def extract_content(article):
@@ -142,6 +148,8 @@ def extract_content(article):
         message = template.format(type(ex).__name__, ex.args)
         logger.exception(message)
         return None
+    if body_content is None:
+        logger.error("The news content is None")
     return body_content
 
 def download_article(url):
@@ -158,22 +166,17 @@ def download_article(url):
 
     try:
         response = requests.get(url, timeout=30)
-    except ConnectionError:
-        logger.error("Failed to fetch:{0}".format(url))
+    except Exception as ex:
+        logger.exception("Failed to fetch {0}".format(url))
         return None
-    except Timeout:
-        logger.error("Timed out while fetching {0}".format(url))
-        return None
-
-    encoding = response.encoding if response.encoding is not None else 'utf8'
-    response_content = response.content.decode(encoding)
-    soup = BeautifulSoup(response_content)
 
     extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
     news = extractor.extract(url=url)
+    soup = BeautifulSoup(response.text)
 
-    article['link_content'] = compress_content(response_content)
+    article['link_content'] = compress_content(response.text)
     article['compressed'] = True
+    article['language'] = detect_language(response.text)
     article['title'] = extract_title(news)
     article['body_content'] = extract_content(news)
     article['published_time'] = extract_published_time(url, soup)
@@ -181,9 +184,11 @@ def download_article(url):
     return article
 
 if __name__ == '__main__':
-    for url in find_articles(sys.argv[1]):
+    for url in find_articles(sys.argv[1], sys.argv[2]):
         exists = list(ARTICLES.find({"link": url}))
         if not exists:
             article = download_article(url)
+            if article['body_content'] is None:
+                continue
             ARTICLES.insert(article, w=1)
 

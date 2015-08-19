@@ -6,8 +6,12 @@ import pymongo
 from bs4 import BeautifulSoup
 import requests
 
+from goose import Goose
 import settings
 from downloader import compress_content, detect_language
+
+from dateutil.parser import parse
+
 
 ###########################
 #  Setting up Logging
@@ -15,17 +19,21 @@ from downloader import compress_content, detect_language
 logger = logging.getLogger("OGlobo")
 logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-fh = RotatingFileHandler('/tmp/mediacloud_oglobo.log', maxBytes=5e6, backupCount=3)
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+file_handler = RotatingFileHandler('/tmp/mediacloud_oglobo.log',
+                                    maxBytes=5e6,
+                                    backupCount=3)
 # create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# add formatter to ch
-ch.setFormatter(formatter)
-fh.setFormatter(formatter)
-# add ch to logger
-#logger.addHandler(ch)  # uncomment for console output of messages
-logger.addHandler(fh)
+
+# add formatter to stream_handler
+stream_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
+
+# add stream_handler to logger
+logger.addHandler(stream_handler)  # uncomment for console output of messages
+logger.addHandler(file_handler)
 
 
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
@@ -42,50 +50,83 @@ def find_articles():
     news_urls = set([n.attrs['href'] for n in news_index.find_all('a')])
     return news_urls
 
-def get_published_time(soup):
+def extract_published_time(soup):
     # Parsing date strings
     # Parse date from article
     time_tag = soup.find('time')
     if time_tag is None:
-        return None
+        return datetime.datetime.today()
     else:
         published_time_str = time_tag.attrs['datetime']
-        published_time = datetime.datetime.strptime(published_time_str, '%Y-%m-%dT%H:%M')
-
+        try:
+            published_time = parse(published_time_str)
+            if published_time is None:
+                published_time = datetime.datetime.today()
+        except Exception as ex:
+            logger.warning("Failed to parse published_time field with error: {0}".format(ex))
+            return datetime.datetime.today()
         return published_time
 
+def extract_title(article):
+    """ Extract the news title.
+    """
+
+    try:
+        title = article.title
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news title. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
+        return None
+    if title is None:
+        logger.error("The news title is None")
+    return title
+
+def extract_content(article):
+    """ Extract relevant information about news page
+    """
+
+    try:
+        body_content = article.cleaned_text
+    except Exception as ex:
+        template = "An exception of type {0} occured during extraction of news content. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        logger.exception(message)
+        return None
+    if body_content is None:
+        logger.error("The news content is None")
+    return body_content
+
 def download_article(url):
-    article = {
-        'link': url,
-        'source': 'crawler_oglobo',
-    }
-    logger.info("Downloading article: %s", url)
+    article = { 'link': url, 'source': 'crawler_oglobo'}
+    logger.info("Downloading article: {0}".format(url))
+
     try:
         response = requests.get(url, timeout=30)
-    except ConnectionError:
-        logger.error("Failed to fetch %s", url)
-        return
-    except Timeout:
-        logger.error("Timed out while fetching %s", url)
-        return
+    except Exception as ex:
+        logger.exception("Failed to fetch {0}. Exception: {1}".format(url, ex))
+        return None
 
-    encoding = response.encoding if response.encoding is not None else 'utf8'
-    dec_content = response.content.decode(encoding)
-    article['link_content'] = compress_content(dec_content)
+    extractor = Goose({'use_meta_language': False, 'target_language':'pt'})
+    news = extractor.extract(url=url)
+    soup = BeautifulSoup(response.text)
 
+    article['link_content'] = compress_content(response.text)
     article['compressed'] = True
-    article['language'] = detect_language(dec_content)
-
-
-    soup = BeautifulSoup(dec_content)
-    article['title'] = soup.find('title').text.strip()
-
-    article['published'] = get_published_time(soup)
+    article['language'] = detect_language(response.text)
+    article['title'] = extract_title(news)
+    article['published_time'] = extract_published_time(soup)
+    article['body_content'] = extract_content(news)
 
     return article
 
-for url in find_articles():
-    exists = list(ARTICLES.find({"link": url}))
-    if not exists:
-        article = download_article(url)
-        ARTICLES.insert(article, w=1)
+if __name__ == '__main__':
+    for url in find_articles():
+        exists = list(ARTICLES.find({"link": url}))
+        if not exists:
+            article = download_article(url)
+            if article['body_content'] is None:
+                continue
+            if article['published_time'] is None:
+                continue
+            ARTICLES.insert(article, w=1)
