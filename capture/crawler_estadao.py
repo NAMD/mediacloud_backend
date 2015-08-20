@@ -41,6 +41,10 @@ mcdb = client.MCDB
 ARTICLES = mcdb.articles  # Article Collection
 ARTICLES.ensure_index("source")
 
+CATEGORIES = (u'politica', u'economia', u'internacional', u'esportes',
+                  u'sao-paulo', u'cultura', u'opiniao', u'alias', u'brasil',
+                  u'ciencia', u'educacao', u'saude', u'sustentabilidade',
+                  u'viagem')
 
 def find_articles(category, page=1):
     """Get the urls of last news and its categories
@@ -52,11 +56,6 @@ def find_articles(category, page=1):
        :return: last news with its categories
        :rtype: list()
     """
-
-    CATEGORIES = (u'politica', u'economia', u'internacional', u'esportes',
-                  u'sao-paulo', u'cultura', u'opiniao', u'alias', u'brasil',
-                  u'ciencia', u'educacao', u'saude', u'sustentabilidade',
-                  u'viagem')
 
     if category not in CATEGORIES:
         raise ValueError("Category value not accepted.")
@@ -184,11 +183,12 @@ def download_article(url):
     return article
 
 if __name__ == '__main__':
-    for url in find_articles(sys.argv[1], sys.argv[2]):
-        exists = list(ARTICLES.find({"link": url}))
-        if not exists:
-            article = download_article(url)
-            if article['body_content'] is None:
-                continue
-            ARTICLES.insert(article, w=1)
+    for category in CATEGORIES:
+        for url in find_articles(category):
+            exists = list(ARTICLES.find({"link": url}))
+            if not exists:
+                article = download_article(url)
+                if article['body_content'] is None:
+                    continue
+                ARTICLES.insert(article, w=1)
 
