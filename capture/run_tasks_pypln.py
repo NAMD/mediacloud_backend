@@ -1,3 +1,12 @@
+"""
+To run the tasks we're using Celery, which is a an asynchronous task queue
+based on distributed message passing. You can run the Celery worker by executing
+"tasks_pypln" with the worker argument on your terminal:
+
+    celery -A tasks_pypln worker --loglevel=info
+
+"""
+
 from celery import Celery
 import pypln.api
 import pymongo
