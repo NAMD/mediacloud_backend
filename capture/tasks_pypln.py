@@ -11,7 +11,7 @@ pypln_temp = client.MCDB.pypln_temp # pypln_temp temporary collection
 articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
 
-app = Celery('tasks', backend='mongodb')
+app = Celery('tasks', backend='mongodb://157.16.4.51')
 
 @app.task(bind=True)
 def fetch_property(self, _id):
@@ -29,3 +29,5 @@ def fetch_property(self, _id):
 
     articles_analysis.update({"articles_id": article["articles_id"]},
                              {"$set": {'properties': properties}})
+
+    pypln_temp.remove({'_id': doc_id})
