@@ -28,6 +28,8 @@ def get_pypln_properties(doc_id):
     fetch_property.delay(doc_id)
 
 
-for article in pypln_temp.find():
+articles_to_fetch = pypln_temp.find({'status': {'$exists': False}})
+
+for article in articles_to_fetch:
     doc_id = article['_id']
     get_pypln_properties(doc_id)
