@@ -17,6 +17,7 @@ app = Celery('tasks', backend='mongodb://172.16.4.51')
 def fetch_property(self, _id):
     article = pypln_temp.find_one({"_id": _id})
 
+
     pypln_document = pypln.api.Document.from_url(article["pypln_url"],
                                                  settings.PYPLN_CREDENTIALS)
 
@@ -30,4 +31,5 @@ def fetch_property(self, _id):
     articles_analysis.update({"articles_id": article["articles_id"]},
                              {"$set": {'properties': properties}})
 
-    pypln_temp.remove({'_id': doc_id})
+    pypln_temp.update({"articles_id": article["articles_id"]},
+                      {"$set": {'status': 'analysis_done'}})
