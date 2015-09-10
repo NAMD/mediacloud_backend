@@ -17,7 +17,6 @@ app = Celery('tasks', backend=settings.CELERY_RESULT_BACKEND)
 def fetch_property(self, _id):
     article = pypln_temp.find_one({"_id": _id})
 
-
     pypln_document = pypln.api.Document.from_url(article["pypln_url"],
                                                  settings.PYPLN_CREDENTIALS)
 
@@ -36,7 +35,7 @@ def fetch_property(self, _id):
         doc_status = 'analysis_running'
 
     articles_analysis.update({"articles_id": article["articles_id"]},
-                             {"$set": {'properties': properties}})
+                             {"$set": {'properties': properties}}, upsert=True)
 
     pypln_temp.update({"articles_id": article["articles_id"]},
                       {"$set": {'status': doc_status}})
