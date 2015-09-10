@@ -28,8 +28,15 @@ def fetch_property(self, _id):
         except RuntimeError as exc:
             raise self.retry(exc=exc)
 
+    # Check the properties dict to know if PyPLn has finished the analysis.
+
+    if len(properties) == 28:
+        doc_status = 'analysis_complete'
+    else:
+        doc_status = 'analysis_running'
+
     articles_analysis.update({"articles_id": article["articles_id"]},
                              {"$set": {'properties': properties}})
 
     pypln_temp.update({"articles_id": article["articles_id"]},
-                      {"$set": {'status': 'analysis_done'}})
+                      {"$set": {'status': doc_status}})
