@@ -21,15 +21,21 @@ pypln_temp = client.MCDB.pypln_temp # pypln_temp temporary collection
 articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
 
+def send_to_queue(article):
+    pypln_temp.update({'_id': article['_id']},
+                      {'$set': {'status': 'on_queue'}})
+    fetch_property.delay(article['_id'])
+
+
 def get_pypln_properties():
     articles_fetch = 0
-    filter_ = {'status': {'$ne': 'analysis_complete'}}
+    filter_ = {'status': {'$nin': ['analysis_complete', 'on_queue']}}
 
     count = pypln_temp.count()
     cursor = pypln_temp.find(filter_, limit=10000)
     P = Pool()
     while articles_fetch < count:
-        P.map(fetch_property.delay, (article['_id'] for article in cursor))
+        P.map(send_to_queue, (article for article in cursor))
         articles_fetch += 10000
         cursor = pypln_temp.find(filter_, limit=10000)
     P.close()
