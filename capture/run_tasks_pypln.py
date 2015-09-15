@@ -7,12 +7,11 @@ based on distributed message passing. You can run the Celery worker by executing
 
 """
 
-from celery import Celery
-import pypln.api
 import pymongo
 import settings
 from tasks_pypln import fetch_property
-from celery import group
+from multiprocessing import Pool
+
 
 
 ## Media Cloud database setup
@@ -22,14 +21,25 @@ pypln_temp = client.MCDB.pypln_temp # pypln_temp temporary collection
 articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
 
-def get_pypln_properties(doc_id):
-    article = pypln_temp.find_one({'_id': doc_id})
-    articles_analysis.insert({'articles_id': article['articles_id']})
-    fetch_property.delay(doc_id)
+def send_to_queue(article):
+    pypln_temp.update({'_id': article['_id']},
+                      {'$set': {'status': 'on_queue'}})
+    fetch_property.delay(article['_id'])
 
 
-articles_to_fetch = pypln_temp.find({'status': {'$exists': False}})
+def get_pypln_properties():
+    articles_fetch = 0
+    filter_ = {'status': {'$nin': ['analysis_complete', 'on_queue']}}
 
-for article in articles_to_fetch:
-    doc_id = article['_id']
-    get_pypln_properties(doc_id)
+    count = pypln_temp.count()
+    cursor = pypln_temp.find(filter_, limit=10000)
+    P = Pool()
+    while articles_fetch < count:
+        P.map(send_to_queue, (article for article in cursor))
+        articles_fetch += 10000
+        cursor = pypln_temp.find(filter_, limit=10000)
+    P.close()
+    P.join()
+
+if __name__ == "__main__":
+    get_pypln_properties()

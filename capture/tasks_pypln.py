@@ -2,7 +2,7 @@ from celery import Celery
 import pypln.api
 import pymongo
 import settings
-
+from requests import ConnectionError
 
 ## Media Cloud database setup
 client = pymongo.MongoClient(host=settings.MONGOHOST)
@@ -17,7 +17,6 @@ app = Celery('tasks', backend=settings.CELERY_RESULT_BACKEND)
 def fetch_property(self, _id):
     article = pypln_temp.find_one({"_id": _id})
 
-
     pypln_document = pypln.api.Document.from_url(article["pypln_url"],
                                                  settings.PYPLN_CREDENTIALS)
 
@@ -25,11 +24,21 @@ def fetch_property(self, _id):
     for property_name in pypln_document.properties:
         try:
             properties[property_name] = pypln_document.get_property(property_name)
-        except RuntimeError as exc:
+        except (RuntimeError, ConnectionError) as exc:
             raise self.retry(exc=exc)
 
+    # Check the properties dict to know if PyPLn has finished the analysis.
+
+    palavras_ran = pypln_document.get_property('palavras_raw_ran')
+    if palavras_ran == True and len(properties) == 28:
+        doc_status = 'analysis_complete'
+    elif palavras_ran == False and len(properties) == 22:
+        doc_status = 'analysis complete'
+    else:
+        doc_status = 'analysis_running'
+
     articles_analysis.update({"articles_id": article["articles_id"]},
-                             {"$set": {'properties': properties}})
+                             {"$set": {'properties': properties}}, upsert=True)
 
     pypln_temp.update({"articles_id": article["articles_id"]},
-                      {"$set": {'status': 'analysis_done'}})
+                      {"$set": {'status': doc_status}})
