@@ -42,6 +42,8 @@ articles_analysis = client.MCDB.articles_analysis # articles_analysis collection
 
 articles.ensure_index('status')
 
+# Defines status codes
+SENT_TO_PYPLN = 'sent_to_pypln'
 
 def load_document(data):
     article, corpus = data
@@ -65,7 +67,7 @@ def load_document(data):
     logger.debug('Updating status for article with '
             'id {}'.format(_id))
     articles.update({'_id': _id},
-                    {'$set': {"status": 0}})
+                    {'$set': {"status": SENT_TO_PYPLN}})
 
     logger.info('inserted document with id {} into PyPLN. Took {} seconds.'.format(
         article['_id'], total_time))
@@ -76,7 +78,7 @@ def load(skip, limit=0):
 
     corpus = nlp.get_corpus()
     articles_sent = 0
-    filter_ = {'status': {'$exists': False}}
+    filter_ = {'status': {'$ne': SENT_TO_PYPLN}}
 
     find_kwargs = {'sort': [("_id", pymongo.DESCENDING)]}
     if skip:

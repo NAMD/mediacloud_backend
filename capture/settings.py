@@ -24,3 +24,8 @@ PYPLN_CREDENTIALS = ("<PYPLN_USERNAME>", "<PYPLN_PASSWORD>")
 ##########
 ELASTICHOST = "localhost"
 ELASTIC_ARTICLE_FIELDS = ['summary', 'title', 'cleaned_text', 'link', 'links', 'language', 'published']
+
+##########
+# Celery configuration
+##########
+CELERY_RESULT_BACKEND = 'mongodb://172.16.4.51:27017/'
