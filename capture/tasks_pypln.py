@@ -20,16 +20,14 @@ def fetch_property(self, _id):
     pypln_document = pypln.api.Document.from_url(article["pypln_url"],
                                                  settings.PYPLN_CREDENTIALS)
 
-    properties = {}
-    for property_name in pypln_document.properties:
-        try:
-            properties[property_name] = pypln_document.get_property(property_name)
-        except (RuntimeError, ConnectionError) as exc:
-            raise self.retry(exc=exc)
+    try:
+        properties = pypln_document.get_property("all_data")
+    except (RuntimeError, ConnectionError) as exc:
+        raise self.retry(exc=exc)
 
     # Check the properties dict to know if PyPLn has finished the analysis.
 
-    palavras_ran = pypln_document.get_property('palavras_raw_ran')
+    palavras_ran = properties['palavras_raw_ran']
     if palavras_ran == True and len(properties) == 28:
         doc_status = 'analysis_complete'
     elif palavras_ran == False and len(properties) == 22:
