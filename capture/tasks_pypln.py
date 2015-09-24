@@ -30,7 +30,7 @@ def fetch_property(self, _id):
     palavras_ran = properties['palavras_raw_ran']
     if palavras_ran == True and len(properties) == 28:
         doc_status = 'analysis_complete'
-    elif palavras_ran == False and len(properties) == 22:
+    elif palavras_ran == False and len(properties) == 24:
         doc_status = 'analysis_complete'
     else:
         doc_status = 'analysis_running'
