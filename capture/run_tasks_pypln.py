@@ -29,7 +29,7 @@ def send_to_queue(article):
 
 def get_pypln_properties():
     articles_fetch = 0
-    filter_ = {'status': {'$nin': ['analysis_complete', 'on_queue']}}
+    filter_ = {'status': {'$nin': ['analysis_complete', 'on_queue', 'analysis complete']}}
 
     count = pypln_temp.count()
     cursor = pypln_temp.find(filter_, limit=10000)
