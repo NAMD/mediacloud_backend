@@ -21,3 +21,4 @@ sphinxit
 goose-extractor
 elasticsearch
 urllib3
+sphinx
