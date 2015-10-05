@@ -4,8 +4,8 @@ __author__ = 'fccoelho'
 import unittest
 import subprocess
 import json
-
-from capture import feedfinder, urlscanner, downloader,googlerss
+from capture import feedfinder, urlscanner, downloader, googlerss
+from capture.twitter.GeoLoc import fetch_loc
 
 
 class FeedFinderTests(unittest.TestCase):
@@ -88,8 +88,25 @@ class Test_Tweet_Geolocate(unittest.TestCase):
     def setUp(self):
         with open('data/sample_tweet.json') as f:
             self._test_tweet = json.loads(f.read())
-    def test_geoloc_tweet(self):
-        pass
+
+    def fetch_lat_lon_from_place(self):
+        if self._test_tweet['place'] is not None and 'full_name' in self._test_tweet['place']:
+            fullgeo = self._test_tweet[u'place'][u'full_name']
+            lat, lon = fetch_loc(fullgeo)
+            self.assertIsInstance(lat, float)
+            self.assertIsInstance(lon, float)
+        else:
+            assert (True)
+
+    def fetch_lat_lon_from_location(self):
+        if u'user' in self._test_tweet and u'location' in self._test_tweet[u'user']:
+            fullgeo = self._test_tweet[u'user'][u'location']
+            lat, lon = fetch_loc(fullgeo)
+            self.assertIsInstance(lat, float)
+            self.assertIsInstance(lon, float)
+        else:
+            assert (True)
+
 
 
 if __name__ == '__main__':
