@@ -69,7 +69,6 @@ FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
 FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
 ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
 ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
-ARTICLES.ensure_index("cleaned_text")
 
 
 
