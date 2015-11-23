@@ -42,7 +42,6 @@ logger.addHandler(file_handler)
 client = pymongo.MongoClient(settings.MONGOHOST, 27017)
 mcdb = client.MCDB
 ARTICLES = mcdb.articles  # Article Collection
-ARTICLES.ensure_index("source")
 
 
 def find_articles(page=None):
