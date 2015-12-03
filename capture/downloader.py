@@ -9,6 +9,7 @@ license: GPL V3 or Later
 
 __docformat__ = 'restructuredtext en'
 
+import hashlib
 import logging
 from multiprocessing.pool import ThreadPool
 import time
@@ -67,7 +68,7 @@ ARTICLES = MCDB.articles  # Article Collection
 ## Ensure indices are created
 FEEDS.ensure_index([("subtitle_detail.base", pymongo.ASCENDING)])
 FEEDS.ensure_index([("last_visited", pymongo.DESCENDING), ("updated", pymongo.DESCENDING)])
-ARTICLES.ensure_index([("link", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
+ARTICLES.ensure_index([("link_sha1", pymongo.ASCENDING), ("published", pymongo.ASCENDING)])
 ARTICLES.ensure_index([("published", pymongo.DESCENDING)])
 
 
@@ -168,8 +169,16 @@ class RSSDownload(object):
                 entry.pop('published_parsed')
             except KeyError:
                 pass
+
+            # Hash the link of the article and store it. We will later use this
+            # to check if the article already exists in our database. We are
+            # using a hash here because as of mongo 2.6 we cannot have index
+            # entries which are greater than 1Kb, and some links are bigger
+            # than that. A sha1 has is guaranteed to have 20b.
+            entry['link_sha1'] = hashlib.sha1(entry.link).hexdigest()
+
             load_into_pypln.load_document(entry, corpus)
-            exists = list(ARTICLES.find({"link": entry.link}))
+            exists = list(ARTICLES.find({"link_sha1": entry.link_sha1}))
             # print exists
             if not exists:
                 if "published" in entry:

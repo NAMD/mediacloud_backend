@@ -1,3 +1,4 @@
+import hashlib
 import datetime
 import logging
 from logging.handlers import RotatingFileHandler
@@ -121,7 +122,8 @@ def download_article(url):
 
 if __name__ == '__main__':
     for url in find_articles():
-        exists = list(ARTICLES.find({"link": url}))
+        exists = list(ARTICLES.find(
+            {"link_sha1": hashlib.sha1(url).hexdigest()}))
         if not exists:
             article = download_article(url)
             if article['body_content'] is None:

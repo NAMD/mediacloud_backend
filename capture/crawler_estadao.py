@@ -1,3 +1,4 @@
+import hashlib
 import sys
 import pymongo
 import logging
@@ -184,7 +185,8 @@ def download_article(url):
 if __name__ == '__main__':
     for category in CATEGORIES:
         for url in find_articles(category):
-            exists = list(ARTICLES.find({"link": url}))
+            exists = list(ARTICLES.find(
+                {"link_sha1": hashlib.sha1(url).hexdigest()}))
             if not exists:
                 article = download_article(url)
                 if article['body_content'] is None:
