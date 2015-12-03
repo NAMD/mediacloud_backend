@@ -177,7 +177,7 @@ class RSSDownload(object):
             # than that. A sha1 has is guaranteed to have 20b.
             entry['link_sha1'] = hashlib.sha1(entry.link).hexdigest()
 
-            load_into_pypln.load_document(entry, corpus)
+            #load_into_pypln.load_document(entry, corpus)
             exists = list(ARTICLES.find({"link_sha1": entry.link_sha1}))
             # print exists
             if not exists:
