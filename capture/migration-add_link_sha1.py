@@ -40,7 +40,7 @@ for article in cursor:
             logger.exception('_id: %s has a list as link. Getting first one.',
                     article['_id'])
             link = link[0]
-        sha1 = hashlib.sha1(link).hexdigest()
+        sha1 = hashlib.sha1(link.encode('utf-8')).hexdigest().decode('utf-8')
         collection.update({'_id': article['_id']}, {'$set':
             {'link_sha1': sha1}})
 
